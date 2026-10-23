@@ -64,6 +64,15 @@ No protótipo as telas usam `grid-template-columns` inline. Aqui viram classes:
 
 Layouts que não cabem nessas grades (ex.: `1.6fr 1fr 1fr 1fr`) ficam no parcial da tela em `pages/`.
 
+### Mesa
+
+`<x-site.poker.mesa>` segue o `RHG.pokerTable`: assento 0 é o dealer, embaixo; os lugares vêm em sentido horário, espaçados pelo comprimento de arco da oval (em proporção real). Diferenças:
+
+- A posição de cada assento é uma variável CSS no contêiner (`left:var(--x3);top:var(--y3)`). O servidor escreve a posição de partida (`App\Support\PosicoesDaMesa`) e o `mesa.js` reescreve ao girar e ao mudar o tamanho da tela. Assim o Livewire pode redesenhar os assentos sem que eles pulem.
+- Em pé (90°/270°) a mesa ganha `.is-retrato` e no máximo 520px de largura. Antes do primeiro desenho do JS os assentos não animam (`.is-pronta`).
+- A busca do ponto na oval começa na amostra 0 (no protótipo começava na 1, deixando o dealer 0,37% fora do centro).
+- Tela 06 usa a mesa compacta com `ar` 2,6 deitada e 0,72 em pé, raios 44/36, como o protótipo.
+
 ### Vitrine
 
 `/vitrine` (só com `APP_ENV=local`) mostra todos os componentes com os dados da Poker Night #18, para comparar com os protótipos.

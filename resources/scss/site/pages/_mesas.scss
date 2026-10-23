@@ -1,0 +1,72 @@
+// ============================================================================
+// Tela 06: configuração das mesas
+// ============================================================================
+
+@use "../vars" as *;
+
+.rh-mesas {
+	grid-template-columns: 220px 1fr;
+	gap: 20px;
+	align-items: start;
+
+	@include ate(tablet) {
+		grid-template-columns: 1fr;
+	}
+
+	&__lado {
+		gap: 12px;
+		position: sticky;
+		top: 16px;
+
+		@include ate(tablet) {
+			position: static;
+		}
+	}
+
+	&__espera {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+
+		.rh-pcard {
+			padding: 7px 10px;
+		}
+	}
+
+	&__dica {
+		display: flex;
+		gap: 8px;
+		align-items: flex-start;
+		font-size: 13px;
+		color: var(--ink-200);
+
+		.rh-ic {
+			margin-top: 2px;
+		}
+	}
+
+	&__mesa .rh-panel__hd {
+		gap: 8px;
+		flex-wrap: wrap;
+	}
+
+	&__ajuste {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+
+		.rh-select {
+			height: 32px;
+			font-size: 14px;
+			width: auto;
+		}
+	}
+
+	&__feltro {
+		padding: 4px 18px 14px;
+
+		@include ate(celular) {
+			padding: 4px 6px 12px;
+		}
+	}
+}

@@ -39,8 +39,19 @@
 			display: none;
 		}
 
+		// O link para a lista de jogos fica, só com o ícone.
+		.rh-btn--ghost.rh-top__link {
+			display: inline-flex;
+
+			span {
+				display: none;
+			}
+		}
+
 		&__ctx {
 			padding-left: 10px;
+			flex: 1 1 auto;
+			overflow: hidden;
 
 			.rh-small {
 				display: none;
@@ -48,7 +59,23 @@
 
 			b {
 				font-size: 18px;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				min-width: 0;
 			}
+
+			.rh-badge {
+				flex: none;
+			}
+		}
+
+		// Com um jogo aberto não sobra espaço: o espaçador some e o Sair fica só no ícone.
+		&__ctx ~ .rh-spacer {
+			display: none;
+		}
+
+		&__sair span {
+			display: none;
 		}
 	}
 }

@@ -93,6 +93,21 @@ Durante `status = em_andamento`, o torneio passa por três fases (`jogos.fase`),
 2. `intervalo` — botão **Encerrar rebuys**: rebuy fecha, add-on abre (até `limite_por_jogador`). Quem estava eliminado e não voltou vira eliminação definitiva, na ordem em que caiu.
 3. `sem_entradas` — botão **Fechar entradas**: add-on fecha, `jogo_premiacoes.valor` é gravado. Daqui em diante só eliminações definitivas, e cada uma dá a posição na hora (quem cai fica em último entre os que restam).
 
+## Lista da noite (jogadores confirmados)
+
+- Confirmar põe o jogador em `participantes` com status `confirmado` e sem lugar; vale com o jogo agendado ou em andamento (quem chega atrasado). Confirmar de novo não duplica. Jogador inativo não entra.
+- Tirar da lista apaga a linha do participante, mas só enquanto ele não tem entrada, pagamento nem eliminação; depois disso ele fica (o caixa já o conhece).
+- Cadastro rápido (`usuarios.cadastro_rapido`) cria o jogador só com nome e apelido opcional e já confirma. Se o nome ou o apelido bater com o nome ou o apelido de alguém (sem diferença de maiúsculas), não cria: o aviso manda confirmar pela lista.
+- Confirmar e tirar pedem `jogadores.confirmar` (Operador e Admin do site).
+
+## Mesas e início do jogo
+
+- Montar as mesas pede `mesas.organizar` (Admin do site); o Operador só vê.
+- Trocar de lugar: clicar no jogador e depois num lugar. Lugar vazio = mover; ocupado = os dois trocam (quem estava vai para o lugar antigo, ou fica sem lugar). Vale com o jogo agendado ou em andamento (quebra de mesa). Eliminado ou quem saiu não senta.
+- Sortear lugares (só antes de começar) senta todos os confirmados: as mesas ficam equilibradas na proporção dos lugares e os lugares dentro de cada mesa são aleatórios. Sem lugar suficiente, avisa quantos faltam.
+- Lugares por mesa de 2 a 12, sem diminuir abaixo de quem está sentado. Dealer só quem tem "Pode ser dealer". Mesa só sai do jogo vazia. Adicionar ou tirar mesa atualiza a agenda.
+- **Iniciar** (`jogo.fases`, Admin do site): só agendado e com pelo menos 2 jogadores sentados. Torneio vai para a fase `rebuys`; cash game fica sem fase. Sentados passam a `jogando`; confirmado sem lugar continua esperando e senta depois.
+
 ## Ações no jogador (clicar no assento)
 
 O painel do jogador mostra investido, pago, recebido e saldo, e as ações:
@@ -184,6 +199,14 @@ Cash game: posição para o ranking = ordem do resultado (maior lucro = 1º). Po
 - **Saldo do jogador** = investido − prêmio − pago + recebido. Positivo: deve ao caixa. Negativo: o caixa deve a ele.
 
 Referência (Poker Night #18): 22 entradas, premiação bruta R$ 2.100; taxa "casa" 10% = R$ 210; prize pool R$ 1.890 → 945 / 567 / 378.
+
+Detalhes da `Calculadora` (tudo em centavos inteiros):
+- A fração do destino vale sobre a soma de cada destino, não lançamento a lançamento.
+- **Jogadores** (taxa por jogador e regra de premiação) = quem tem pelo menos um buy-in válido. **Entradas** (taxa por entrada) = buy-ins, rebuys e add-ons; opcionais não contam.
+- Taxa percentual arredonda meio centavo para cima (7,5% de R$ 606 = R$ 45,45). Taxa por unidade usa quantidade mínima 1.
+- Prize pool não fica negativo: se as taxas passarem da premiação bruta, ele é zero.
+- Prêmios: cada posição leva prize pool × percentual, para baixo; a sobra (centavos) vai para o 1º, quando os percentuais somam 100%. Premiação pela regra usa a faixa do número de jogadores; manual usa os percentuais do jogo. Cash game não tem prêmios.
+- **Simulação** (prize pool estimado): N jogadores com o buy-in padrão, N rebuys e N add-ons padrão, mais os opcionais obrigatórios (por jogador ou junto de cada entrada).
 
 ## Fechamento e acertos
 

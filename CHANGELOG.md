@@ -10,6 +10,71 @@ Registro das atualizações do sistema do Rodrigues Home Game, organizadas por:
 - Docs: documentação;
 - Chore: manutenção.
 
+## 0.3.4
+
+Fim da fase 2 (telas 01–06).
+
+### Feat
+- Mesas (tela 06, `/jogos/{jogo}/mesas`, Livewire `Jogo\Mesas`): lista "sem lugar", clicar no jogador e depois num lugar para mover ou trocar, tirar do lugar, sortear lugares, lugares e dealer por mesa, adicionar e tirar mesa, girar a mesa e Iniciar torneio/jogo com confirmação. Operador só vê.
+- `<x-site.poker.mesa>` + `resources/js/site/mesa.js`: assentos por comprimento de arco (dealer embaixo), giro de 90° salvo no aparelho, mesa em pé no celular; posições em variáveis CSS para sobreviver ao redesenho do Livewire. `App\Support\PosicoesDaMesa` faz a mesma conta no servidor.
+- Actions `TrocarLugar`, `SortearLugares` (equilibrado), `AjustarMesa`, `AdicionarMesa`, `RemoverMesa` (agenda acompanha) e `IniciarJogo` (torneio na fase de rebuys, sentados jogando), com o trait `ChecaRegras`.
+- "Organizar mesas" na tela de jogadores passa a levar para as mesas.
+
+### Fix
+- Topbar das telas da noite no celular: o selo do status ficava por cima do avatar. O nome do jogo encolhe com reticências e o Sair fica só no ícone.
+
+### Test
+- `MesasDoJogoTest` (Actions), `Site\MesasTest` (tela) e `PosicoesDaMesaTest`.
+
+## 0.3.3
+
+### Feat
+- Jogadores confirmados (tela 05, `/jogos/{jogo}/jogadores`, Livewire `Jogo\Jogadores`): cartões dos jogadores ativos, clicar confirma ou tira; busca sem diferença de acento e maiúscula; filtros Todos / Selecionados / Frequentes; lista de confirmados com remover; capacidade das mesas ("sobram N" / "faltam N lugares"); NOVO JOGADOR com cadastro rápido em modal; botão Organizar mesas.
+- Actions `ConfirmarJogador`, `DesconfirmarJogador` (só quem não tem lançamento) e `CadastrarJogadorRapido` (não duplica nome nem apelido), com permissão `jogadores.confirmar` / `usuarios.cadastro_rapido` e `lockForUpdate`.
+- "Conferido, seguir" na conferência passa a levar para os jogadores.
+
+### Docs
+- `regras.md`: seção "Lista da noite". `CLAUDE.md`: marcadores do Livewire nos testes e apelido sorteado pela factory.
+
+### Test
+- `ListaDeJogadoresTest` (Actions) e `JogadoresTest` (tela).
+
+## 0.3.2
+
+### Feat
+- Conferência da estrutura (tela 04, `/jogos/{jogo}/conferencia`): buy-ins com ficha (B, 2, 3), limite e fichas; rebuy e add-on (ou recompra no cash game) com disponível/não tem; opcionais com compra, destino e obrigatório; evento; financeiro (taxas, premiação pela regra com os confirmados ou manual, prize pool estimado); mesas, capacidade, dealers e floor. Botões "Editar no painel" e "Conferido, seguir".
+- Layout das telas da noite `<x-site.operacao>`: topbar com o jogo (nome, status, data), fluxo da noite com etapas feitas (✓), atual e as que ainda não abrem.
+- Middleware `jogo.etapa`: etapa que o status não permite volta para a etapa atual (ou para a lista) com aviso; rascunho, cancelado e modelo voltam para a lista.
+- O "Abrir" de jogo agendado no dashboard e na lista passa a levar para a conferência.
+
+### Test
+- `ConferenciaTest`: estrutura da noite #18 agendada, fluxo da noite, cash game com opcional, jogo em andamento barrado com aviso, jogo fora do site e o Abrir da lista.
+
+## 0.3.1
+
+### Feat
+- Dashboard do site (tela 02): jogo ao vivo (prize pool real) ou próximo agendado (prize pool estimado pelos confirmados), com data, confirmados, mesas e buy-in; números (em andamento, próximos, jogadores ativos, média por noite); últimos eventos com arrecadação e campeão; agenda com os próximos eventos; última noite.
+- Escolha do jogo (tela 03, `/jogos`): destaque do jogo ao vivo ou de hoje, abas Próximos / Em andamento / Finalizados com contagem, busca pelo nome e paginação no estilo do design system. Rascunho, cancelado e modelo não aparecem no site.
+- `EtapaDoJogo` (etapas do fluxo da noite, o que cada status permite e para onde o Abrir leva), `Datas` (datas em pt_BR), `Jogo::noSite()`, `buyinPadrao()` e `campeao()`, `Taxa::resumo()` ("10%", "2 × R$ 215"…).
+- Componentes `datebox` e `status-jogo`; link "Jogos" na topbar (no celular, só o ícone).
+
+### Test
+- `DashboardTest` e `SelecaoDeJogoTest`; estados `agendado()`, `emAndamento()` e `finalizado()` na factory de jogos.
+
+## 0.3.0
+
+Início da fase 2. A `Calculadora` veio da fase 4 para cá porque o dashboard e a conferência já mostram prize pool e premiação.
+
+### Feat
+- `App\Services\Jogo\Calculadora`: arrecadação, premiação bruta (por destino), taxas nos cinco cálculos, prize pool, fora da premiação e prêmios (sobra do arredondamento para o 1º), em centavos. `doJogo()` usa as entradas válidas; `simular()` estima pelo cadastro. Resultado em `ResumoFinanceiro`.
+- `Dinheiro::percentual()`: percentual de um valor em centavos, meio centavo para cima.
+
+### Docs
+- `regras.md`: detalhes de arredondamento, contagem de jogadores e entradas e simulação.
+
+### Test
+- `CalculadoraTest`: noite #18 (R$ 2.100 / 210 / 1.890 → 945 / 567 / 378), entrada cancelada, exemplo do sábado (R$ 4.290 / 3.510 / 2.890), taxas por jogador, por entrada e percentual, sobra para o 1º, premiação manual, simulação, opcionais obrigatórios, cash game e jogador sem buy-in.
+
 ## 0.2.3
 
 Fim da fase 1.

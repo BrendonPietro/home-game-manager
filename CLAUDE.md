@@ -61,11 +61,14 @@ Site e painel **nunca gravam entradas ou status direto pelo model**. Tudo passa 
 | `App\Actions\Jogo\TrocarLugar` | Muda mesa/lugar (quebra de mesa) |
 | `App\Actions\Jogo\DesfazerAcao` | Cancela a última ação do jogador, com motivo (nunca apaga) |
 | `App\Actions\Jogo\AgendarJogo`, `CancelarJogo` | Rascunho → agendado (botão no painel) e rascunho/agendado → cancelado |
+| `App\Actions\Jogo\ConfirmarJogador`, `DesconfirmarJogador`, `CadastrarJogadorRapido` | Lista da noite (tela 05): confirmar, tirar (só sem lançamento) e cadastro rápido que já confirma |
+| `App\Actions\Jogo\SortearLugares`, `AjustarMesa`, `AdicionarMesa`, `RemoverMesa` | Montar as mesas (tela 06): sorteio equilibrado, lugares e dealer, mesas do jogo (a agenda acompanha) |
+| `App\Actions\Jogo\IniciarJogo` | Agendado → em andamento (torneio na fase de rebuys); sentados viram "jogando" |
 | `App\Actions\Jogo\EncerrarRebuys`, `FecharEntradas`, `FinalizarJogo` | Fases e status |
 | `App\Services\Jogo\EventoDoJogo` | Cria/atualiza o evento do jogo na agenda (com as mesas); tira modelo, sem data e cancelado |
 | `App\Actions\Jogo\CriarDeModelo` | Novo jogo a partir de um torneio modelo (`jogos.e_modelo`) |
 
-Toda ação roda numa transação com `lockForUpdate()` na linha do jogo. Regra violada (ex.: agendar sem buy-in) lança `App\Exceptions\RegraDoJogo`, com mensagem para mostrar como está a quem usa.
+Toda ação roda numa transação com `lockForUpdate()` na linha do jogo. Regra violada (ex.: agendar sem buy-in) lança `App\Exceptions\RegraDoJogo`, com mensagem para mostrar como está a quem usa; falta de permissão lança `AuthorizationException`. O trait `App\Actions\Jogo\Concerns\ChecaRegras` dá `permitir()` e `exigirStatus()`. As telas Livewire pegam as duas exceções e mostram a mensagem em `$erro` (sem derrubar a tela).
 
 Regras e fórmulas em [docs/regras.md](docs/regras.md).
 
@@ -120,17 +123,22 @@ V2. Na v1, `jogos.nivel_atual` e `blinds_atual` são digitados. Detalhes em [doc
 - SCSS em `resources/scss/site/` (`vars`, `core`, `components`, `pages`), classes com prefixo `rh-`. Tokens como variáveis CSS em `vars/_tokens.scss` (mesmos nomes do `bundle.css`: `--bg-000`, `--radius-md`…); breakpoints com `@include ate(largo|tablet|celular)`. Grades responsivas `rh-grid--2…6` e `rh-grid--side` no lugar de `grid-template-columns` inline. Sem Tailwind e sem WPF3 no site.
 - Ícones: SVGs em `resources/svg/site/icons/` (set `rh` do blade-icons, registrado no `AppServiceProvider`): `@svg('rh-home')`.
 - Layout base: `<x-site.app titulo="...">` (`app/View/Components/Site/App.php` → `site/layouts/app.blade.php`). Livewire e Alpine vêm num bundle só (`resources/js/site/app.js` importa o ESM do Livewire; o layout usa `@livewireScriptConfig`): não importar Alpine de novo.
-- Componentes Blade em `resources/views/components/site/{core,props,poker,window}`.
-- A mesa (`<x-site.poker.mesa>`) é renderizada no servidor; `resources/js/site/mesa.js` (Alpine) posiciona os assentos por comprimento de arco e gira em passos de 90°. A rotação fica no `localStorage` do aparelho.
+- Componentes Blade em `resources/views/components/site/{core,props,poker,window}`. Já existem: `props/{brand,field,avatar,datebox,status-jogo,aviso,linha-item}`, `window/{topbar,fluxo-da-noite}`, `poker/mesa`. Conteúdo das telas dentro de `<main class="rh-page"><div class="rh-wrap">`.
+- Telas da noite usam `<x-site.operacao :jogo etapa="…" titulo="…">` (topbar com o jogo + fluxo da noite + aviso; slot `faixa` para a faixa ao vivo) e a rota leva `->middleware('jogo.etapa:<etapa>')`.
+- Datas no site com `App\Support\Datas` ("Domingo, 04/10/2026", "Dom 04/10/2026", "OUT", "Em 4 dias"); o Carbon já está em pt_BR. Etapas da noite e o destino do Abrir em `App\Support\EtapaDoJogo`.
+- A mesa (`<x-site.poker.mesa :jogo-mesa :ocupantes acao="metodoLivewire">`) é renderizada no servidor; `resources/js/site/mesa.js` (Alpine) posiciona os assentos por comprimento de arco e gira em passos de 90°. A rotação fica no `localStorage` do aparelho (`rh-mesa-rotacao-<jogoMesaId>`). Posições em variáveis CSS (`--x0…`, `--y0…`) no contêiner, que tem `wire:ignore.self`: o Livewire redesenha os assentos sem perder a posição. `App\Support\PosicoesDaMesa` faz a mesma conta no PHP (posição de partida). Botão de girar fora da mesa: `$dispatch('girar-mesa', jogoMesaId)`.
 - Fontes Barlow e Barlow Condensed locais em `resources/fonts/barlow/` (sem Google Fonts).
 - Entradas do Vite: `resources/scss/site/index.scss`, `resources/js/site/app.js`, `resources/css/filament/painel/theme.css`.
 
 ## Testes
 
 - `phpunit.xml` usa `APP_URL=http://localhost` e SQLite em memória. (No casamento, `APP_URL` sem esquema fazia toda rota dar 404 nos testes.)
+- Em views de componentes Livewire, cada `@if` ganha marcadores `<!--[if BLOCK]>` com quebra de linha: frase que atravessa um `@if` não casa com `assertSee`. Monte o texto numa expressão (`{{ $a ? … : … }}`) ou use `assertSeeText`.
+- Factory de `Usuario` sorteia apelido: em teste que procura o nome na tela, crie com `'apelido' => null`.
 - A noite de exemplo **Poker Night #18** é a referência: 12 jogadores, 22 entradas, R$ 2.100 arrecadados, rake R$ 210, prize pool R$ 1.890 pago como 945 / 567 / 378. Se a `Calculadora` não devolver isso, algo quebrou.
   - `PokerNight18Seeder` cria a noite com os jogadores e lugares do protótipo, em andamento no intervalo (rebuys encerrados, add-ons feitos, ninguém eliminado). O `db:seed` só a cria no ambiente local (testes rodam o seeder dela direto), e rodar de novo não duplica.
-  - `PokerNight18Test` confere os números somando em centavos; a `Calculadora` (fase 4) tem que bater com ele.
+  - `PokerNight18Test` confere os números somando direto em centavos; `CalculadoraTest` confere a `Calculadora` contra a mesma noite e contra o exemplo do sábado do `regras.md`.
+- `Calculadora::doJogo($jogo)` dá os números reais (entradas válidas); `simular($jogo, jogadores, rebuys, addons)` estima pelo cadastro (buy-in, rebuy e add-on padrão + opcionais obrigatórios). Os dois devolvem um `ResumoFinanceiro` em centavos.
 
 ## Deploy
 

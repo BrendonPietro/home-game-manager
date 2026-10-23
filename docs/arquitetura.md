@@ -86,18 +86,20 @@ Tudo atrás de `auth` (guard `web`, tabela `usuarios`) e das permissões do site
 | Tela | Rota | Nome | Implementação |
 |---|---|---|---|
 | 01 Login | `GET/POST /login`, `POST /logout` | `login`, `logout` | `AuthController` (e-mail e senha; `guest:web` / `auth:web`) |
-| 02 Dashboard | `GET /` | `home` | `HomeController@index` |
-| 03 Seleção do jogo | `GET /jogos` | `jogos.index` | `JogoController@index` |
+| 02 Dashboard | `GET /` | `home` | `HomeController@index` (jogo ao vivo ou próximo agendado com prize pool real/estimado, números, últimos finalizados, agenda, última noite) |
+| 03 Seleção do jogo | `GET /jogos` | `jogos.index` | `JogoController@index` (abas Próximos / Em andamento / Finalizados, busca `?busca=`, destaque do jogo ao vivo ou de hoje) |
 | 04 Conferência | `GET /jogos/{jogo}/conferencia` | `jogos.conferencia` | `JogoController@conferencia` |
 | 05 Jogadores confirmados | `GET /jogos/{jogo}/jogadores` | `jogos.jogadores` | Livewire `Jogo\Jogadores` (cadastro rápido incluso) |
-| 06 Mesas | `GET /jogos/{jogo}/mesas` | `jogos.mesas` | Livewire `Jogo\Mesas` (lugares, dealer por mesa, floor, Iniciar jogo) |
+| 06 Mesas | `GET /jogos/{jogo}/mesas` | `jogos.mesas` | Livewire `Jogo\Mesas` (sem lugar, clicar para mover/trocar, sortear, lugares e dealer por mesa, adicionar/remover mesa, girar, Iniciar jogo). O floor do jogo é escolhido no painel |
 | 07–09, 11 Ao vivo | `GET /jogos/{jogo}/ao-vivo` | `jogos.ao-vivo` | Livewire `Jogo\AoVivo` + `Jogo\AcoesJogador` (entrada, pagamento, eliminação/cash-out, trocar lugar, desfazer) + botões de fase |
 | 10 Resumo | `GET /jogos/{jogo}/resumo` | `jogos.resumo` | Livewire `Jogo\Resumo` (saldos e pendências) |
 | 12 Premiação | `GET /jogos/{jogo}/premiacao` | `jogos.premiacao` | `JogoController@premiacao` (só torneio) |
 | 13 Resultado | `GET /jogos/{jogo}/resultado` | `jogos.resultado` | Livewire `Jogo\Resultado` (posições / cash-outs) |
 | 14 Fechamento | `GET /jogos/{jogo}/fechamento`, `POST /jogos/{jogo}/finalizar` | `jogos.fechamento`, `jogos.finalizar` | `JogoController` |
 
-Middleware `jogo.etapa`: quem abre uma etapa que o status/fase não permite volta para a etapa atual com aviso.
+Middleware `jogo.etapa` (`App\Http\Middleware\JogoEtapa`, alias em `bootstrap/app.php`): quem abre uma etapa que o status/fase não permite volta para a etapa atual com aviso (`session('aviso')`, mostrado pelo `<x-site.props.aviso>`). Enquanto a tela da etapa atual não existe, volta para a lista de jogos.
+
+O site só mostra jogos reais agendados, em andamento e finalizados (`Jogo::noSite()`); rascunho e cancelado ficam no painel. `App\Support\EtapaDoJogo` guarda as etapas do fluxo da noite, quais o status permite (agendado: conferência, jogadores, mesas; em andamento: ao vivo, resumo, premiação; finalizado: premiação, resultado, fechamento; cash game sem premiação) e para onde o **Abrir** leva. Enquanto a tela da etapa não existe, o Abrir aparece desabilitado.
 
 ## Painel (`/painel`, guard `painel`, tabela `seguranca`)
 

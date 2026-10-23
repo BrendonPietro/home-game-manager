@@ -2,7 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Enums\FaseTorneio;
 use App\Enums\Modalidade;
+use App\Enums\StatusJogo;
 use App\Enums\TipoItem;
 use App\Models\Jogo;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -20,6 +22,25 @@ class JogoFactory extends Factory
             'data' => fake()->dateTimeBetween('now', '+1 month'),
             'horario' => '20:00',
         ];
+    }
+
+    public function agendado(): static
+    {
+        return $this->state(fn () => ['status' => StatusJogo::Agendado]);
+    }
+
+    public function emAndamento(): static
+    {
+        return $this->state(fn (array $atributos) => [
+            'status' => StatusJogo::EmAndamento,
+            'fase' => ($atributos['modalidade'] ?? null) === Modalidade::CashGame ? null : FaseTorneio::Rebuys,
+            'iniciado_em' => now(),
+        ]);
+    }
+
+    public function finalizado(): static
+    {
+        return $this->state(fn () => ['status' => StatusJogo::Finalizado, 'finalizado_em' => now()]);
     }
 
     public function cashGame(): static

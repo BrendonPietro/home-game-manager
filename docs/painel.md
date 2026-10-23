@@ -33,7 +33,7 @@ Menu (via `navigationSort`): Dashboard, Calendário, Jogos, Modelos, Rankings, U
 - Entradas, opcionais, taxas, premiação e mesas só se editam em rascunho e agendado; durante o jogo quem mexe é o Admin do site. Finalizado e cancelado abrem só para ver.
 - Botões **Agendar** (rascunho → agendado, pela `AgendarJogo`: exige data, um buy-in ativo com valor e premiação manual somando 100%) e **Cancelar jogo** (`CancelarJogo`). Excluir só rascunho sem entradas.
 - Salvar cria ou atualiza o evento do jogo na agenda, com as mesas (`Services\Jogo\EventoDoJogo`); cancelado sai da agenda.
-- Ficam para depois: simulação do prize pool (com a `Calculadora`, fase 4), Abrir no site (fase 2), Duplicar e Salvar como modelo (fase 5).
+- Ficam para depois: simulação do prize pool ao lado do formulário (a conta já existe em `Calculadora::simular`; falta a tela, que precisa simular com o formulário ainda não salvo — fase 5), Abrir no site (fase 2), Duplicar e Salvar como modelo (fase 5).
 | `ModeloResource` | Jogos com `e_modelo`; mesmo formulário, sem data. Ação Criar a partir do modelo (nome, data, horário) |
 | `RankingResource` | Nome, periodicidade, período, posições pontuadas (repeater), FT pontua? + pontos, participação pontua? + pontos. Página de classificação |
 | `UsuarioResource` | Seções Dados (foto, nome, apelido, telefone), Na noite ("Pode ser dealer", "Pode ser floor", ativo) e Acesso ao site (e-mail em minúsculas, senha, grupos do site), mais observações. A seção de acesso só aparece para quem tem `usuarios.editar`: o grupo Geral cadastra jogadores, mas não dá acesso ao site. Excluir é soft delete (filtro de excluídos + Restaurar). Colunas: jogos, pontos, saldo pendente (este entra na fase 4, com `Saldos`) |

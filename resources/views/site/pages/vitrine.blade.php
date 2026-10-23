@@ -286,7 +286,7 @@
 					</div>
 				</div>
 				<div class="rh-col" style="align-items:flex-end;justify-content:space-between">
-					<div class="rh-datebox"><b>11</b><span>OUT</span></div>
+					<x-site.props.datebox :data="\Illuminate\Support\Carbon::parse('2026-10-11')" />
 					<a class="rh-btn rh-btn--primary rh-btn--lg" href="#">Abrir jogo @svg('rh-arrow-r')</a>
 				</div>
 			</div>

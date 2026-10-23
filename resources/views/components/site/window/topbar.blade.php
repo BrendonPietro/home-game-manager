@@ -18,11 +18,12 @@
 	{{ $acoes }}
 
 	@if ($usuario)
+		<a class="rh-btn rh-btn--ghost rh-btn--sm rh-top__link" href="{{ route('jogos.index') }}" aria-label="Jogos">@svg('rh-list') <span>Jogos</span></a>
 		<x-site.props.avatar :nome="$usuario->nome_exibicao" :foto="$usuario->foto" tamanho="sm" />
 
 		<form method="POST" action="{{ route('logout') }}">
 			@csrf
-			<button type="submit" class="rh-btn rh-btn--sm" title="Sair">@svg('rh-out') Sair</button>
+			<button type="submit" class="rh-btn rh-btn--sm rh-top__sair" title="Sair" aria-label="Sair">@svg('rh-out') <span>Sair</span></button>
 		</form>
 	@endif
 </header>

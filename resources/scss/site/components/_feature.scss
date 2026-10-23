@@ -76,4 +76,15 @@
 		color: var(--red-300);
 		font-weight: 600;
 	}
+
+	// Na lista da agenda
+	&--sm {
+		width: 48px;
+		height: 52px;
+
+		b {
+			font-size: 22px;
+			line-height: 24px;
+		}
+	}
 }

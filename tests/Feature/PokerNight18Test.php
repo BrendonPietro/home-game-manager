@@ -16,8 +16,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
- * A noite de referência. Por enquanto as contas são feitas aqui, em centavos, direto das entradas;
- * na fase 4 a Calculadora precisa chegar exatamente nos mesmos números.
+ * A noite de referência. As contas daqui são feitas à mão, em centavos, direto das entradas,
+ * de propósito: a Calculadora (CalculadoraTest) precisa chegar exatamente nos mesmos números.
  */
 class PokerNight18Test extends TestCase
 {

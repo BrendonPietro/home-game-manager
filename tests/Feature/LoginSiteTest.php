@@ -45,9 +45,10 @@ class LoginSiteTest extends TestCase
 
         $this->assertAuthenticatedAs($operador, 'web');
 
+        // Dashboard com o operador na topbar (o avatar mostra o apelido).
         $this->get('/')
             ->assertOk()
-            ->assertSee('Olá, Marcão')
+            ->assertSee('title="Marcão"', false)
             ->assertSee('Sair');
     }
 

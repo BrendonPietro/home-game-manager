@@ -70,6 +70,17 @@
 		margin-top: 2px;
 	}
 
+	// Antes do primeiro desenho do mesa.js os assentos não animam (evita o salto ao abrir girada).
+	&:not(.is-pronta) .rh-seat,
+	&:not(.is-pronta) .rh-ptable__rail {
+		transition: none;
+	}
+
+	// Em pé (girada 90°/270°) a mesa fica estreita: limita a largura para não virar uma torre.
+	&.is-retrato {
+		max-width: 520px;
+	}
+
 	&--compact .rh-seat {
 		width: 124px;
 		padding: 7px 8px;

@@ -13,9 +13,16 @@
 	color: var(--ink-100);
 	cursor: pointer;
 	text-align: left;
+	width: 100%;
+	font: inherit;
+	min-width: 0;
 
 	&:hover {
 		background: var(--bg-300);
+	}
+
+	&[disabled] {
+		cursor: default;
 	}
 
 	&__n {

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\JogoController;
 use Illuminate\Support\Facades\Route;
 
 // Tela 01: login do site (guard web, tabela usuarios)
@@ -13,8 +14,22 @@ Route::middleware('guest:web')->group(function () {
 Route::middleware('auth:web')->group(function () {
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
 
-    // Tela 02: dashboard (por enquanto só a casca)
+    // Tela 02: dashboard
     Route::get('/', [HomeController::class, 'index'])->name('home');
+
+    // Tela 03: escolher o jogo
+    Route::get('/jogos', [JogoController::class, 'index'])->name('jogos.index');
+
+    // Antes da noite (jogo agendado). jogo.etapa manda para a etapa certa quando o status não permite.
+    Route::get('/jogos/{jogo}/conferencia', [JogoController::class, 'conferencia'])
+        ->middleware('jogo.etapa:conferencia')
+        ->name('jogos.conferencia');
+    Route::get('/jogos/{jogo}/jogadores', [JogoController::class, 'jogadores'])
+        ->middleware('jogo.etapa:jogadores')
+        ->name('jogos.jogadores');
+    Route::get('/jogos/{jogo}/mesas', [JogoController::class, 'mesas'])
+        ->middleware('jogo.etapa:mesas')
+        ->name('jogos.mesas');
 });
 
 // Vitrine do design system, só para desenvolvimento.

@@ -1,0 +1,83 @@
+// ============================================================================
+// Tela 04: conferência da estrutura
+// ============================================================================
+
+@use "../vars" as *;
+
+.rh-conferencia {
+	grid-template-columns: 1.25fr 1fr;
+	align-items: start;
+
+	@include ate(tablet) {
+		grid-template-columns: 1fr;
+	}
+}
+
+// Linha de entrada/opcional: ficha · nome e detalhe · fichas · valor
+.rh-item {
+	display: grid;
+	grid-template-columns: auto 1fr auto auto;
+	gap: 14px;
+	align-items: center;
+	padding: 14px 16px;
+	border-bottom: 1px solid var(--line-100);
+
+	&:last-child {
+		border-bottom: 0;
+	}
+
+	&.is-off {
+		opacity: 0.55;
+	}
+
+	&__t {
+		font-family: var(--font-display);
+		font-weight: 700;
+		font-size: 18px;
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+	}
+
+	&__fichas {
+		font-family: var(--font-display);
+		font-weight: 600;
+		font-size: 16px;
+		color: var(--ink-200);
+		font-variant-numeric: tabular-nums;
+		text-align: right;
+		min-width: 110px;
+	}
+
+	&__v {
+		font-family: var(--font-display);
+		font-weight: 700;
+		font-size: 24px;
+		font-variant-numeric: tabular-nums;
+		text-align: right;
+		min-width: 90px;
+	}
+
+	&__sem-ficha {
+		display: inline-grid;
+		place-items: center;
+		width: 30px;
+		height: 30px;
+		border-radius: 999px;
+		border: 1px dashed var(--line-control);
+		color: var(--ink-300);
+	}
+
+	@include ate(celular) {
+		grid-template-columns: auto 1fr auto;
+		gap: 10px;
+
+		&__fichas {
+			display: none;
+		}
+
+		&__v {
+			font-size: 20px;
+			min-width: 0;
+		}
+	}
+}

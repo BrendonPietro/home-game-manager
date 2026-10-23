@@ -1,0 +1,24 @@
+// ============================================================================
+// Tela 05: jogadores confirmados
+// ============================================================================
+
+@use "../vars" as *;
+
+.rh-jogadores__busca {
+	width: 260px;
+	max-width: 100%;
+
+	@include ate(celular) {
+		width: 100%;
+		order: 3;
+	}
+}
+
+.rh-jogadores__lista {
+	max-height: 470px;
+	overflow: auto;
+
+	@include ate(tablet) {
+		max-height: none;
+	}
+}

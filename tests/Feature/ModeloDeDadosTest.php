@@ -24,7 +24,7 @@ use Tests\TestCase;
 
 /**
  * Confere que migrations, models e seeders conversam entre si.
- * As regras de dinheiro (Calculadora) ganham teste próprio na fase 4.
+ * As regras de dinheiro ficam no CalculadoraTest.
  */
 class ModeloDeDadosTest extends TestCase
 {

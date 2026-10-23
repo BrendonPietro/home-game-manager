@@ -159,6 +159,12 @@ class Jogo extends Model
         return $this->hasOne(Evento::class);
     }
 
+    /** Quem terminou em 1º (torneio finalizado). */
+    public function campeao(): HasOne
+    {
+        return $this->hasOne(Participante::class)->where('posicao_final', 1);
+    }
+
     // ── Escopos ─────────────────────────────────────────────
 
     /** Jogos de verdade (exclui torneios modelo). Use em tudo que o site e o calendário listam. */
@@ -175,6 +181,12 @@ class Jogo extends Model
     public function scopeComStatus(Builder $query, StatusJogo ...$status): Builder
     {
         return $query->whereIn('status', $status);
+    }
+
+    /** O que o site mostra: jogos reais agendados, em andamento ou finalizados. */
+    public function scopeNoSite(Builder $query): Builder
+    {
+        return $query->reais()->comStatus(StatusJogo::Agendado, StatusJogo::EmAndamento, StatusJogo::Finalizado);
     }
 
     // ── Estado ─────────────────────────────────────────────
@@ -197,6 +209,14 @@ class Jogo extends Model
     public function estaNaFase(FaseTorneio $fase): bool
     {
         return $this->status === StatusJogo::EmAndamento && $this->fase === $fase;
+    }
+
+    /** O buy-in que o jogo anuncia: o padrão ativo, ou o primeiro buy-in ativo. */
+    public function buyinPadrao(): ?Item
+    {
+        $buyins = $this->itens->filter(fn (Item $item) => $item->tipo === TipoItem::Buyin && $item->ativo);
+
+        return $buyins->firstWhere('padrao', true) ?? $buyins->first();
     }
 
     /** Admin do site ainda pode mexer em entradas, opcionais e taxas. */

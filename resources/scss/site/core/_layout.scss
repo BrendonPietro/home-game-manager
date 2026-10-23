@@ -17,6 +17,13 @@
 	}
 }
 
+// Largura máxima do conteúdo das telas (o protótipo usa 1180–1240px centralizado)
+.rh-wrap {
+	width: 100%;
+	max-width: 1240px;
+	margin: 0 auto;
+}
+
 .rh-row {
 	display: flex;
 	align-items: center;

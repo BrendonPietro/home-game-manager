@@ -40,6 +40,18 @@ class Dinheiro
         return $partes[1] === '-' ? -$centavos : $centavos;
     }
 
+    /**
+     * Percentual de um valor em centavos, arredondando meio centavo para cima.
+     * Ex.: percentual(10100, '7.5') → 758 (7,5% de R$ 101 = R$ 7,575).
+     */
+    public static function percentual(int $centavos, string|int|float $percentual): int
+    {
+        // Percentual também vira inteiro (centésimos de ponto): 7.5 → 750.
+        $produto = $centavos * self::centavos($percentual);
+
+        return intdiv($produto + ($produto >= 0 ? 5000 : -5000), 10000);
+    }
+
     /** Centavos → decimal para gravar no banco ('1890.00'). */
     public static function decimal(int $centavos): string
     {
