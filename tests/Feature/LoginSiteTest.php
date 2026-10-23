@@ -61,6 +61,22 @@ class LoginSiteTest extends TestCase
         $this->assertAuthenticatedAs($operador, 'web');
     }
 
+    public function test_volta_para_a_pagina_pretendida_do_site_mas_nao_do_painel(): void
+    {
+        $this->operador();
+
+        $this->withSession(['url.intended' => url('/vitrine')])
+            ->post('/login', ['email' => 'operador@exemplo.com', 'password' => 'password'])
+            ->assertRedirect(url('/vitrine'));
+
+        Auth::guard('web')->logout();
+
+        // Quem tentou abrir o painel antes não vai parar no painel ao entrar no site.
+        $this->withSession(['url.intended' => url('/painel/mesas')])
+            ->post('/login', ['email' => 'operador@exemplo.com', 'password' => 'password'])
+            ->assertRedirect(route('home'));
+    }
+
     public function test_lembrar_acesso_grava_o_cookie(): void
     {
         $this->operador();
@@ -79,6 +95,16 @@ class LoginSiteTest extends TestCase
             ->assertSessionHasErrors(['email' => 'E-mail ou senha incorretos.']);
 
         $this->assertGuest('web');
+    }
+
+    public function test_campos_vazios_com_mensagem_em_portugues(): void
+    {
+        $this->from('/login')
+            ->post('/login', ['email' => '', 'password' => ''])
+            ->assertSessionHasErrors([
+                'email' => 'O campo e-mail é obrigatório.',
+                'password' => 'O campo senha é obrigatório.',
+            ]);
     }
 
     public function test_quem_nao_acessa_o_site_nao_entra(): void

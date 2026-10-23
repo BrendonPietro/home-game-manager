@@ -22,3 +22,7 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Configuração local do Claude Code (caminhos desta máquina)
+/.claude/launch.json
+/.claude/settings.local.json

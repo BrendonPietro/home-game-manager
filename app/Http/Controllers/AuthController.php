@@ -57,7 +57,12 @@ class AuthController extends Controller
         RateLimiter::clear($chave);
         $request->session()->regenerate();
 
-        return redirect()->intended(route('home'));
+        // Volta para a página pretendida só se ela for do site (a sessão é a mesma do painel).
+        $pretendida = (string) $request->session()->pull('url.intended');
+        $painel = url('painel');
+        $doPainel = $pretendida === $painel || str_starts_with($pretendida, $painel.'/');
+
+        return redirect()->to($pretendida !== '' && ! $doPainel ? $pretendida : route('home'));
     }
 
     public function destroy(Request $request): RedirectResponse

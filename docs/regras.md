@@ -207,7 +207,7 @@ O jogo pode ser finalizado com saldos em aberto: viram pendências do jogador, a
 ## Ciclo de vida do jogo
 
 1. `rascunho` — configurando no painel.
-2. `agendado` — aparece no site e no calendário; confirmar jogadores e montar mesas.
+2. `agendado` — botão **Agendar** no painel (exige data, um buy-in ativo com valor e, se a premiação for manual, percentuais somando 100%). Aparece no site e no calendário; confirmar jogadores e montar mesas.
 3. `em_andamento` — botão **Iniciar jogo**. Torneio passa pelas fases acima.
 4. `finalizado` — botão **Finalizar**; grava resultado, pontos e acertos.
 

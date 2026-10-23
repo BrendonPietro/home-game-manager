@@ -49,7 +49,7 @@ php artisan migrate:fresh --seed
 php artisan test
 ```
 
-O seed cria as permissões, os grupos (painel: Admin, Desenvolvedor, Geral; site: Admin, Operador), as regras de premiação, a conta `dev` do painel e a conta `dev@rodrigues.test` do site (grupo Admin). Em produção, desative ou troque as duas depois do primeiro acesso. O Filament (`composer require filament/filament:^5.0`) entra na fase 0, junto com o tema.
+O seed cria as permissões, os grupos (painel: Admin, Desenvolvedor, Geral; site: Admin, Operador), as regras de premiação, a conta `dev` do painel e a conta `dev@rodrigues.test` do site (grupo Admin). Em produção, desative ou troque as duas depois do primeiro acesso. No ambiente local (`APP_ENV=local`), o seed cria também a noite de exemplo Poker Night #18 (12 jogadores, 2 mesas, 22 entradas). O Filament (`composer require filament/filament:^5.0`) entra na fase 0, junto com o tema.
 
 ## Lançamento: domínio e hospedagem novos (a definir)
 

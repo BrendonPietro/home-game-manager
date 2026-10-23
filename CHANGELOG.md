@@ -10,6 +10,56 @@ Registro das atualizações do sistema do Rodrigues Home Game, organizadas por:
 - Docs: documentação;
 - Chore: manutenção.
 
+## 0.2.3
+
+Fim da fase 1.
+
+### Feat
+- Cadastro de jogos no painel (telas 19 e 20, `JogoResource`): modalidade no topo e abas Informações, Dinheiro, Premiação, Rankings e Mesas. Entradas em três tabelas com a linha padrão fixa e o + para variações; opcionais com compra e destino; taxas nos cinco cálculos; premiação pela regra do clube ou manual (soma 100%); mesas com dealer e floor do jogo. Cash game pede valor da ficha e não tem add-on.
+- Lista de jogos reais com data, modalidade, status, jogadores e arrecadação; filtros por status e modalidade.
+- Botões Agendar e Cancelar jogo, pelas Actions `AgendarJogo` e `CancelarJogo` (transação com `lockForUpdate`), com a exceção `RegraDoJogo` para as mensagens de regra.
+- Estrutura do jogo (entradas, opcionais, taxas, premiação, mesas) travada no painel a partir de em andamento; finalizado e cancelado só para ver; excluir só rascunho sem entradas (`JogoPolicy`).
+- `EventoDoJogo`: salvar o jogo cria ou atualiza o evento na agenda, com as mesas; cancelado sai da agenda.
+
+### Test
+- `JogosTest`: lista com arrecadação e sem modelos, torneio completo (entradas, variação, opcionais, taxas, mesas, evento), premiação manual somando 100%, cash game, agendar e cancelar, agendar sem buy-in, jogo em andamento travado, exclusão e grupo Geral só vendo.
+
+## 0.2.2
+
+### Feat
+- `PokerNight18Seeder`: a noite de referência com os jogadores e lugares do protótipo. Mesas 01 e 02 com os dealers Sérgio e Paulo; entradas buy-in R$ 100, duplo R$ 200, triplo R$ 300, rebuy R$ 100 e add-on R$ 50; taxa "Casa" 10%; premiação 50/30/20 pela regra de 11–18 jogadores; evento na agenda. A noite fica em andamento no intervalo, com as 22 entradas (12 buy-ins, um deles duplo, 6 rebuys e 4 add-ons). O `db:seed` só a cria no ambiente local.
+
+### Test
+- `PokerNight18Test`: cadastro da noite, 22 entradas, R$ 2.100 / 210 / 1.890, prêmios 945 / 567 / 378, investido de cada jogador e seed que não duplica.
+
+## 0.2.1
+
+### Feat
+- Cadastro de usuários no painel (tela 21, `UsuarioResource`): foto, nome, apelido e telefone; dealer, floor e ativo; acesso ao site com e-mail (gravado em minúsculas), senha (em branco mantém a atual) e grupos do site. Lista com busca por nome, apelido, telefone e e-mail, quantidade de jogos, pontos e filtros. Excluir é soft delete, com Restaurar.
+- O grupo Geral cadastra jogadores, mas não vê a seção de acesso ao site nem edita.
+
+### Fix
+- Mensagens de validação estavam em inglês no site e no painel. Agora em português (`lang/pt_BR/`), e as 39 chaves que faltavam na tradução do Filament ficam em `lang/vendor/`.
+
+### Test
+- `UsuariosTest` (busca, cadastro mínimo, operador criado no painel entra no site, validações do acesso, senha mantida ao editar, grupo Geral, excluir e restaurar) e `TraducoesTest`.
+
+## 0.2.0
+
+Início da fase 1 (cadastros do painel).
+
+### Feat
+- Cadastro de mesas no painel (tela 22, `MesaResource`): nome único, lugares (2–12), valor do aluguel, ativa e observações; coluna com quantos jogos usaram a mesa. Mesa usada em jogo não se exclui (desative).
+- Policies do painel pela permissão `recurso.acao` (`PoliticaDoPainel` + `MesaPolicy`); sem exclusão definitiva pelo painel.
+- `App\Support\Dinheiro` (centavos inteiros, decimal do banco, `R$ 1.890` / `+R$ 795` / `−R$ 200`) e diretiva `@brl`.
+- Ícones do design system no menu do painel.
+
+### Fix
+- Painel e site dividem a sessão: entrar num deles mandava para a página pretendida do outro (ex.: depois de abrir `/`, o login do painel caía no login do site). Agora cada login só volta para página do próprio lado.
+
+### Test
+- `MesasTest` (lista, sem permissão, criar, validação, mesa usada não se exclui, quem só vê não altera), `DinheiroTest` e testes da página pretendida nos dois logins.
+
 ## 0.1.4
 
 ### Feat

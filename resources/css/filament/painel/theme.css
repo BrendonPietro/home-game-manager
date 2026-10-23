@@ -136,6 +136,15 @@
         color: var(--color-primary-600);
     }
 
+    /* Ícones do design system (resources/svg/site/icons) no menu e nas ações: só traço */
+    .rh-ic {
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.75;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
     /* Login (tela 15): "Vai operar a noite? Entrar no site de operação" */
     .rh-link-site {
         margin: 0;

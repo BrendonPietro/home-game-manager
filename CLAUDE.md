@@ -60,10 +60,12 @@ Site e painel **nunca gravam entradas ou status direto pelo model**. Tudo passa 
 | `App\Actions\Jogo\RegistrarCashOut` | Cash game: fichas finais × valor da ficha |
 | `App\Actions\Jogo\TrocarLugar` | Muda mesa/lugar (quebra de mesa) |
 | `App\Actions\Jogo\DesfazerAcao` | Cancela a última ação do jogador, com motivo (nunca apaga) |
+| `App\Actions\Jogo\AgendarJogo`, `CancelarJogo` | Rascunho → agendado (botão no painel) e rascunho/agendado → cancelado |
 | `App\Actions\Jogo\EncerrarRebuys`, `FecharEntradas`, `FinalizarJogo` | Fases e status |
+| `App\Services\Jogo\EventoDoJogo` | Cria/atualiza o evento do jogo na agenda (com as mesas); tira modelo, sem data e cancelado |
 | `App\Actions\Jogo\CriarDeModelo` | Novo jogo a partir de um torneio modelo (`jogos.e_modelo`) |
 
-Toda ação roda numa transação com `lockForUpdate()` na linha do jogo.
+Toda ação roda numa transação com `lockForUpdate()` na linha do jogo. Regra violada (ex.: agendar sem buy-in) lança `App\Exceptions\RegraDoJogo`, com mensagem para mostrar como está a quem usa.
 
 Regras e fórmulas em [docs/regras.md](docs/regras.md).
 
@@ -88,7 +90,8 @@ Hospedagem compartilhada não roda WebSocket. A tela ao vivo e o resumo usam `wi
 - **Painel** → guard `painel`, tabela `seguranca` (model `App\Models\Seguranca`), `->authGuard('painel')` no provider do Filament.
 - **Site** → guard `web`, tabela `usuarios` (model `App\Models\Usuario`). `usuarios` guarda todas as pessoas, inclusive jogadores sem login (`acessa_site = false`). Jogos, pontos e dinheiro se ligam ao `id` daqui. Checkboxes `pode_ser_dealer` e `pode_ser_floor` alimentam os selects de dealer e floor. Login do site (`AuthController`, `/login`) pelo **e-mail** (a tabela não tem coluna de login), só com `acessa_site` e `ativo`; 5 tentativas erradas por e-mail+IP bloqueiam por 1 minuto.
 - Contas de desenvolvimento do seed: painel `dev` (`PAINEL_SENHA_INICIAL`) e site `dev@rodrigues.test`, grupo Admin (`SITE_SENHA_INICIAL`). Sem a variável, a senha é gerada e mostrada no terminal.
-- **Permissões** com `spatie/laravel-permission` v6 nos dois guards (`guard_name` separa painel e site). Tabelas renomeadas em `config/permission.php`: `grupos`, `permissoes`, `grupo_permissoes`, `modelo_grupos`, `modelo_permissoes`. Grupos iniciais (seeder): painel Admin, Desenvolvedor, Geral; site Admin, Operador (Operador só lança entradas, pagamentos e eliminações). Formato `recurso.acao` (ex.: `jogos.editar`, `pagamentos.registrar`). Painel: policies por resource. Site: checar no Action e esconder botão com `@can`.
+- **Permissões** com `spatie/laravel-permission` v6 nos dois guards (`guard_name` separa painel e site). Tabelas renomeadas em `config/permission.php`: `grupos`, `permissoes`, `grupo_permissoes`, `modelo_grupos`, `modelo_permissoes`. Grupos iniciais (seeder): painel Admin, Desenvolvedor, Geral; site Admin, Operador (Operador só lança entradas, pagamentos e eliminações). Formato `recurso.acao` (ex.: `jogos.editar`, `pagamentos.registrar`). Painel: uma policy por model, estendendo `App\Policies\PoliticaDoPainel` (só define `RECURSO`; `forceDelete` é sempre negado). Site: checar no Action e esconder botão com `@can`.
+- Painel e site dividem a mesma sessão: cada login só volta para a página pretendida do próprio lado (`App\Filament\Auth\LoginResponse` e `AuthController`).
 - Nunca checar permissão comparando nome de grupo; sempre pela permissão.
 
 ### Rankings e modelos
@@ -104,10 +107,11 @@ V2. Na v1, `jogos.nivel_atual` e `blinds_atual` são digitados. Detalhes em [doc
 
 - Tabelas e colunas de domínio em português (`usuarios`, `jogos`, `entradas`). Tabelas internas do Laravel com o nome padrão (`sessions`, `cache`, `jobs`).
 - Sim/não como `boolean` nativo (diferente do casamento, que usava `'S'`/`'N'`).
-- Dinheiro em `decimal(10,2)` com cast `decimal:2`. **Contas sempre em centavos inteiros** via `App\Support\Dinheiro`; nunca somar float. Formatação: `@brl($valor)` → `R$ 1.890`, `@brl($valor, true)` → `+R$ 795` / `−R$ 200`.
+- Dinheiro em `decimal(10,2)` com cast `decimal:2`. **Contas sempre em centavos inteiros** via `App\Support\Dinheiro` (`centavos()`, `decimal()`); nunca somar float. Formatação: `@brl($valor)` → `R$ 1.890`, `@brl($valor, true)` → `+R$ 795` / `−R$ 200`; no PHP e nas colunas do Filament, `Dinheiro::brl()`. Centavos só aparecem quando existem (`R$ 12,50`).
 - Enums PHP em `app/Enums` para status e tipos; o banco guarda o valor string.
 - Cadastro de jogador: nome obrigatório; apelido, telefone e foto opcionais. Não pedir CPF, endereço ou data de nascimento.
 - Textos da interface em português do Brasil; termos de poker ficam como o grupo fala (buy-in, rebuy, add-on, rake, prize pool, dealer, blinds, ITM). Ações do torneio em CAIXA ALTA nos botões.
+- Traduções: `lang/pt_BR/` (validação, auth, senhas, paginação) e `lang/vendor/filament-*/pt_BR/` só com as chaves que faltam na tradução do Filament. `TraducoesTest` falha se uma atualização do Filament trouxer texto novo sem pt_BR.
 
 ## Front-end
 
@@ -125,6 +129,8 @@ V2. Na v1, `jogos.nivel_atual` e `blinds_atual` são digitados. Detalhes em [doc
 
 - `phpunit.xml` usa `APP_URL=http://localhost` e SQLite em memória. (No casamento, `APP_URL` sem esquema fazia toda rota dar 404 nos testes.)
 - A noite de exemplo **Poker Night #18** é a referência: 12 jogadores, 22 entradas, R$ 2.100 arrecadados, rake R$ 210, prize pool R$ 1.890 pago como 945 / 567 / 378. Se a `Calculadora` não devolver isso, algo quebrou.
+  - `PokerNight18Seeder` cria a noite com os jogadores e lugares do protótipo, em andamento no intervalo (rebuys encerrados, add-ons feitos, ninguém eliminado). O `db:seed` só a cria no ambiente local (testes rodam o seeder dela direto), e rodar de novo não duplica.
+  - `PokerNight18Test` confere os números somando em centavos; a `Calculadora` (fase 4) tem que bater com ele.
 
 ## Deploy
 

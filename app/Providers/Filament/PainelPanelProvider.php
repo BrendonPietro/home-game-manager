@@ -3,6 +3,8 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Auth\Login;
+use App\Filament\Auth\LoginResponse;
+use Filament\Auth\Http\Responses\Contracts\LoginResponse as LoginResponseContrato;
 use Filament\Enums\ThemeMode;
 use Filament\FontProviders\LocalFontProvider;
 use Filament\Http\Middleware\Authenticate;
@@ -94,6 +96,14 @@ class PainelPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ]);
+    }
+
+    public function register(): void
+    {
+        parent::register();
+
+        // Depois do login, só volta para página do painel (a sessão é a mesma do site).
+        $this->app->bind(LoginResponseContrato::class, LoginResponse::class);
     }
 
     /**

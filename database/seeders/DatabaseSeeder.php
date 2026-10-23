@@ -13,7 +13,12 @@ class DatabaseSeeder extends Seeder
             RegrasPremiacaoSeeder::class,
             SegurancaSeeder::class,
             AcessoSiteSeeder::class,
-            // PokerNight18Seeder::class, // fase 4: noite de referência (R$ 2.100 / 210 / 1.890)
         ]);
+
+        // Noite de referência (R$ 2.100 / 210 / 1.890): só no ambiente local. Testes que precisam
+        // dela rodam o PokerNight18Seeder direto.
+        if (app()->environment('local')) {
+            $this->call(PokerNight18Seeder::class);
+        }
     }
 }

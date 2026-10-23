@@ -62,6 +62,28 @@ class PainelTest extends TestCase
         $this->get('/painel')->assertOk()->assertSee($conta->nome);
     }
 
+    public function test_volta_para_a_pagina_pretendida_do_painel_mas_nao_do_site(): void
+    {
+        Seguranca::factory()->create(['login' => 'organizador']);
+
+        session(['url.intended' => url('/painel/mesas')]);
+
+        Livewire::test(Login::class)
+            ->fillForm(['login' => 'organizador', 'password' => 'password'])
+            ->call('authenticate')
+            ->assertRedirect(url('/painel/mesas'));
+
+        Filament::auth()->logout();
+
+        // Quem tentou abrir o site antes não vai parar no login do site ao entrar no painel.
+        session(['url.intended' => url('/')]);
+
+        Livewire::test(Login::class)
+            ->fillForm(['login' => 'organizador', 'password' => 'password'])
+            ->call('authenticate')
+            ->assertRedirect(Filament::getUrl());
+    }
+
     public function test_senha_errada_nao_entra(): void
     {
         Seguranca::factory()->create(['login' => 'organizador']);
