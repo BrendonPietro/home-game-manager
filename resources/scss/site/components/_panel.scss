@@ -1,0 +1,66 @@
+// ============================================================================
+// Painel (card), lista chave/valor e divisória
+// ============================================================================
+
+@use "../vars" as *;
+
+.rh-panel {
+	background: var(--bg-200);
+	border: 1px solid var(--line-200);
+	border-radius: var(--radius-md);
+	min-width: 0;
+
+	&__hd {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		padding: 12px 16px;
+		border-bottom: 1px solid var(--line-100);
+		min-height: 52px;
+	}
+
+	&__bd {
+		padding: 16px;
+	}
+
+	&__ft {
+		display: flex;
+		gap: 8px;
+		justify-content: flex-end;
+		padding: 12px 16px;
+		border-top: 1px solid var(--line-100);
+	}
+
+	@include ate(tablet) {
+		overflow-x: auto;
+	}
+}
+
+.rh-kv {
+	margin: 0;
+	display: grid;
+	grid-template-columns: 1fr auto;
+	gap: 8px 16px;
+	align-items: baseline;
+
+	dt {
+		color: var(--ink-200);
+		font-size: 14px;
+	}
+
+	dd {
+		margin: 0;
+		text-align: right;
+		font-family: var(--font-display);
+		font-weight: 600;
+		font-size: 18px;
+		font-variant-numeric: tabular-nums;
+	}
+}
+
+.rh-divider {
+	height: 1px;
+	background: var(--line-100);
+	border: 0;
+	margin: 12px 0;
+}

@@ -1,0 +1,41 @@
+// ============================================================================
+// Drawer lateral (ações do jogador). No celular ocupa a largura toda.
+// ============================================================================
+
+@use "../vars" as *;
+
+.rh-drawer {
+	position: fixed;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	width: 400px;
+	max-width: 100%;
+	background: var(--bg-200);
+	border-left: 1px solid var(--line-200);
+	box-shadow: var(--shadow-modal);
+	display: flex;
+	flex-direction: column;
+	z-index: 21;
+
+	&__hd {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		padding: 16px 20px;
+		border-bottom: 1px solid var(--line-100);
+	}
+
+	&__bd {
+		padding: 16px 20px;
+		overflow: auto;
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+	}
+
+	@include ate(celular) {
+		width: 100%;
+	}
+}

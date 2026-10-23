@@ -1,0 +1,36 @@
+// Componentes do design system (docs/design-system/bundle.css), um parcial por bloco.
+// Fora daqui (são do painel, onde o Filament cuida): shell do admin, calendário e gráficos.
+
+// Props
+@forward "brand";
+@forward "button";
+@forward "action";
+@forward "badge";
+@forward "chip";
+@forward "avatar";
+@forward "field";
+
+// Core
+@forward "tabs";
+@forward "panel";
+@forward "stat";
+@forward "data-table";
+@forward "modal";
+@forward "drawer";
+@forward "warn";
+@forward "pick";
+@forward "list";
+@forward "feature";
+@forward "pcard";
+
+// Window
+@forward "topbar";
+@forward "fluxo-da-noite";
+@forward "faixa-ao-vivo";
+
+// Poker
+@forward "mesa";
+@forward "acerto";
+
+// Telas sem layout próprio
+@forward "login";

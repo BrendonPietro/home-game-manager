@@ -1,0 +1,21 @@
+// ============================================================================
+// Breakpoints (docs/design-system.md)
+// largo   ≤ 1100px: grades de 5–6 colunas viram 3
+// tablet  ≤ 900px:  colunas laterais empilham
+// celular ≤ 600px:  mesa girada, fluxo da noite rola de lado, modais sobem de baixo
+// ============================================================================
+
+@use "sass:map";
+
+$breakpoints: (
+	"largo": 1100px,
+	"tablet": 900px,
+	"celular": 600px,
+);
+
+// Uso: @include ate(tablet) { ... }
+@mixin ate($nome) {
+	@media (max-width: map.get($breakpoints, $nome)) {
+		@content;
+	}
+}

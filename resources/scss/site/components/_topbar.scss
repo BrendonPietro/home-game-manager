@@ -1,0 +1,54 @@
+// ============================================================================
+// Topbar do site: marca + jogo atual (nome, status, data) + ações
+// ============================================================================
+
+@use "../vars" as *;
+
+.rh-top {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	height: 60px;
+	padding: 0 20px;
+	background: var(--bg-100);
+	border-bottom: 1px solid var(--line-200);
+
+	&__ctx {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		padding-left: 16px;
+		border-left: 1px solid var(--line-200);
+		min-width: 0;
+
+		b {
+			font-family: var(--font-display);
+			font-weight: 600;
+			font-size: 20px;
+			white-space: nowrap;
+		}
+	}
+
+	@include ate(celular) {
+		padding: 0 12px;
+		gap: 10px;
+
+		.rh-brand__name,
+		.rh-brand__sub,
+		.rh-btn--ghost {
+			display: none;
+		}
+
+		&__ctx {
+			padding-left: 10px;
+
+			.rh-small {
+				display: none;
+			}
+
+			b {
+				font-size: 18px;
+			}
+		}
+	}
+}

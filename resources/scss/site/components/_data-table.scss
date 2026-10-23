@@ -1,0 +1,73 @@
+// ============================================================================
+// Tabela de dados (cabeçalho fixo, números à direita) e célula "quem"
+// ============================================================================
+
+@use "../vars" as *;
+
+.rh-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 14px;
+
+	th {
+		position: sticky;
+		top: 0;
+		background: var(--bg-300);
+		text-align: left;
+		font-family: var(--font-display);
+		font-weight: 600;
+		font-size: 12px;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--ink-200);
+		padding: 9px 12px;
+		border-bottom: 1px solid var(--line-200);
+		white-space: nowrap;
+	}
+
+	td {
+		padding: 10px 12px;
+		border-bottom: 1px solid var(--line-100);
+		white-space: nowrap;
+	}
+
+	tbody tr:hover td {
+		background: var(--bg-300);
+	}
+
+	tr.is-selected td {
+		background: var(--bg-400);
+	}
+
+	.n {
+		text-align: right;
+		font-family: var(--font-display);
+		font-weight: 600;
+		font-size: 16px;
+		font-variant-numeric: tabular-nums;
+	}
+
+	th.n {
+		text-align: right;
+		font-size: 12px;
+	}
+
+	tfoot td {
+		background: var(--bg-100);
+		font-weight: 600;
+		border-top: 1px solid var(--line-200);
+	}
+
+	@include ate(celular) {
+		.rh-row {
+			flex-wrap: nowrap;
+		}
+	}
+}
+
+.rh-who {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	font-weight: 600;
+}

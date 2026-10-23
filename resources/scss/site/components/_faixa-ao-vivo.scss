@@ -1,0 +1,46 @@
+// ============================================================================
+// Faixa ao vivo: nível, relógio, jogadores, entradas, arrecadação, prize pool
+// ============================================================================
+
+@use "../vars" as *;
+
+.rh-strip {
+	display: flex;
+	align-items: stretch;
+	background: var(--bg-100);
+	border-bottom: 1px solid var(--line-200);
+	overflow-x: auto;
+
+	> * {
+		padding: 10px 20px;
+		border-right: 1px solid var(--line-100);
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		gap: 2px;
+		white-space: nowrap;
+	}
+
+	// Prize pool em destaque
+	> .is-prize {
+		background: var(--bg-200);
+	}
+
+	.v {
+		font-family: var(--font-display);
+		font-weight: 700;
+		font-size: 24px;
+		line-height: 26px;
+		font-variant-numeric: tabular-nums;
+	}
+
+	@include ate(celular) {
+		> * {
+			padding: 8px 12px;
+		}
+
+		.v {
+			font-size: 20px;
+		}
+	}
+}

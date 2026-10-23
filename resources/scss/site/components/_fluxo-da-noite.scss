@@ -1,0 +1,96 @@
+// ============================================================================
+// Fluxo da noite: Antes (conferência, jogadores, mesas) → Durante → Final
+// ============================================================================
+
+@use "../vars" as *;
+
+.rh-flow {
+	display: flex;
+	align-items: center;
+	gap: 0;
+	padding: 0 20px;
+	background: var(--bg-100);
+	border-bottom: 1px solid var(--line-200);
+	overflow-x: auto;
+
+	&__grp {
+		display: flex;
+		align-items: center;
+		gap: 2px;
+		padding-right: 16px;
+		margin-right: 16px;
+		border-right: 1px solid var(--line-100);
+
+		&:last-child {
+			border-right: 0;
+		}
+
+		> .rh-label {
+			margin-right: 8px;
+			color: var(--ink-300);
+			font-size: 11px;
+		}
+	}
+
+	@include ate(celular) {
+		padding: 0 8px;
+
+		&__grp {
+			padding-right: 8px;
+			margin-right: 8px;
+
+			> .rh-label {
+				display: none;
+			}
+		}
+	}
+}
+
+.rh-step {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	height: 44px;
+	padding: 0 10px;
+	color: var(--ink-200);
+	font-size: 14px;
+	font-weight: 500;
+	text-decoration: none;
+	border-bottom: 2px solid transparent;
+	white-space: nowrap;
+
+	i {
+		font-style: normal;
+		display: inline-grid;
+		place-items: center;
+		width: 20px;
+		height: 20px;
+		border-radius: 999px;
+		border: 1px solid var(--line-control);
+		font-size: 11px;
+		font-weight: 700;
+		color: var(--ink-200);
+	}
+
+	&.is-done i {
+		background: var(--bg-400);
+		border-color: var(--bg-400);
+		color: var(--green-300);
+	}
+
+	&[aria-current="step"] {
+		color: var(--ink-100);
+		border-bottom-color: var(--red-500);
+
+		i {
+			background: var(--red-500);
+			border-color: var(--red-500);
+			color: var(--on-red);
+		}
+	}
+
+	@include ate(celular) {
+		padding: 0 8px;
+		font-size: 13px;
+	}
+}

@@ -1,0 +1,103 @@
+// ============================================================================
+// Botões: padrão (secundário), primary (um por área), ghost, danger
+// Ações do torneio em CAIXA ALTA usam --lg
+// ============================================================================
+
+@use "../vars" as *;
+
+.rh-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	height: 38px;
+	padding: 0 16px;
+	border-radius: var(--radius-md);
+	border: 1px solid var(--line-control);
+	background: var(--bg-300);
+	color: var(--ink-100);
+	font-family: var(--font-sans);
+	font-weight: 600;
+	font-size: 14px;
+	letter-spacing: 0.04em;
+	cursor: pointer;
+	white-space: nowrap;
+	text-decoration: none;
+
+	&:hover {
+		background: var(--bg-400);
+	}
+
+	&--primary {
+		background: var(--red-500);
+		border-color: var(--red-500);
+		color: var(--on-red);
+
+		&:hover {
+			background: var(--red-400);
+			border-color: var(--red-400);
+		}
+
+		&:active {
+			background: var(--red-600);
+		}
+	}
+
+	&--ghost {
+		background: transparent;
+		border-color: transparent;
+		color: var(--ink-200);
+
+		&:hover {
+			background: var(--bg-300);
+			color: var(--ink-100);
+		}
+	}
+
+	&--danger {
+		background: transparent;
+		border-color: var(--red-300);
+		color: var(--red-300);
+	}
+
+	&--sm {
+		height: 30px;
+		padding: 0 10px;
+		font-size: 13px;
+	}
+
+	&--lg {
+		height: 52px;
+		padding: 0 24px;
+		text-transform: uppercase;
+		font-family: var(--font-display);
+		font-size: 18px;
+		letter-spacing: 0.06em;
+	}
+
+	&--block {
+		width: 100%;
+	}
+
+	&--icon {
+		width: 38px;
+		padding: 0;
+	}
+
+	&[disabled] {
+		opacity: 0.45;
+		cursor: not-allowed;
+	}
+
+	@include ate(celular) {
+		&--lg {
+			padding: 0 16px;
+			font-size: 16px;
+		}
+
+		.rh-row > &--lg,
+		.rh-row > &--primary {
+			flex: 1 1 auto;
+		}
+	}
+}

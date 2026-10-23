@@ -11,9 +11,9 @@ Um app Laravel só, com duas entradas:
 - **Site de operação** em `/`: usado na mesa durante a noite (notebook, tablet e celular). Blade + Livewire 4 + Alpine.js com o design system do clube.
 - **Painel administrativo** em `/painel`: Filament 5 tematizado, usado no PC para configurar torneios, calendário, aluguéis e relatórios.
 
-Stack: **PHP 8.2** (`config.platform.php = 8.2` no composer), **Laravel 12**, Filament 5, Livewire 4, Vite, SCSS, MySQL. Por enquanto roda só local no Laragon; domínio e hospedagem do lançamento ainda não foram escolhidos.
+Stack: **PHP 8.5** (`config.platform.php = 8.5` no composer), **Laravel 13**, Filament 5, Livewire 4, Vite, SCSS, MySQL. Por enquanto roda só local no Laragon; domínio e hospedagem do lançamento ainda não foram escolhidos.
 
-> Laravel 12 é a maior versão compatível com PHP 8.2 e recebe correções de segurança até 24/02/2027 (o Laravel 13 exige PHP 8.3). Não atualizar o PHP sem combinar.
+> PHP 8.5 + Laravel 13 desde 22/10/2026 (antes PHP 8.2 + Laravel 12, que só teria segurança até 24/02/2027). O Laravel 13 recebe correções de bugs até o 3º trimestre de 2027 e de segurança até 17/03/2028. A hospedagem do lançamento precisa oferecer PHP 8.5. Não trocar a versão do PHP sem combinar.
 
 ## Comandos
 
@@ -34,7 +34,10 @@ php artisan test --filter=CalculadoraTest
 
 # Filament
 php artisan make:filament-resource NomeDoModel
-php artisan filament:assets              # republicar assets após atualizar o pacote
+php artisan filament:assets              # republicar assets (o composer já roda filament:upgrade após update)
+
+# Site
+http://rodrigues-home-game.test/vitrine  # vitrine do design system (só APP_ENV=local)
 ```
 
 ## Arquitetura
@@ -83,7 +86,8 @@ Hospedagem compartilhada não roda WebSocket. A tela ao vivo e o resumo usam `wi
 ### Acesso: dois logins e permissões
 
 - **Painel** → guard `painel`, tabela `seguranca` (model `App\Models\Seguranca`), `->authGuard('painel')` no provider do Filament.
-- **Site** → guard `web`, tabela `usuarios` (model `App\Models\Usuario`). `usuarios` guarda todas as pessoas, inclusive jogadores sem login (`acessa_site = false`). Jogos, pontos e dinheiro se ligam ao `id` daqui. Checkboxes `pode_ser_dealer` e `pode_ser_floor` alimentam os selects de dealer e floor.
+- **Site** → guard `web`, tabela `usuarios` (model `App\Models\Usuario`). `usuarios` guarda todas as pessoas, inclusive jogadores sem login (`acessa_site = false`). Jogos, pontos e dinheiro se ligam ao `id` daqui. Checkboxes `pode_ser_dealer` e `pode_ser_floor` alimentam os selects de dealer e floor. Login do site (`AuthController`, `/login`) pelo **e-mail** (a tabela não tem coluna de login), só com `acessa_site` e `ativo`; 5 tentativas erradas por e-mail+IP bloqueiam por 1 minuto.
+- Contas de desenvolvimento do seed: painel `dev` (`PAINEL_SENHA_INICIAL`) e site `dev@rodrigues.test`, grupo Admin (`SITE_SENHA_INICIAL`). Sem a variável, a senha é gerada e mostrada no terminal.
 - **Permissões** com `spatie/laravel-permission` v6 nos dois guards (`guard_name` separa painel e site). Tabelas renomeadas em `config/permission.php`: `grupos`, `permissoes`, `grupo_permissoes`, `modelo_grupos`, `modelo_permissoes`. Grupos iniciais (seeder): painel Admin, Desenvolvedor, Geral; site Admin, Operador (Operador só lança entradas, pagamentos e eliminações). Formato `recurso.acao` (ex.: `jogos.editar`, `pagamentos.registrar`). Painel: policies por resource. Site: checar no Action e esconder botão com `@can`.
 - Nunca checar permissão comparando nome de grupo; sempre pela permissão.
 
@@ -108,7 +112,10 @@ V2. Na v1, `jogos.nivel_atual` e `blinds_atual` são digitados. Detalhes em [doc
 ## Front-end
 
 - Design system do clube (tokens, componentes, 25 telas): ver [docs/design-system.md](docs/design-system.md).
-- SCSS em `resources/scss/site/` (`vars`, `core`, `components`, `pages`, `wpf`), classes com prefixo `rh-`. Tokens como variáveis CSS em `vars/_tokens.scss`.
+- **Referência visual:** `docs/prototipo/rodrigues-prototipo.html` (desktop) e `docs/prototipo/rodrigues-mobile.html` (tablet/celular). Antes de montar uma tela, abra a tela correspondente no protótipo. Tokens, `bundle.css` e fontes em `docs/design-system/`. Onde o protótipo divergir de `docs/regras.md`, vale o `regras.md`.
+- SCSS em `resources/scss/site/` (`vars`, `core`, `components`, `pages`), classes com prefixo `rh-`. Tokens como variáveis CSS em `vars/_tokens.scss` (mesmos nomes do `bundle.css`: `--bg-000`, `--radius-md`…); breakpoints com `@include ate(largo|tablet|celular)`. Grades responsivas `rh-grid--2…6` e `rh-grid--side` no lugar de `grid-template-columns` inline. Sem Tailwind e sem WPF3 no site.
+- Ícones: SVGs em `resources/svg/site/icons/` (set `rh` do blade-icons, registrado no `AppServiceProvider`): `@svg('rh-home')`.
+- Layout base: `<x-site.app titulo="...">` (`app/View/Components/Site/App.php` → `site/layouts/app.blade.php`). Livewire e Alpine vêm num bundle só (`resources/js/site/app.js` importa o ESM do Livewire; o layout usa `@livewireScriptConfig`): não importar Alpine de novo.
 - Componentes Blade em `resources/views/components/site/{core,props,poker,window}`.
 - A mesa (`<x-site.poker.mesa>`) é renderizada no servidor; `resources/js/site/mesa.js` (Alpine) posiciona os assentos por comprimento de arco e gira em passos de 90°. A rotação fica no `localStorage` do aparelho.
 - Fontes Barlow e Barlow Condensed locais em `resources/fonts/barlow/` (sem Google Fonts).

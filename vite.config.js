@@ -5,9 +5,16 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/css/app.css', 'resources/js/app.js'],
+            input: [
+                // Site de operação (SCSS do design system + Livewire/Alpine)
+                'resources/scss/site/index.scss',
+                'resources/js/site/app.js',
+                // Tema do painel Filament (Tailwind 4)
+                'resources/css/filament/painel/theme.css',
+            ],
             refresh: true,
         }),
+        // Só o tema do painel usa Tailwind; o site não.
         tailwindcss(),
     ],
     server: {

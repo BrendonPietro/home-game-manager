@@ -14,7 +14,7 @@
 Painel e site têm logins separados, cada um com seu guard:
 
 - **Painel** → guard `painel`, tabela `seguranca`, model `App\Models\Seguranca`. Filament: `->authGuard('painel')`.
-- **Site** → guard `web`, tabela `usuarios`, model `App\Models\Usuario`.
+- **Site** → guard `web`, tabela `usuarios`, model `App\Models\Usuario`. Entra pelo e-mail e senha; só quem tem `acessa_site` e está ativo (excluído também não entra). 5 tentativas erradas por e-mail+IP bloqueiam por 1 minuto. Esqueceu a senha: o organizador troca no painel (sem recuperação por e-mail na v1).
 
 Permissões dos dois lados com `spatie/laravel-permission` (v6), usando o `guard_name` para separar painel e site. Tabelas renomeadas em `config/permission.php`. Grupo = conjunto de permissões; cada conta pode ter grupos e permissões avulsas.
 

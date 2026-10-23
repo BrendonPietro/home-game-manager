@@ -1,0 +1,135 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Seguranca;
+use App\Models\Usuario;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
+use Tests\TestCase;
+
+class LoginSiteTest extends TestCase
+{
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->withoutVite();
+    }
+
+    private function operador(array $dados = []): Usuario
+    {
+        return Usuario::factory()->comAcesso()->create(['email' => 'operador@exemplo.com', ...$dados]);
+    }
+
+    public function test_visitante_vai_para_o_login(): void
+    {
+        $this->get('/')->assertRedirect('/login');
+
+        $this->get('/login')
+            ->assertOk()
+            ->assertSee('Entrar na operação')
+            ->assertSee('E-mail')
+            ->assertSee('Lembrar acesso')
+            ->assertDontSee('fonts.googleapis.com');
+    }
+
+    public function test_operador_entra_com_email_e_senha(): void
+    {
+        $operador = $this->operador(['nome' => 'Marcos Silva', 'apelido' => 'Marcão']);
+
+        $this->post('/login', ['email' => 'operador@exemplo.com', 'password' => 'password'])
+            ->assertRedirect('/');
+
+        $this->assertAuthenticatedAs($operador, 'web');
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('Olá, Marcão')
+            ->assertSee('Sair');
+    }
+
+    public function test_email_ignora_maiusculas_e_espacos(): void
+    {
+        $operador = $this->operador();
+
+        $this->post('/login', ['email' => ' Operador@Exemplo.COM ', 'password' => 'password'])
+            ->assertRedirect('/');
+
+        $this->assertAuthenticatedAs($operador, 'web');
+    }
+
+    public function test_lembrar_acesso_grava_o_cookie(): void
+    {
+        $this->operador();
+
+        $this->post('/login', ['email' => 'operador@exemplo.com', 'password' => 'password', 'remember' => '1'])
+            ->assertCookie(Auth::guard('web')->getRecallerName());
+    }
+
+    public function test_senha_errada_nao_entra(): void
+    {
+        $this->operador();
+
+        $this->from('/login')
+            ->post('/login', ['email' => 'operador@exemplo.com', 'password' => 'errada'])
+            ->assertRedirect('/login')
+            ->assertSessionHasErrors(['email' => 'E-mail ou senha incorretos.']);
+
+        $this->assertGuest('web');
+    }
+
+    public function test_quem_nao_acessa_o_site_nao_entra(): void
+    {
+        $this->operador(['acessa_site' => false]);
+        Usuario::factory()->comAcesso()->create(['email' => 'inativo@exemplo.com', 'ativo' => false]);
+        Usuario::factory()->comAcesso()->create(['email' => 'excluido@exemplo.com'])->delete();
+
+        foreach (['operador@exemplo.com', 'inativo@exemplo.com', 'excluido@exemplo.com'] as $email) {
+            $this->post('/login', ['email' => $email, 'password' => 'password'])
+                ->assertSessionHasErrors('email');
+        }
+
+        $this->assertGuest('web');
+    }
+
+    public function test_bloqueia_depois_de_cinco_tentativas(): void
+    {
+        $this->operador();
+
+        foreach (range(1, 5) as $tentativa) {
+            $this->post('/login', ['email' => 'operador@exemplo.com', 'password' => 'errada']);
+        }
+
+        $this->post('/login', ['email' => 'operador@exemplo.com', 'password' => 'password'])
+            ->assertSessionHasErrors('email');
+
+        $this->assertGuest('web');
+        $this->assertStringStartsWith('Muitas tentativas', session('errors')->first('email'));
+    }
+
+    public function test_sair(): void
+    {
+        $this->actingAs($this->operador(), 'web')
+            ->post('/logout')
+            ->assertRedirect('/login');
+
+        $this->assertGuest('web');
+    }
+
+    public function test_quem_ja_entrou_nao_ve_o_login(): void
+    {
+        $this->actingAs($this->operador(), 'web')
+            ->get('/login')
+            ->assertRedirect('/');
+    }
+
+    public function test_conta_do_painel_nao_abre_o_site(): void
+    {
+        $this->actingAs(Seguranca::factory()->create(), 'painel')
+            ->get('/')
+            ->assertRedirect('/login');
+    }
+}

@@ -1,0 +1,57 @@
+// ============================================================================
+// Escolha grande (ex.: buy-in simples / duplo / triplo)
+// ============================================================================
+
+@use "../vars" as *;
+
+.rh-pick {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	width: 100%;
+	padding: 14px 16px;
+	border-radius: var(--radius-lg);
+	border: 1px solid var(--line-control);
+	background: var(--bg-300);
+	color: var(--ink-100);
+	cursor: pointer;
+	text-align: left;
+
+	&:hover {
+		background: var(--bg-400);
+	}
+
+	&[aria-pressed="true"] {
+		border-color: var(--red-500);
+		box-shadow: inset 0 0 0 1px var(--red-500);
+	}
+
+	&__t {
+		font-family: var(--font-display);
+		font-weight: 700;
+		font-size: 18px;
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+	}
+
+	&__v {
+		margin-left: auto;
+		text-align: right;
+		font-family: var(--font-display);
+		font-weight: 700;
+		font-size: 22px;
+		font-variant-numeric: tabular-nums;
+
+		small {
+			display: block;
+			font-family: var(--font-sans);
+			font-size: 12px;
+			font-weight: 500;
+			color: var(--ink-200);
+		}
+
+		@include ate(celular) {
+			font-size: 18px;
+		}
+	}
+}

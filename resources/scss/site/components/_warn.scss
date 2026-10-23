@@ -1,0 +1,25 @@
+// ============================================================================
+// Aviso (âmbar): pendências antes de fechar entradas, finalizar etc.
+// ============================================================================
+
+.rh-warn {
+	display: flex;
+	gap: 10px;
+	padding: 12px 14px;
+	border-radius: var(--radius-md);
+	background: var(--bg-100);
+	border: 1px solid var(--amber-300);
+	color: var(--ink-100);
+	font-size: 14px;
+
+	.rh-ic {
+		color: var(--amber-300);
+		margin-top: 2px;
+	}
+
+	ul {
+		margin: 6px 0 0;
+		padding-left: 18px;
+		color: var(--ink-200);
+	}
+}

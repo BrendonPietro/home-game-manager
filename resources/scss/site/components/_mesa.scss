@@ -1,0 +1,215 @@
+// ============================================================================
+// Mesa de poker e assentos (<x-site.poker.mesa>)
+// A posição dos assentos (left/top) e a rotação vêm de resources/js/site/mesa.js
+// ============================================================================
+
+@use "../vars" as *;
+
+.rh-ptable {
+	position: relative;
+	width: 100%;
+	aspect-ratio: var(--ar, 1.75);
+	margin: 0 auto;
+	user-select: none;
+
+	&__rail {
+		position: absolute;
+		inset: var(--inset, 12%);
+		border-radius: 999px;
+		background: var(--rail-700);
+		box-shadow: inset 0 0 0 2px var(--rail-500), 0 0 0 1px #000;
+		transition: inset 0.25s;
+	}
+
+	&__felt {
+		position: absolute;
+		inset: 16px;
+		border-radius: 999px;
+		background: radial-gradient(ellipse at 50% 45%, var(--felt-500) 0%, var(--felt-700) 78%);
+		box-shadow: var(--shadow-felt);
+		display: grid;
+		place-items: center;
+		overflow: hidden;
+
+		&::before {
+			content: "";
+			position: absolute;
+			inset: 14%;
+			border-radius: 999px;
+			border: 1.5px solid var(--felt-300);
+			opacity: 0.55;
+		}
+	}
+
+	&__center {
+		position: relative;
+		text-align: center;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 2px;
+
+		.rh-label {
+			color: var(--ink-100);
+			opacity: 0.8;
+		}
+	}
+
+	&__name {
+		font-family: var(--font-display);
+		font-weight: 700;
+		font-size: 26px;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+
+	&__suits {
+		font-size: 14px;
+		letter-spacing: 0.4em;
+		opacity: 0.55;
+		margin-top: 2px;
+	}
+
+	&--compact .rh-seat {
+		width: 124px;
+		padding: 7px 8px;
+	}
+
+	&--compact .rh-seat__total {
+		font-size: 15px;
+	}
+}
+
+.rh-seat {
+	position: absolute;
+	transform: translate(-50%, -50%);
+	width: 132px;
+	padding: 8px 10px;
+	border-radius: var(--radius-lg);
+	background: var(--bg-200);
+	border: 1px solid var(--rail-500);
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	cursor: pointer;
+	transition: left 0.25s, top 0.25s;
+	text-align: left;
+	font: inherit;
+	color: var(--ink-100);
+
+	&:hover {
+		border-color: var(--ink-200);
+	}
+
+	&.is-active {
+		border-color: var(--red-500);
+		box-shadow: 0 0 0 2px var(--red-500);
+	}
+
+	&__hd {
+		display: flex;
+		align-items: center;
+		gap: 7px;
+		min-width: 0;
+	}
+
+	&__no {
+		font-family: var(--font-display);
+		font-weight: 700;
+		font-size: 11px;
+		color: var(--ink-300);
+		width: 16px;
+		flex: none;
+	}
+
+	&__name {
+		font-weight: 600;
+		font-size: 14px;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	&__ft {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+	}
+
+	&__total {
+		font-family: var(--font-display);
+		font-weight: 700;
+		font-size: 17px;
+		font-variant-numeric: tabular-nums;
+		margin-right: auto;
+	}
+
+	&__chips {
+		display: flex;
+		gap: 3px;
+
+		.rh-chip {
+			width: 16px;
+			height: 16px;
+			font-size: 9px;
+			box-shadow: inset 0 0 0 1.5px var(--c), inset 0 0 0 2.5px var(--bg-000);
+		}
+	}
+
+	&--empty {
+		background: transparent;
+		border: 1px dashed var(--line-control);
+		color: var(--ink-300);
+		align-items: center;
+		justify-content: center;
+		min-height: 56px;
+		width: 104px;
+
+		.rh-seat__name {
+			font-weight: 500;
+			font-size: 13px;
+		}
+	}
+
+	&--out {
+		opacity: 0.5;
+
+		.rh-seat__name {
+			text-decoration: line-through;
+		}
+	}
+
+	&--dealer {
+		background: var(--bg-100);
+		border-color: var(--chip-dealer);
+		width: 118px;
+		align-items: center;
+
+		.rh-label {
+			color: var(--ink-100);
+		}
+	}
+
+	.rh-dealer-btn {
+		position: absolute;
+		top: -10px;
+		right: -10px;
+	}
+
+	@include ate(celular) {
+		width: 96px;
+		padding: 5px 6px;
+
+		.rh-avatar {
+			display: none;
+		}
+
+		&__name {
+			font-size: 12px;
+		}
+
+		&__total {
+			font-size: 14px;
+		}
+	}
+}

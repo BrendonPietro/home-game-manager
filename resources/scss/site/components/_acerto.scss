@@ -1,0 +1,38 @@
+// ============================================================================
+// Acerto do fechamento: quem paga → quem recebe, valor
+// ============================================================================
+
+@use "../vars" as *;
+
+.rh-xfer {
+	display: grid;
+	grid-template-columns: 1fr 28px 1fr auto;
+	align-items: center;
+	gap: 10px;
+	padding: 10px 16px;
+	border-bottom: 1px solid var(--line-100);
+
+	&:last-child {
+		border-bottom: 0;
+	}
+
+	&__arrow {
+		color: var(--ink-300);
+		text-align: center;
+	}
+
+	&__v {
+		font-family: var(--font-display);
+		font-weight: 700;
+		font-size: 20px;
+		font-variant-numeric: tabular-nums;
+		text-align: right;
+		min-width: 84px;
+	}
+
+	@include ate(tablet) {
+		grid-template-columns: 1fr 20px 1fr auto;
+		padding: 10px 12px;
+		gap: 6px;
+	}
+}

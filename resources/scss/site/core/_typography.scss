@@ -1,0 +1,94 @@
+// ============================================================================
+// Tipografia e cores de texto
+// Dinheiro sempre em Barlow Condensed tabular; positivo com +, negativo com −
+// ============================================================================
+
+@use "../vars" as *;
+
+.rh-num,
+.rh-money {
+	font-family: var(--font-display);
+	font-variant-numeric: tabular-nums lining-nums;
+	letter-spacing: 0;
+}
+
+.rh-pos {
+	color: var(--green-300);
+}
+
+.rh-neg {
+	color: var(--red-300);
+}
+
+.rh-muted {
+	color: var(--ink-200);
+}
+
+.rh-faint {
+	color: var(--ink-300);
+}
+
+.rh-label {
+	font-family: var(--font-display);
+	font-weight: 600;
+	font-size: 12px;
+	line-height: 16px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--ink-200);
+}
+
+.rh-title {
+	font-family: var(--font-display);
+	font-weight: 600;
+	font-size: 28px;
+	line-height: 32px;
+	margin: 0;
+
+	@include ate(celular) {
+		font-size: 24px;
+		line-height: 28px;
+	}
+}
+
+.rh-heading {
+	font-family: var(--font-display);
+	font-weight: 600;
+	font-size: 20px;
+	line-height: 24px;
+	margin: 0;
+}
+
+.rh-small {
+	font-size: 13px;
+	line-height: 18px;
+}
+
+.rh-suit {
+	font-family: var(--font-sans);
+	font-weight: 700;
+}
+
+// Ícones do design system (resources/svg/site/icons, @svg('rh-…'))
+.rh-ic {
+	width: 18px;
+	height: 18px;
+	flex: none;
+	stroke: currentColor;
+	fill: none;
+	stroke-width: 1.75;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+.rh-link {
+	color: var(--ink-100);
+	text-decoration: underline;
+	text-decoration-color: var(--line-control);
+	text-underline-offset: 3px;
+	font-size: 14px;
+
+	&:hover {
+		text-decoration-color: var(--ink-100);
+	}
+}

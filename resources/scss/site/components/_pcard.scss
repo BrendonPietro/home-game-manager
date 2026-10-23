@@ -1,0 +1,58 @@
+// ============================================================================
+// Cartão de jogador selecionável (jogadores confirmados, mesas)
+// ============================================================================
+
+.rh-pcard {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 10px 12px;
+	border-radius: var(--radius-md);
+	border: 1px solid var(--line-200);
+	background: var(--bg-200);
+	color: var(--ink-100);
+	cursor: pointer;
+	text-align: left;
+
+	&:hover {
+		background: var(--bg-300);
+	}
+
+	&__n {
+		font-weight: 600;
+		flex: 1;
+		min-width: 0;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	&.is-on {
+		border-color: var(--red-500);
+		background: var(--bg-300);
+	}
+}
+
+.rh-tick {
+	width: 22px;
+	height: 22px;
+	border-radius: 999px;
+	border: 1px solid var(--line-control);
+	display: grid;
+	place-items: center;
+	flex: none;
+
+	.rh-pcard.is-on & {
+		background: var(--red-500);
+		border-color: var(--red-500);
+
+		&::after {
+			content: "";
+			width: 9px;
+			height: 5px;
+			border-left: 2px solid var(--on-red);
+			border-bottom: 2px solid var(--on-red);
+			transform: translateY(-1px) rotate(-45deg);
+		}
+	}
+}

@@ -1,13 +1,13 @@
 # Arquitetura
 
-Um único app Laravel 12 (PHP 8.2), no molde do site do casamento: site de operação em `/` e painel Filament em `/painel`, um banco MySQL. Por enquanto roda só local no Laragon; domínio e hospedagem do lançamento a definir.
+Um único app Laravel 13 (PHP 8.5), no molde do site do casamento: site de operação em `/` e painel Filament em `/painel`, um banco MySQL. Por enquanto roda só local no Laragon; domínio e hospedagem do lançamento a definir.
 
 ## Stack
 
 | Camada | Escolha | Observação |
 |---|---|---|
-| Linguagem | PHP 8.2 | `config.platform.php = 8.2` no `composer.json` |
-| Framework | Laravel 12 | Maior versão compatível com PHP 8.2 (decisão: manter PHP 8.2). Segurança até 24/02/2027 |
+| Linguagem | PHP 8.5 | `config.platform.php = 8.5` no `composer.json`. A hospedagem do lançamento precisa ter PHP 8.5 |
+| Framework | Laravel 13 | Bugs até o 3º tri de 2027, segurança até 17/03/2028. Era Laravel 12 + PHP 8.2 até 22/10/2026 |
 | Painel | Filament 5 | Requer PHP 8.2, Laravel 11.28+, Livewire 4, Tailwind 4 (só no tema do painel) |
 | Site | Blade components + Livewire 4 + Alpine.js | Livewire já vem com o Filament |
 | CSS do site | SCSS (padrão do casamento) + tokens `rh-` | Sem Tailwind no site |
@@ -67,7 +67,7 @@ resources/
 │   │   └── window/             # topbar, fluxo-da-noite, faixa-ao-vivo
 │   ├── livewire/jogo/
 │   └── site/{layouts,pages}/
-├── scss/site/                  # vars, core, components, pages, wpf
+├── scss/site/                  # vars, core, components, pages
 ├── css/filament/painel/theme.css
 ├── fonts/barlow/
 ├── svg/site/icons/
@@ -85,7 +85,7 @@ Tudo atrás de `auth` (guard `web`, tabela `usuarios`) e das permissões do site
 
 | Tela | Rota | Nome | Implementação |
 |---|---|---|---|
-| 01 Login | `GET/POST /login`, `POST /logout` | `login`, `logout` | `AuthController` |
+| 01 Login | `GET/POST /login`, `POST /logout` | `login`, `logout` | `AuthController` (e-mail e senha; `guest:web` / `auth:web`) |
 | 02 Dashboard | `GET /` | `home` | `HomeController@index` |
 | 03 Seleção do jogo | `GET /jogos` | `jogos.index` | `JogoController@index` |
 | 04 Conferência | `GET /jogos/{jogo}/conferencia` | `jogos.conferencia` | `JogoController@conferencia` |
@@ -129,7 +129,7 @@ Middleware `jogo.etapa`: quem abre uma etapa que o status/fase não permite volt
 
 | Fase | Entrega | Portão |
 |---|---|---|
-| 0 Base | Laravel 12 + Filament 5, tema, fontes, SCSS do design system, login, docs | |
+| 0 Base | Laravel 13 + Filament 5, tema, fontes, SCSS do design system, login, docs | |
 | 1 Cadastros | Migrations, models, resources básicos do painel, seeder da noite #18 | |
 | 2 Antes da noite | Telas 01–06 | |
 | 3 Durante a noite | Telas 07–11, ações no jogador (entrada, pagamento, eliminação, cash-out), fases, polling | |

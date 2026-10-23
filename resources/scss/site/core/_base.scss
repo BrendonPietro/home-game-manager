@@ -1,0 +1,38 @@
+// ============================================================================
+// Base
+// ============================================================================
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	background: var(--bg-000);
+	color: var(--ink-100);
+	font-family: var(--font-sans);
+	font-size: 15px;
+	line-height: 22px;
+	-webkit-font-smoothing: antialiased;
+}
+
+body {
+	min-height: 100vh;
+}
+
+:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: 2px;
+}
+
+button {
+	font: inherit;
+	color: inherit;
+}
+
+[x-cloak] {
+	display: none !important;
+}

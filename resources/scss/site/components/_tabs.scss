@@ -1,0 +1,88 @@
+// ============================================================================
+// Abas e filtro segmentado
+// ============================================================================
+
+@use "../vars" as *;
+
+.rh-tabs {
+	display: flex;
+	gap: 2px;
+	border-bottom: 1px solid var(--line-200);
+
+	@include ate(celular) {
+		overflow-x: auto;
+	}
+}
+
+.rh-tab {
+	height: 40px;
+	padding: 0 14px;
+	white-space: nowrap;
+	flex: none;
+	border: 0;
+	background: none;
+	color: var(--ink-200);
+	font-family: var(--font-display);
+	font-weight: 600;
+	font-size: 15px;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	cursor: pointer;
+	border-bottom: 2px solid transparent;
+	margin-bottom: -1px;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	text-decoration: none;
+
+	&[aria-selected="true"] {
+		color: var(--ink-100);
+		border-bottom-color: var(--red-500);
+	}
+
+	.rh-count {
+		font-family: var(--font-sans);
+		font-size: 12px;
+		font-weight: 600;
+		background: var(--bg-300);
+		border-radius: 999px;
+		padding: 0 7px;
+		color: var(--ink-200);
+		letter-spacing: 0;
+	}
+}
+
+.rh-seg {
+	display: inline-flex;
+	padding: 3px;
+	gap: 2px;
+	border-radius: var(--radius-md);
+	background: var(--bg-100);
+	border: 1px solid var(--line-200);
+
+	button {
+		height: 30px;
+		padding: 0 12px;
+		border: 0;
+		border-radius: 3px;
+		background: none;
+		color: var(--ink-200);
+		font-weight: 600;
+		font-size: 13px;
+		cursor: pointer;
+
+		&[aria-pressed="true"] {
+			background: var(--bg-400);
+			color: var(--ink-100);
+		}
+	}
+
+	@include ate(celular) {
+		max-width: 100%;
+		overflow-x: auto;
+
+		button {
+			flex: none;
+		}
+	}
+}

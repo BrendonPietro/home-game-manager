@@ -1,0 +1,63 @@
+// ============================================================================
+// Grades responsivas
+// No protótipo as telas usam grid-template-columns inline e uma camada (.rh-screen)
+// que dobra as colunas por breakpoint. Aqui isso vira classe:
+//
+//   .rh-grid--2 … --6   colunas iguais
+//   .rh-grid--side      conteúdo + coluna lateral (largura em --side, padrão 360px)
+//
+//                 desktop  ≤1100  ≤900  ≤600
+//   --2              2       2      2     1
+//   --3              3       3      2     1
+//   --4              4       4      2     2
+//   --5 / --6       5/6      3      2     2
+//   --side         1fr+360   =      1     1
+// ============================================================================
+
+@use "../vars" as *;
+
+.rh-grid {
+	display: grid;
+	gap: 16px;
+
+	> * {
+		min-width: 0;
+	}
+
+	@for $n from 2 through 6 {
+		&--#{$n} {
+			grid-template-columns: repeat($n, 1fr);
+		}
+	}
+
+	&--side {
+		grid-template-columns: 1fr var(--side, 360px);
+	}
+
+	@include ate(largo) {
+		&--5,
+		&--6 {
+			grid-template-columns: repeat(3, 1fr);
+		}
+	}
+
+	@include ate(tablet) {
+		&--3,
+		&--4,
+		&--5,
+		&--6 {
+			grid-template-columns: repeat(2, 1fr);
+		}
+
+		&--side {
+			grid-template-columns: 1fr;
+		}
+	}
+
+	@include ate(celular) {
+		&--2,
+		&--3 {
+			grid-template-columns: 1fr;
+		}
+	}
+}

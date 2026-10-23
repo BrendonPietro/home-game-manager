@@ -1,0 +1,95 @@
+// ============================================================================
+// Tokens do design system (docs/design-system/tokens.json)
+// Viram variáveis CSS em :root com os mesmos nomes do bundle.css (--bg-000, --radius-md…)
+// ============================================================================
+
+@use "sass:meta";
+
+// Cores (tema único: Noite)
+$cores: (
+	// Fundos: página → cromo → painéis → hover → selecionado
+	"bg-000": #0b0c0d,
+	"bg-100": #121415,
+	"bg-200": #181b1d,
+	"bg-300": #202427,
+	"bg-400": #2a2f33,
+
+	// Linhas
+	"line-100": #262b2e,
+	"line-200": #343a3e,
+	"line-control": #646c71,
+
+	// Texto
+	"ink-100": #eeeae3,
+	"ink-200": #b4aea5,
+	"ink-300": #938d85,
+
+	// Vermelho carta (acento)
+	"red-600": #9e2530,
+	"red-500": #c62f3a,
+	"red-400": #d8434d,
+	"red-300": #f07a7f,
+	"on-red": #ffffff,
+
+	// Estados
+	"green-300": #5fcf8f,
+	"amber-300": #e7b552,
+	"blue-300": #7fb2f0,
+	"focus": #f2c14e,
+
+	// Mesa
+	"felt-900": #0d261c,
+	"felt-700": #13402f,
+	"felt-500": #1b5940,
+	"felt-300": #2f7d5c,
+	"rail-700": #1d1511,
+	"rail-500": #3a2a20,
+
+	// Fichas
+	"chip-buyin": #e8e4dc,
+	"chip-rebuy": #5b9be8,
+	"chip-addon": #e8ad44,
+	"chip-dealer": #f4f1ea,
+);
+
+// Fontes (arquivos locais em resources/fonts/barlow)
+$fontes: (
+	"font-display": ('Barlow Condensed', 'Arial Narrow', sans-serif),
+	"font-sans": ('Barlow', 'Segoe UI', system-ui, sans-serif),
+);
+
+// Espaçamentos
+$espacos: (
+	"space-1": 4px,
+	"space-2": 8px,
+	"space-3": 12px,
+	"space-4": 16px,
+	"space-6": 24px,
+	"space-8": 32px,
+	"space-12": 48px,
+);
+
+// Raios: badge / botão e painel / assento / ficha e mesa
+$raios: (
+	"radius-sm": 3px,
+	"radius-md": 5px,
+	"radius-lg": 8px,
+	"radius-pill": 999px,
+);
+
+// Sombras: só modais/drawers flutuam; o feltro tem profundidade interna
+$sombras: (
+	"shadow-modal": (0 16px 40px rgba(0, 0, 0, 0.55)),
+	"shadow-felt": (inset 0 0 0 2px rgba(0, 0, 0, 0.35), inset 0 10px 40px rgba(0, 0, 0, 0.45)),
+);
+
+:root {
+	color-scheme: dark;
+
+	@each $mapa in ($cores, $fontes, $espacos, $raios, $sombras) {
+		@each $nome, $valor in $mapa {
+			// meta.inspect mantém as aspas dos nomes de fonte
+			--#{$nome}: #{meta.inspect($valor)};
+		}
+	}
+}

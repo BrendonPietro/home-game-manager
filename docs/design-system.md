@@ -1,6 +1,11 @@
 # Design system
 
-O design system do clube está publicado no Claude (artifact **Rodrigues Home Game**, tipo Design System), com tokens, 18 componentes e as 25 telas. Há também dois protótipos navegáveis: desktop e mobile.
+O design system do clube está publicado no Claude (artifact **Rodrigues Home Game**, tipo Design System), com tokens, 18 componentes e as 25 telas. Há também dois protótipos navegáveis, desktop e mobile, copiados para o repositório:
+
+- `docs/prototipo/rodrigues-prototipo.html` e `docs/prototipo/rodrigues-mobile.html` — referência visual de todas as telas (ver `docs/prototipo/README.md`).
+- `docs/design-system/` — `tokens.json`, `bundle.css` (classes `rh-`), `bundle.js` (inclui `RHG.pokerTable`, referência para `mesa.js`) e as fontes Barlow / Barlow Condensed em `.woff2` (copiar para `resources/fonts/barlow/`).
+
+Visual vem dos protótipos; regras vêm de `docs/regras.md` (onde divergirem, vale o `regras.md`).
 
 ## Direção
 
@@ -32,6 +37,36 @@ Escuro por padrão, grafite + feltro verde discreto + vermelho carta como acento
 | `RHG.pokerTable()` | `<x-site.poker.mesa>` + `resources/js/site/mesa.js` (posição por comprimento de arco, rotação 90°) |
 | `siteShell` | Layout `<x-site.operacao>`: topbar + fluxo da noite + faixa ao vivo |
 | `adminShell` | Layout do Filament com o tema custom |
+
+### SCSS do site
+
+`resources/scss/site/index.scss` usa `vars` (tokens e breakpoints), `core` (fontes, base, tipografia, layout, grades), `components` (um parcial por bloco do `bundle.css`) e `pages` (layout próprio de cada tela).
+
+- As variáveis CSS têm os mesmos nomes do `bundle.css` (`--bg-000`, `--font-display`, `--radius-md`…), então uma classe copiada do protótipo funciona sem mudar nada.
+- As regras responsivas que no protótipo ficam em `.rh-screen` entram em cada componente (`@include ate(celular) { … }`).
+- Diferenças em relação ao `bundle.css`:
+  - `.rh-scrim` e `.rh-drawer` são `fixed` na janela, não `absolute` dentro da tela.
+  - Acréscimos: `.rh-field__error`, `.rh-input[aria-invalid]`, foto no `.rh-avatar` e `.rh-strip > .is-prize` (destaque do prize pool, que no protótipo é um estilo inline).
+- Ficam **fora** do site, porque só aparecem no painel: shell do admin (`rh-app`, `rh-side`, `rh-nav`, `rh-pagehd`, `rh-content`, `rh-mtop`), calendário (`rh-cal`, `rh-ev`, `rh-legend`, `rh-dot`) e gráficos (`rh-bars`, `rh-tip`). Quando o calendário (tela 17) e os gráficos (tela 16) forem feitos, os estilos entram no tema do Filament.
+- Conferência: o CSS gerado tem as mesmas declarações do `bundle.css` para todos os seletores portados.
+
+### Grades
+
+No protótipo as telas usam `grid-template-columns` inline. Aqui viram classes:
+
+| Classe | Desktop | ≤ 1100 | ≤ 900 | ≤ 600 |
+|---|---|---|---|---|
+| `rh-grid--2` | 2 | 2 | 2 | 1 |
+| `rh-grid--3` | 3 | 3 | 2 | 1 |
+| `rh-grid--4` | 4 | 4 | 2 | 2 |
+| `rh-grid--5` / `--6` | 5 / 6 | 3 | 2 | 2 |
+| `rh-grid--side` | conteúdo + lateral (`--side`, padrão 360px) | = | 1 | 1 |
+
+Layouts que não cabem nessas grades (ex.: `1.6fr 1fr 1fr 1fr`) ficam no parcial da tela em `pages/`.
+
+### Vitrine
+
+`/vitrine` (só com `APP_ENV=local`) mostra todos os componentes com os dados da Poker Night #18, para comparar com os protótipos.
 
 ## Breakpoints
 

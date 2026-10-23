@@ -1,0 +1,26 @@
+// ============================================================================
+// Fontes locais (resources/fonts/barlow), sem Google Fonts
+// Barlow: texto · Barlow Condensed: display e números
+// ============================================================================
+
+@use "sass:list";
+
+// família: (prefixo do arquivo, pesos)
+$barlow: (
+	"Barlow": ("Barlow", (400, 500, 600, 700)),
+	"Barlow Condensed": ("BarlowCondensed", (500, 600, 700)),
+);
+
+@each $familia, $fonte in $barlow {
+	$arquivo: list.nth($fonte, 1);
+
+	@each $peso in list.nth($fonte, 2) {
+		@font-face {
+			font-family: $familia;
+			src: url("../../../fonts/barlow/#{$arquivo}-#{$peso}.woff2") format("woff2");
+			font-weight: $peso;
+			font-style: normal;
+			font-display: swap;
+		}
+	}
+}

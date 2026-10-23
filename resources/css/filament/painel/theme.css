@@ -1,0 +1,146 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+@source '../../../../app/Filament/**/*';
+@source '../../../../resources/views/filament/**/*';
+
+/*
+ * Tema do painel (docs/painel.md + design system do clube).
+ * As paletas ficam no PainelPanelProvider; aqui: fontes locais, raios, cromo e títulos.
+ */
+
+/* ── Fontes locais (resources/fonts/barlow), sem Google/Bunny Fonts ── */
+
+@font-face {
+    font-family: 'Barlow';
+    src: url('../../../fonts/barlow/Barlow-400.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Barlow';
+    src: url('../../../fonts/barlow/Barlow-500.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Barlow';
+    src: url('../../../fonts/barlow/Barlow-600.woff2') format('woff2');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Barlow';
+    src: url('../../../fonts/barlow/Barlow-700.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Barlow Condensed';
+    src: url('../../../fonts/barlow/BarlowCondensed-500.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Barlow Condensed';
+    src: url('../../../fonts/barlow/BarlowCondensed-600.woff2') format('woff2');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Barlow Condensed';
+    src: url('../../../fonts/barlow/BarlowCondensed-700.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* ── Tokens ── */
+
+@theme {
+    --font-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+
+    /* radius-sm / radius-md do design system: badge 3px; botão, campo, painel e modal 5px */
+    --radius-md: 3px;
+    --radius-lg: 5px;
+    --radius-xl: 5px;
+}
+
+@layer components {
+    /* Cromo (bg-100): topbar e sidebar. Painéis e cards ficam no gray-900 (bg-200). */
+    .dark .fi-topbar,
+    .dark .fi-sidebar,
+    .dark .fi-body-has-topbar .fi-sidebar-header {
+        background-color: #121415;
+    }
+
+    .dark .fi-sidebar {
+        border-inline-end: 1px solid #262b2e; /* line-100 */
+    }
+
+    /* Item ativo do menu: fundo bg-300 + filete vermelho à esquerda */
+    .dark .fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
+        background-color: var(--color-gray-800);
+        box-shadow: inset 3px 0 0 var(--color-primary-600);
+    }
+
+    /* Títulos e números em Barlow Condensed */
+    .fi-header-heading,
+    .fi-simple-header-heading,
+    .fi-section-header-heading,
+    .fi-modal-heading,
+    .fi-wi-stats-overview-stat-value {
+        font-family: var(--font-display);
+        letter-spacing: 0;
+    }
+
+    .fi-wi-stats-overview-stat-value {
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* Login (tela 15): filete vermelho no topo do cartão */
+    .fi-simple-main {
+        border-top: 3px solid var(--color-primary-600);
+    }
+
+    /* Marca provisória (resources/views/filament/painel/marca.blade.php) */
+    .rh-marca {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-family: var(--font-display);
+        font-size: 1.25rem;
+        font-weight: 700;
+        line-height: 1;
+        white-space: nowrap;
+        color: var(--color-gray-950);
+    }
+
+    .dark .rh-marca {
+        color: var(--color-gray-100);
+    }
+
+    .rh-marca__naipe {
+        font-size: 1.4em;
+        color: var(--color-primary-600);
+    }
+
+    /* Login (tela 15): "Vai operar a noite? Entrar no site de operação" */
+    .rh-link-site {
+        margin: 0;
+        text-align: center;
+        font-size: 0.875rem;
+        color: var(--color-gray-500);
+    }
+}
