@@ -14,8 +14,10 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Leva o jogador para um lugar de uma mesa. Lugar ocupado: os dois trocam (quem estava vai para o
- * lugar antigo, ou fica sem lugar). Mesa nula: o jogador fica sem lugar. Serve para montar as mesas
- * e para a quebra de mesa durante o jogo.
+ * lugar antigo, ou fica sem lugar); se quem estava já saiu do jogo (eliminado, cash-out), ele só
+ * guardava o lugar e fica sem lugar. Mesa nula: o jogador fica sem lugar. Serve para montar as mesas
+ * e para a quebra de mesa durante o jogo; quem chegou atrasado e senta com o jogo em andamento
+ * passa a jogando.
  */
 class TrocarLugar
 {
@@ -59,8 +61,14 @@ class TrocarLugar
 
             // (jogo_mesa_id, lugar) é único: libera o lugar de quem se move antes de trocar.
             $participante->update(['jogo_mesa_id' => null, 'lugar' => null]);
-            $ocupante?->update(['jogo_mesa_id' => $mesaAntes, 'lugar' => $lugarAntes]);
+            $ocupante?->update($ocupante->estaFora()
+                ? ['jogo_mesa_id' => null, 'lugar' => null]
+                : ['jogo_mesa_id' => $mesaAntes, 'lugar' => $lugarAntes]);
             $participante->update(['jogo_mesa_id' => $mesa->id, 'lugar' => $lugar]);
+
+            if ($jogo->status === StatusJogo::EmAndamento && $participante->status === StatusParticipante::Confirmado) {
+                $participante->forceFill(['status' => StatusParticipante::Jogando])->save();
+            }
         });
     }
 }

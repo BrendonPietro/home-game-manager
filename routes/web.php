@@ -30,6 +30,14 @@ Route::middleware('auth:web')->group(function () {
     Route::get('/jogos/{jogo}/mesas', [JogoController::class, 'mesas'])
         ->middleware('jogo.etapa:mesas')
         ->name('jogos.mesas');
+
+    // Durante a noite (jogo em andamento).
+    Route::get('/jogos/{jogo}/ao-vivo', [JogoController::class, 'aoVivo'])
+        ->middleware('jogo.etapa:ao-vivo')
+        ->name('jogos.ao-vivo');
+    Route::get('/jogos/{jogo}/resumo', [JogoController::class, 'resumo'])
+        ->middleware('jogo.etapa:resumo')
+        ->name('jogos.resumo');
 });
 
 // Vitrine do design system, só para desenvolvimento.

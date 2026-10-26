@@ -7,12 +7,15 @@
 	- ocupantes: participantes indexados pelo lugar (com usuario carregado)
 	- acao: método Livewire chamado com (jogoMesaId, lugar) ao clicar num assento; sem acao a mesa é só leitura
 	- selecionado: id do participante destacado
+	- rodapes: [participanteId => ['total' => 'R$ 250', 'fichas' => [['B', null], ['R', 'r'], ['A', 'a']]]] (tela ao vivo)
 	- ar / arRetrato: proporção deitada e em pé (padrão do mesa.js: 1,7 / 0,82; celular 1,2 / 0,6); rx / ry: raios em %
+	Eliminado e quem fez cash-out aparecem apagados no lugar.
 --}}
 @props([
 	'jogoMesa',
 	'ocupantes' => collect(),
 	'selecionado' => null,
+	'rodapes' => [],
 	'acao' => null,
 	'compacta' => false,
 	'subtitulo' => null,
@@ -64,6 +67,7 @@
 	@for ($lugar = 1; $lugar <= $lugares; $lugar++)
 		@php
 			$ocupante = $ocupantes->get($lugar);
+			$rodape = $ocupante ? ($rodapes[$ocupante->id] ?? null) : null;
 			$clique = $acao ? "{$acao}({$jogoMesa->id}, {$lugar})" : null;
 		@endphp
 
@@ -71,7 +75,7 @@
 			<button
 				type="button"
 				wire:key="assento-{{ $jogoMesa->id }}-{{ $lugar }}"
-				@class(['rh-seat', 'is-active' => $selecionado === $ocupante->id, 'rh-seat--out' => $ocupante->status === \App\Enums\StatusParticipante::Eliminado])
+				@class(['rh-seat', 'is-active' => $selecionado === $ocupante->id, 'rh-seat--out' => $ocupante->estaFora()])
 				style="{{ $posicao($lugar) }}"
 				@if ($clique) wire:click="{{ $clique }}" wire:loading.attr="disabled" @else disabled @endif
 				aria-pressed="{{ $selecionado === $ocupante->id ? 'true' : 'false' }}"
@@ -82,6 +86,16 @@
 					<x-site.props.avatar :nome="$ocupante->usuario->nome_exibicao" :foto="$ocupante->usuario->foto" tamanho="sm" />
 					<span class="rh-seat__name">{{ $ocupante->usuario->nome_exibicao }}</span>
 				</span>
+				@if ($rodape)
+					<span class="rh-seat__ft">
+						<span class="rh-seat__total">{{ $rodape['total'] }}</span>
+						<span class="rh-seat__chips">
+							@foreach ($rodape['fichas'] as [$rotulo, $cor])
+								<span @class(['rh-chip', 'rh-chip--'.$cor => $cor])>{{ $rotulo }}</span>
+							@endforeach
+						</span>
+					</span>
+				@endif
 			</button>
 		@else
 			<button

@@ -1,0 +1,304 @@
+<?php
+
+namespace App\Livewire\Jogo;
+
+use App\Actions\Jogo\AtualizarNivel;
+use App\Actions\Jogo\EncerrarRebuys;
+use App\Actions\Jogo\FecharEntradas;
+use App\Actions\Jogo\TrocarLugar;
+use App\Enums\FaseTorneio;
+use App\Enums\StatusParticipante;
+use App\Enums\TipoItem;
+use App\Exceptions\RegraDoJogo;
+use App\Models\Entrada;
+use App\Models\Jogo;
+use App\Models\JogoMesa;
+use App\Models\Participante;
+use App\Models\Usuario;
+use App\Services\Jogo\Calculadora;
+use App\Services\Jogo\Entradas;
+use App\Services\Jogo\EntradasDoJogador;
+use App\Support\Dinheiro;
+use App\Support\EtapaDoJogo;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Support\Collection;
+use Illuminate\View\View;
+use Livewire\Attributes\On;
+use Livewire\Attributes\Url;
+use Livewire\Component;
+
+/**
+ * Telas 07 e 07m: a noite ao vivo. Faixa com nível, fase e números; a mesa escolhida com o total e
+ * as fichas de cada um; prize pool, contagem e últimos registros ao lado. Atualiza a cada 5 s
+ * (wire:poll, sem WebSocket).
+ *
+ * Clicar num jogador abre o painel dele (Livewire Jogo\AcoesJogador). "Mudar de lugar" no painel
+ * põe a tela no modo de mudança: o próximo lugar clicado recebe o jogador (quebra de mesa).
+ */
+class AoVivo extends Component
+{
+    public Jogo $jogo;
+
+    /** jogo_mesa em exibição (?mesa= na URL); vazio = a primeira. */
+    #[Url(as: 'mesa', except: null)]
+    public ?int $mesa = null;
+
+    /** Jogador com o painel aberto. */
+    public ?int $selecionado = null;
+
+    /** Jogador mudando de lugar: o próximo lugar clicado é o novo. */
+    public ?int $movendo = null;
+
+    /** Modal da tela: nivel, encerrar (rebuys) ou fechar (entradas). */
+    public ?string $modal = null;
+
+    public string $nivel = '';
+
+    public string $blinds = '';
+
+    public ?string $erro = null;
+
+    public ?string $aviso = null;
+
+    /** Jogo finalizado em outro aparelho enquanto a tela estava aberta: vai para a etapa atual. */
+    public function hydrate(): void
+    {
+        if (! EtapaDoJogo::permite($this->jogo, 'ao-vivo')) {
+            session()->flash('aviso', "{$this->jogo->nome} não está mais em andamento.");
+            $this->redirect(EtapaDoJogo::url($this->jogo) ?? route('jogos.index'));
+        }
+    }
+
+    public function verMesa(int $jogoMesaId): void
+    {
+        $this->mesa = $this->jogo->mesas()->findOrFail($jogoMesaId)->id;
+        $this->selecionado = null;
+    }
+
+    public function clicarAssento(int $jogoMesaId, int $lugar): void
+    {
+        if ($this->movendo !== null) {
+            $this->trocar($this->jogo->mesas()->findOrFail($jogoMesaId), $lugar);
+
+            return;
+        }
+
+        $ocupante = $this->jogo->participantes()->where('jogo_mesa_id', $jogoMesaId)->where('lugar', $lugar)->first();
+
+        $this->selecionar($ocupante?->id);
+    }
+
+    public function selecionar(?int $participanteId): void
+    {
+        $this->selecionado = $participanteId === null || $participanteId === $this->selecionado ? null : $participanteId;
+    }
+
+    #[On('fechar-jogador')]
+    public function fecharJogador(): void
+    {
+        $this->selecionado = null;
+    }
+
+    /** O painel do jogador lançou algo: redesenha a mesa e a faixa na hora, sem esperar o poll. */
+    #[On('caixa-mudou')]
+    public function caixaMudou(): void {}
+
+    #[On('mudar-lugar')]
+    public function mudarLugar(int $participanteId): void
+    {
+        $this->movendo = $this->jogo->participantes()->findOrFail($participanteId)->id;
+        $this->selecionado = null;
+        $this->erro = null;
+    }
+
+    public function tirarDoLugar(): void
+    {
+        $this->trocar(null, null);
+    }
+
+    public function cancelarMudanca(): void
+    {
+        $this->movendo = null;
+        $this->erro = null;
+    }
+
+    private function trocar(?JogoMesa $jogoMesa, ?int $lugar): void
+    {
+        $participante = $this->jogo->participantes()->findOrFail($this->movendo);
+
+        if ($this->executar(fn () => app(TrocarLugar::class)($participante, $jogoMesa, $lugar, $this->quem()))) {
+            $this->movendo = null;
+        }
+    }
+
+    // ── Nível e blinds (digitados na v1) ──
+
+    public function abrirNivel(): void
+    {
+        $this->modal = 'nivel';
+        $this->nivel = (string) ($this->jogo->nivel_atual ?? '');
+        $this->blinds = (string) ($this->jogo->blinds_atual ?? '');
+        $this->erro = null;
+    }
+
+    public function salvarNivel(): void
+    {
+        $nivel = trim($this->nivel);
+
+        if ($nivel !== '' && ! ctype_digit($nivel)) {
+            $this->erro = 'O nível é um número.';
+
+            return;
+        }
+
+        if ($this->executar(fn () => app(AtualizarNivel::class)($this->jogo, $nivel === '' ? null : (int) $nivel, $this->blinds, $this->quem()))) {
+            $this->modal = null;
+        }
+    }
+
+    // ── Fases do torneio: Encerrar rebuys (tela 07) e Fechar entradas (tela 11) ──
+
+    public function abrirFase(): void
+    {
+        $this->modal = $this->jogo->fase === FaseTorneio::Rebuys ? 'encerrar' : 'fechar';
+        $this->erro = null;
+    }
+
+    public function encerrarRebuys(): void
+    {
+        if ($this->executar(fn () => app(EncerrarRebuys::class)($this->jogo, $this->quem()))) {
+            $this->modal = null;
+            $this->aviso = 'Rebuys encerrados: o add-on está aberto.';
+        }
+    }
+
+    public function fecharEntradas(): void
+    {
+        if ($this->executar(fn () => app(FecharEntradas::class)($this->jogo, $this->quem()))) {
+            $this->modal = null;
+            $this->aviso = 'Entradas fechadas e prêmios gravados: cada eliminação agora dá a posição.';
+        }
+    }
+
+    public function fecharModal(): void
+    {
+        $this->modal = null;
+        $this->erro = null;
+    }
+
+    /** Roda uma Action; regra ou permissão aparece na tela sem derrubá-la. Deu certo, relê o jogo. */
+    private function executar(callable $acao): bool
+    {
+        $this->erro = null;
+        $this->aviso = null;
+
+        try {
+            $acao();
+        } catch (RegraDoJogo|AuthorizationException $erro) {
+            $this->erro = $erro->getMessage();
+
+            return false;
+        }
+
+        $this->jogo->refresh();
+
+        return true;
+    }
+
+    private function quem(): Usuario
+    {
+        return auth('web')->user();
+    }
+
+    public function render(Calculadora $calculadora, Entradas $entradas): View
+    {
+        $mesas = $this->jogo->mesas()->with(['mesa', 'dealer'])->get();
+        $mesaAtual = $mesas->firstWhere('id', $this->mesa) ?? $mesas->first();
+        $participantes = $this->jogo->participantes()->with('usuario')->get();
+        $porJogador = $entradas->porJogador($this->jogo);
+
+        return view('livewire.jogo.ao-vivo', [
+            'resumo' => $calculadora->doJogo($this->jogo),
+            'mesas' => $mesas,
+            'mesaAtual' => $mesaAtual,
+            'ocupantes' => $mesaAtual
+                ? $participantes->where('jogo_mesa_id', $mesaAtual->id)->keyBy('lugar')
+                : collect(),
+            'naMesa' => $participantes->where('status', StatusParticipante::Jogando)->countBy('jogo_mesa_id'),
+            'jogando' => $participantes->where('status', StatusParticipante::Jogando)->count(),
+            'semLugar' => $participantes->whereNull('jogo_mesa_id')
+                ->whereIn('status', [StatusParticipante::Confirmado, StatusParticipante::Jogando])
+                ->values(),
+            'movendoNome' => $participantes->firstWhere('id', $this->movendo)?->nome(),
+            'rodapes' => $this->rodapes($porJogador),
+            'contagem' => [
+                'buyins' => $porJogador->filter(fn (EntradasDoJogador $e) => $e->buyin !== null)->count(),
+                'rebuys' => $porJogador->sum('rebuys'),
+                'addons' => $porJogador->sum('addons'),
+                'cashOuts' => $participantes->whereNotNull('cash_out')->count(),
+            ],
+            'ultimos' => $this->jogo->entradas()->validas()->whereNull('vinculada_a')
+                ->with(['participante.usuario', 'item'])
+                ->latest()->latest('id')->limit(8)->get(),
+            'urlResumo' => EtapaDoJogo::url($this->jogo, 'resumo'),
+            'premiacao' => $this->jogo->fase === FaseTorneio::SemEntradas
+                ? $this->jogo->premiacoes()->get()->map(fn ($premio) => [
+                    'posicao' => $premio->posicao,
+                    'valor' => $premio->valor,
+                    'quem' => $participantes->firstWhere('posicao_final', $premio->posicao)?->nome(),
+                ])
+                : collect(),
+            // Só o que o modal aberto mostra.
+            'foraDeVez' => $this->modal === 'encerrar' ? $this->foraDeVez($participantes) : collect(),
+            'semBuyin' => $this->modal === 'fechar'
+                ? $participantes->filter(fn (Participante $p) => $p->status === StatusParticipante::Jogando && ! $porJogador->get($p->id)?->buyin)
+                    ->map->nome()->values()
+                : collect(),
+            'addon' => $this->modal === 'encerrar'
+                ? $this->jogo->itens()->ativos()->where('tipo', TipoItem::Addon)->orderBy('valor')->first()
+                : null,
+        ]);
+    }
+
+    /**
+     * Quem está fora numa eliminação provisória e não voltou: fica eliminado de vez ao encerrar os rebuys.
+     *
+     * @param  Collection<int, Participante>  $participantes
+     * @return Collection<int, string>
+     */
+    private function foraDeVez(Collection $participantes): Collection
+    {
+        $ids = $this->jogo->eliminacoes()->validas()->emAberto()->pluck('participante_id');
+
+        return $participantes->whereIn('id', $ids)->map->nome()->values();
+    }
+
+    /**
+     * Total e fichas de cada assento: buy-in (B, 2, 3…), rebuys (R ou a quantidade) e add-on (A).
+     *
+     * @param  Collection<int, EntradasDoJogador>  $porJogador
+     * @return array<int, array{total: string, fichas: list<array{0: string, 1: ?string}>}>
+     */
+    private function rodapes(Collection $porJogador): array
+    {
+        return $porJogador->map(fn (EntradasDoJogador $e) => [
+            'total' => Dinheiro::brlCentavos($e->total),
+            'fichas' => array_values(array_filter([
+                $e->buyin ? [$this->jogo->fichaDoBuyin($e->buyin), null] : null,
+                $e->rebuys ? [$e->rebuys > 1 ? (string) $e->rebuys : 'R', 'r'] : null,
+                $e->addons ? ['A', 'a'] : null,
+            ])),
+        ])->all();
+    }
+
+    /** Ficha da linha dos últimos registros (opcional sozinho não tem ficha). */
+    public function fichaDaEntrada(Entrada $entrada): ?array
+    {
+        return match ($entrada->tipo) {
+            TipoItem::Buyin => [$this->jogo->fichaDoBuyin($entrada->item), null],
+            TipoItem::Rebuy => ['R', 'r'],
+            TipoItem::Addon => ['A', 'a'],
+            TipoItem::Opcional => null,
+        };
+    }
+}

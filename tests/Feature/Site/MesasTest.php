@@ -110,17 +110,17 @@ class MesasTest extends TestCase
             ->assertSee('Tem jogador no lugar');
     }
 
-    public function test_iniciar_volta_para_a_lista_com_aviso(): void
+    public function test_iniciar_leva_para_a_tela_ao_vivo(): void
     {
         $this->jogador('João', 1);
         $this->jogador('Lucas', 2);
 
         Livewire::test(Mesas::class, ['jogo' => $this->jogo])
             ->call('iniciar')
-            ->assertRedirect(route('jogos.index'));
+            ->assertRedirect(route('jogos.ao-vivo', $this->jogo));
 
         $this->assertSame(StatusJogo::EmAndamento, $this->jogo->fresh()->status);
-        $this->assertStringStartsWith('Poker Night #19 começou.', session('aviso'));
+        $this->assertSame('Poker Night #19 começou.', session('aviso'));
     }
 
     public function test_erro_de_regra_aparece_na_tela(): void

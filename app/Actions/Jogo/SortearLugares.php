@@ -54,6 +54,10 @@ class SortearLugares
 
             $jogo->participantes()->update(['jogo_mesa_id' => null, 'lugar' => null]);
 
+            // Recarrega depois de zerar: o model em memória ainda tem o lugar antigo e o update só
+            // gravaria o que mudou (quem caísse na mesma mesa ficaria sem mesa no banco).
+            $jogadores = $jogadores->map->refresh();
+
             $proximo = 0;
             foreach ($mesas as $mesa) {
                 $lugares = collect(range(1, $mesa->lugares))->shuffle()->take($quantos[$mesa->id]);

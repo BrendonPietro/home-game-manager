@@ -51,20 +51,23 @@ Site e painel **nunca gravam entradas ou status direto pelo model**. Tudo passa 
 | Classe | Faz |
 |---|---|
 | `App\Services\Jogo\Calculadora` | Arrecadação, premiação bruta, taxas, prize pool e prêmios, a partir de `entradas` |
-| `App\Services\Jogo\Saldos` | Investido, pago, recebido e saldo por jogador (`entradas` + `pagamentos`) |
+| `App\Services\Jogo\Saldos` | Investido, pago, recebido e saldo por jogador (`entradas` + `pagamentos`), em `SaldoDoJogador` (centavos) |
+| `App\Services\Jogo\Posicoes` | Posição e prêmio de quem caiu, refeitos a cada eliminação depois de fechar entradas |
 | `App\Services\Jogo\Acertos` | Sugestão de "quem paga quem" no fechamento |
 | `App\Services\Ranking\Pontuacao` | Pontos por ranking (posição + bônus de mesa final + participação) |
-| `App\Actions\Jogo\RegistrarEntrada` | Buy-in, rebuy, add-on e opcionais marcados, conforme a fase |
-| `App\Actions\Jogo\RegistrarPagamento` | Pagamento parcial ou total (jogador pagou / recebeu) |
-| `App\Actions\Jogo\RegistrarEliminacao` | Provisória antes do intervalo, definitiva depois (dá a posição) |
-| `App\Actions\Jogo\RegistrarCashOut` | Cash game: fichas finais × valor da ficha |
-| `App\Actions\Jogo\TrocarLugar` | Muda mesa/lugar (quebra de mesa) |
-| `App\Actions\Jogo\DesfazerAcao` | Cancela a última ação do jogador, com motivo (nunca apaga) |
+| `App\Actions\Jogo\RegistrarEntrada` | Buy-in (um por jogador), rebuy, add-on e opcionais marcados/obrigatórios, conforme a fase; rebuy traz de volta quem caiu |
+| `App\Actions\Jogo\RegistrarPagamento` | Pagamento parcial ou total (jogador pagou / recebeu), também depois de finalizar |
+| `App\Actions\Jogo\RegistrarEliminacao` | Provisória na fase de rebuys, definitiva depois; com as entradas fechadas dá a posição na hora |
+| `App\Actions\Jogo\RegistrarCashOut` | Cash game: fichas finais × valor da ficha; o jogador sai (registrar de novo corrige) |
+| `App\Actions\Jogo\TrocarLugar` | Muda mesa/lugar (quebra de mesa); quem já saiu só guardava o lugar e fica sem lugar |
+| `App\Actions\Jogo\DesfazerAcao` | Cancela a última ação do jogador, com motivo (nunca apaga); `ultimaAcao()` diz qual é |
 | `App\Actions\Jogo\AgendarJogo`, `CancelarJogo` | Rascunho → agendado (botão no painel) e rascunho/agendado → cancelado |
 | `App\Actions\Jogo\ConfirmarJogador`, `DesconfirmarJogador`, `CadastrarJogadorRapido` | Lista da noite (tela 05): confirmar, tirar (só sem lançamento) e cadastro rápido que já confirma |
 | `App\Actions\Jogo\SortearLugares`, `AjustarMesa`, `AdicionarMesa`, `RemoverMesa` | Montar as mesas (tela 06): sorteio equilibrado, lugares e dealer, mesas do jogo (a agenda acompanha) |
 | `App\Actions\Jogo\IniciarJogo` | Agendado → em andamento (torneio na fase de rebuys); sentados viram "jogando" |
-| `App\Actions\Jogo\EncerrarRebuys`, `FecharEntradas`, `FinalizarJogo` | Fases e status |
+| `App\Actions\Jogo\EncerrarRebuys`, `FecharEntradas` | Rebuys → intervalo (quem caiu e não voltou fica fora de vez) → sem entradas (grava os prêmios e as posições) |
+| `App\Actions\Jogo\AtualizarNivel` | Nível e blinds digitados na tela ao vivo (v1; "100/200" vira "100 / 200") |
+| `App\Actions\Jogo\FinalizarJogo` | Em andamento → finalizado (fase 4) |
 | `App\Services\Jogo\EventoDoJogo` | Cria/atualiza o evento do jogo na agenda (com as mesas); tira modelo, sem data e cancelado |
 | `App\Actions\Jogo\CriarDeModelo` | Novo jogo a partir de um torneio modelo (`jogos.e_modelo`) |
 
@@ -74,7 +77,7 @@ Regras e fórmulas em [docs/regras.md](docs/regras.md).
 
 ### `entradas` e `pagamentos` são o caixa
 
-Cada buy-in, rebuy e add-on é uma linha em `entradas` (o que o jogador deve), com `valor` e `fichas` copiados da opção no momento do registro. Cada pagamento, parcial ou total, é uma linha em `pagamentos` (jogador pagou ao caixa ou recebeu do caixa). Nada é apagado; desfazer preenche `cancelada_em`/`cancelado_em` (trait `App\Models\Concerns\Cancelavel`: use sempre `->validas()` nas somas). Cada jogo define em `jogo_itens` as **entradas** (buy-in, rebuy e add-on padrão + variações como rebuy duplo) e os **opcionais** (opcional, churrasco…, com `destino` `premiacao` / `metade` / `fora`), e em `jogo_taxas` as **taxas** (dealers, casa…), tiradas da premiação antes de dividir. Prize pool = premiação bruta − taxas. Só o Admin do site altera isso durante o jogo, até fechar entradas. Saldo do jogador = investido − prêmio − pago + recebido. Os dois têm `uuid` único vindo do clique, para um toque duplo não registrar duas vezes.
+Cada buy-in, rebuy e add-on é uma linha em `entradas` (o que o jogador deve), com `valor` e `fichas` copiados da opção no momento do registro. Cada pagamento, parcial ou total, é uma linha em `pagamentos` (jogador pagou ao caixa ou recebeu do caixa). Nada é apagado; desfazer preenche `cancelada_em`/`cancelado_em` (trait `App\Models\Concerns\Cancelavel`: use sempre `->validas()` nas somas; `cancelar($quem, $motivo)` só pelo `DesfazerAcao`). Cada jogo define em `jogo_itens` as **entradas** (buy-in, rebuy e add-on padrão + variações como rebuy duplo) e os **opcionais** (opcional, churrasco…, com `destino` `premiacao` / `metade` / `fora`), e em `jogo_taxas` as **taxas** (dealers, casa…), tiradas da premiação antes de dividir. Prize pool = premiação bruta − taxas. Só o Admin do site altera isso durante o jogo, até fechar entradas. Saldo do jogador = investido − prêmio − pago + recebido. Os dois têm `uuid` único vindo do clique, para um toque duplo não registrar duas vezes.
 
 ### Jogo: torneio ou cash game
 
@@ -124,7 +127,10 @@ V2. Na v1, `jogos.nivel_atual` e `blinds_atual` são digitados. Detalhes em [doc
 - Ícones: SVGs em `resources/svg/site/icons/` (set `rh` do blade-icons, registrado no `AppServiceProvider`): `@svg('rh-home')`.
 - Layout base: `<x-site.app titulo="...">` (`app/View/Components/Site/App.php` → `site/layouts/app.blade.php`). Livewire e Alpine vêm num bundle só (`resources/js/site/app.js` importa o ESM do Livewire; o layout usa `@livewireScriptConfig`): não importar Alpine de novo.
 - Componentes Blade em `resources/views/components/site/{core,props,poker,window}`. Já existem: `props/{brand,field,avatar,datebox,status-jogo,aviso,linha-item}`, `window/{topbar,fluxo-da-noite}`, `poker/mesa`. Conteúdo das telas dentro de `<main class="rh-page"><div class="rh-wrap">`.
-- Telas da noite usam `<x-site.operacao :jogo etapa="…" titulo="…">` (topbar com o jogo + fluxo da noite + aviso; slot `faixa` para a faixa ao vivo) e a rota leva `->middleware('jogo.etapa:<etapa>')`.
+- Telas da noite usam `<x-site.operacao :jogo etapa="…" titulo="…">` (topbar com o jogo + fluxo da noite + aviso) e a rota leva `->middleware('jogo.etapa:<etapa>')`. Com `larga`, o conteúdo vai de ponta a ponta (tela ao vivo, que traz a faixa ao vivo dentro do Livewire para atualizar no `wire:poll`).
+- Tela ao vivo: Livewire `Jogo\AoVivo` (`?mesa=` escolhe a mesa; sai sozinha se o jogo deixar de estar em andamento). Assentos com total e fichas via a prop `rodapes` da mesa; contagens por jogador em `Services\Jogo\Entradas::porJogador()`; ficha do buy-in (B, 2, 3) em `Jogo::fichaDoBuyin()`.
+- Resumo (tela 10): Livewire `Jogo\Resumo` (`?mesa=` e `?pendentes=1` filtram; saldos pelo `Services\Jogo\Saldos`). Clicar na linha abre o mesmo painel do jogador com `:muda-lugar="false"`.
+- Painel do jogador: Livewire filho `Jogo\AcoesJogador` (`:key` pelo participante, então o poll do pai não o redesenha). Conversa com o pai por eventos: `caixa-mudou` (lançou algo: pai redesenha), `fechar-jogador` e `mudar-lugar` (pai entra no modo de mudança e o próximo lugar clicado chama o `TrocarLugar`). O `uuid` de cada lançamento nasce ao abrir o modal. Valor digitado com `Dinheiro::lerTexto()` ('1.234,50' → centavos) e `paraTexto()` para preencher o campo.
 - Datas no site com `App\Support\Datas` ("Domingo, 04/10/2026", "Dom 04/10/2026", "OUT", "Em 4 dias"); o Carbon já está em pt_BR. Etapas da noite e o destino do Abrir em `App\Support\EtapaDoJogo`.
 - A mesa (`<x-site.poker.mesa :jogo-mesa :ocupantes acao="metodoLivewire">`) é renderizada no servidor; `resources/js/site/mesa.js` (Alpine) posiciona os assentos por comprimento de arco e gira em passos de 90°. A rotação fica no `localStorage` do aparelho (`rh-mesa-rotacao-<jogoMesaId>`). Posições em variáveis CSS (`--x0…`, `--y0…`) no contêiner, que tem `wire:ignore.self`: o Livewire redesenha os assentos sem perder a posição. `App\Support\PosicoesDaMesa` faz a mesma conta no PHP (posição de partida). Botão de girar fora da mesa: `$dispatch('girar-mesa', jogoMesaId)`.
 - Fontes Barlow e Barlow Condensed locais em `resources/fonts/barlow/` (sem Google Fonts).
@@ -134,10 +140,13 @@ V2. Na v1, `jogos.nivel_atual` e `blinds_atual` são digitados. Detalhes em [doc
 
 - `phpunit.xml` usa `APP_URL=http://localhost` e SQLite em memória. (No casamento, `APP_URL` sem esquema fazia toda rota dar 404 nos testes.)
 - Em views de componentes Livewire, cada `@if` ganha marcadores `<!--[if BLOCK]>` com quebra de linha: frase que atravessa um `@if` não casa com `assertSee`. Monte o texto numa expressão (`{{ $a ? … : … }}`) ou use `assertSeeText`.
+- Depois de um `call()`, o `assertSeeInOrder` do Livewire compara com o JSON da resposta, onde acento e símbolo viram `í`, `−`…: com texto não ASCII, use `assertSee` (que olha o HTML).
 - Factory de `Usuario` sorteia apelido: em teste que procura o nome na tela, crie com `'apelido' => null`.
 - A noite de exemplo **Poker Night #18** é a referência: 12 jogadores, 22 entradas, R$ 2.100 arrecadados, rake R$ 210, prize pool R$ 1.890 pago como 945 / 567 / 378. Se a `Calculadora` não devolver isso, algo quebrou.
   - `PokerNight18Seeder` cria a noite com os jogadores e lugares do protótipo, em andamento no intervalo (rebuys encerrados, add-ons feitos, ninguém eliminado). O `db:seed` só a cria no ambiente local (testes rodam o seeder dela direto), e rodar de novo não duplica.
   - `PokerNight18Test` confere os números somando direto em centavos; `CalculadoraTest` confere a `Calculadora` contra a mesma noite e contra o exemplo do sábado do `regras.md`.
+  - `Jogo\NoiteDeReferenciaTest` joga a mesma noite só pelas Actions (confirmar, sentar, iniciar, entradas, fases, eliminações) e confere números, prêmios, posições e saldos.
+- Testes das Actions da noite usam o trait `Tests\Concerns\MontaNoite`: torneio em andamento com entradas padrão de R$ 100, uma mesa, `$admin` e `$operador`, e atalhos `jogador()`, `entrar()`, `pagar()`, `eliminar()`, `desfazer()` e `assertRegra($mensagem, fn)`.
 - `Calculadora::doJogo($jogo)` dá os números reais (entradas válidas); `simular($jogo, jogadores, rebuys, addons)` estima pelo cadastro (buy-in, rebuy e add-on padrão + opcionais obrigatórios). Os dois devolvem um `ResumoFinanceiro` em centavos.
 
 ## Deploy

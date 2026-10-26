@@ -129,6 +129,19 @@ class MesasDoJogoTest extends TestCase
         $this->assertSame(13, $sentados->map(fn ($p) => $p->jogo_mesa_id.'-'.$p->lugar)->unique()->count());
     }
 
+    public function test_sortear_de_novo_quem_ja_estava_sentado_na_mesma_mesa(): void
+    {
+        // Só uma mesa: todo mundo cai na mesma mesa em que já estava.
+        $this->mesa2->delete();
+        $joao = $this->confirmado($this->mesa1, 1);
+        $lucas = $this->confirmado($this->mesa1, 2);
+
+        app(SortearLugares::class)($this->jogo, $this->admin);
+
+        $this->assertSame($this->mesa1->id, $joao->fresh()->jogo_mesa_id);
+        $this->assertSame($this->mesa1->id, $lucas->fresh()->jogo_mesa_id);
+    }
+
     public function test_sortear_sem_lugar_suficiente_ou_sem_mesa(): void
     {
         foreach (range(1, 19) as $_) {

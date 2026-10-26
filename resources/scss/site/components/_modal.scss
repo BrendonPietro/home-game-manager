@@ -23,6 +23,16 @@
 			overflow: auto;
 		}
 	}
+
+	// Fundo do drawer: mais claro, a mesa continua à vista
+	&--leve {
+		background: rgba(5, 6, 7, 0.45);
+	}
+
+	// Modal aberto por cima do drawer
+	&--topo {
+		z-index: 30;
+	}
 }
 
 .rh-modal {

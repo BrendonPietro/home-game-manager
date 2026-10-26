@@ -70,4 +70,15 @@ class Participante extends Model
     {
         return $query->where('status', StatusParticipante::Jogando);
     }
+
+    /** Eliminado ou saiu (cash-out): o lugar continua dele até alguém sentar ali. */
+    public function estaFora(): bool
+    {
+        return in_array($this->status, [StatusParticipante::Eliminado, StatusParticipante::Saiu], true);
+    }
+
+    public function nome(): string
+    {
+        return $this->usuario->nome_exibicao;
+    }
 }

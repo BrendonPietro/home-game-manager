@@ -7,6 +7,7 @@ use App\Enums\MetodoPremiacao;
 use App\Enums\Modalidade;
 use App\Enums\StatusJogo;
 use App\Enums\TipoItem;
+use App\Support\Dinheiro;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -219,9 +220,29 @@ class Jogo extends Model
         return $buyins->firstWhere('padrao', true) ?? $buyins->first();
     }
 
+    /** Ficha de um buy-in: B no padrão, 2 / 3… nas variações que valem 2× / 3× o padrão. */
+    public function fichaDoBuyin(Item $item): string
+    {
+        $padrao = $this->buyinPadrao();
+        $base = $padrao ? Dinheiro::centavos($padrao->valor) : 0;
+        $valor = Dinheiro::centavos($item->valor);
+
+        if ($item->is($padrao) || $base === 0 || $valor % $base !== 0 || $valor / $base < 2 || $valor / $base > 9) {
+            return 'B';
+        }
+
+        return (string) intdiv($valor, $base);
+    }
+
     /** Admin do site ainda pode mexer em entradas, opcionais e taxas. */
     public function estruturaEditavel(): bool
     {
         return ! $this->estaFinalizado() && $this->entradas_fechadas_em === null;
+    }
+
+    /** Ainda dá para lançar buy-in, rebuy, add-on ou opcional: em andamento e antes de Fechar entradas. */
+    public function entradasAbertas(): bool
+    {
+        return $this->status === StatusJogo::EmAndamento && $this->fase !== FaseTorneio::SemEntradas;
     }
 }

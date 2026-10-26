@@ -22,4 +22,13 @@
 		padding-left: 18px;
 		color: var(--ink-200);
 	}
+
+	// Deu certo (ex.: "Rebuy registrado para Lucas.")
+	&--ok {
+		border-color: var(--green-300);
+
+		.rh-ic {
+			color: var(--green-300);
+		}
+	}
 }

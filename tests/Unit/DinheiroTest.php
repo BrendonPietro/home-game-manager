@@ -48,6 +48,30 @@ class DinheiroTest extends TestCase
         $this->assertSame('R$ 0', Dinheiro::brl('0', true));
     }
 
+    public function test_multiplicar_fichas_pelo_valor_da_ficha(): void
+    {
+        $this->assertSame(25000, Dinheiro::multiplicar(25000, '0.0100')); // R$ 250
+        $this->assertSame(32550, Dinheiro::multiplicar(32550, '0.0100'));
+        $this->assertSame(2, Dinheiro::multiplicar(3, '0.0050'));          // R$ 0,015 → 2 centavos
+        $this->assertSame(0, Dinheiro::multiplicar(0, '0.0100'));
+        $this->assertSame(1000, Dinheiro::multiplicar(2, '5'));
+    }
+
+    public function test_ler_valor_digitado(): void
+    {
+        $this->assertSame(10000, Dinheiro::lerTexto('100'));
+        $this->assertSame(10050, Dinheiro::lerTexto('100,50'));
+        $this->assertSame(123450, Dinheiro::lerTexto('R$ 1.234,50'));
+        $this->assertSame(150000, Dinheiro::lerTexto('1.500'));
+        $this->assertSame(10050, Dinheiro::lerTexto('100.50'));
+        $this->assertNull(Dinheiro::lerTexto('abc'));
+        $this->assertNull(Dinheiro::lerTexto(''));
+        $this->assertNull(Dinheiro::lerTexto('-10'));
+
+        $this->assertSame('1.234,50', Dinheiro::paraTexto(123450));
+        $this->assertSame('40', Dinheiro::paraTexto(-4000));
+    }
+
     public function test_recusa_texto_invalido(): void
     {
         $this->expectException(InvalidArgumentException::class);

@@ -31,15 +31,16 @@ use RuntimeException;
  * Fica em andamento, no intervalo (rebuys encerrados, add-ons feitos, ninguém eliminado), como a
  * tela ao vivo do protótipo; as fases 3 e 4 continuam a mesma noite até o fechamento.
  *
- * As entradas são gravadas direto porque RegistrarEntrada ainda não existe (fase 3); quando existir,
- * este seeder passa a usar a Action. O DatabaseSeeder só chama este seeder no ambiente local.
+ * As entradas são gravadas direto, com o horário de cada uma (chegada, rebuys, intervalo), para a
+ * noite ter história nas telas. Jogo\NoiteDeReferenciaTest joga a mesma noite pelas Actions e chega
+ * nos mesmos números. O DatabaseSeeder só chama este seeder no ambiente local.
  */
 class PokerNight18Seeder extends Seeder
 {
     public const NOME = 'Poker Night #18';
 
     /** nome, apelido, mesa, lugar, buy-in (simples|duplo), rebuys, add-ons */
-    private const JOGADORES = [
+    public const JOGADORES = [
         ['João', null, 1, 1, 'simples', 0, 1],
         ['Lucas', null, 1, 2, 'simples', 1, 0],
         ['Carlos', null, 1, 3, 'simples', 1, 1],

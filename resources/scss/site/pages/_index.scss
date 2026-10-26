@@ -1,8 +1,11 @@
 // Estilos próprios de cada tela (layouts que não cabem nas grades de core/_responsive).
 // Um parcial por tela, entrando junto com ela nas fases 2–4.
 
+@forward "ao-vivo";
 @forward "conferencia";
+@forward "jogador";
 @forward "jogadores";
 @forward "jogos";
 @forward "mesas";
+@forward "resumo";
 @forward "vitrine";

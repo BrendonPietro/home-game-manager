@@ -53,7 +53,7 @@ app/
 ├── Policies/                   # uma por model, consultando as permissões
 ├── Providers/Filament/PainelPanelProvider.php
 ├── Services/
-│   ├── Jogo/                   # Calculadora, Saldos, Acertos
+│   ├── Jogo/                   # Calculadora, Saldos, Posicoes, Acertos, EventoDoJogo
 │   └── Ranking/                # Pontuacao
 ├── Support/Dinheiro.php
 └── View/Components/Site/       # App, Operacao

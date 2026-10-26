@@ -90,9 +90,9 @@ class ConferenciaTest extends TestCase
     {
         $noite = Jogo::query()->where('nome', PokerNight18Seeder::NOME)->sole();
 
-        // A tela ao vivo é da fase 3: por enquanto volta para a lista, com o aviso.
+        // Volta para a etapa atual (ao vivo), com o aviso.
         $this->get(route('jogos.conferencia', $noite))
-            ->assertRedirect(route('jogos.index'))
+            ->assertRedirect(route('jogos.ao-vivo', $noite))
             ->assertSessionHas('aviso', 'Conferência não abre agora: o jogo está em andamento.');
 
         $this->followingRedirects()

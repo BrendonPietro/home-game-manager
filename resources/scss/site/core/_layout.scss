@@ -15,6 +15,25 @@
 	@include ate(celular) {
 		padding: 16px;
 	}
+
+	// De ponta a ponta (tela ao vivo): a tela cuida das próprias margens.
+	&--larga {
+		padding: 0;
+		gap: 0;
+		flex: 1;
+
+		@include ate(celular) {
+			padding: 0;
+		}
+	}
+
+	&__aviso {
+		margin: 12px 24px 0;
+
+		@include ate(celular) {
+			margin: 12px 12px 0;
+		}
+	}
 }
 
 // Largura máxima do conteúdo das telas (o protótipo usa 1180–1240px centralizado)

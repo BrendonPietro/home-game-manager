@@ -1,0 +1,197 @@
+// ============================================================================
+// Telas 08, 08b e 09: painel do jogador na tela ao vivo (playerDrawer do protótipo)
+// O drawer, os botões grandes (.rh-action), a escolha (.rh-pick) e os modais vêm dos componentes.
+// ============================================================================
+
+@use "../vars" as *;
+
+.rh-jogador {
+	&__nome {
+		font-size: 26px;
+		line-height: 28px;
+		text-transform: uppercase;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	&__acoes {
+		display: grid;
+		grid-auto-flow: column;
+		grid-auto-columns: 1fr;
+		gap: 8px;
+
+		.rh-action {
+			min-height: 80px;
+			padding: 12px;
+		}
+
+		.rh-action__top {
+			font-size: 17px;
+		}
+	}
+
+	&__blocos {
+		display: flex;
+		flex-direction: column;
+	}
+
+	&__bloco {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		padding: 10px 0;
+		border-bottom: 1px solid var(--line-100);
+
+		&:last-child {
+			border-bottom: 0;
+		}
+
+		.rh-jogador__sem-ficha {
+			width: 30px;
+			height: 30px;
+		}
+	}
+
+	&__bloco-t {
+		flex: 1;
+		min-width: 0;
+	}
+
+	&__bloco-v {
+		font-family: var(--font-display);
+		font-weight: 700;
+		font-size: 22px;
+		font-variant-numeric: tabular-nums;
+		white-space: nowrap;
+	}
+
+	&__sem-ficha {
+		display: inline-grid;
+		place-items: center;
+		width: 20px;
+		height: 20px;
+		flex: none;
+		color: var(--ink-300);
+
+		.rh-ic {
+			width: 14px;
+			height: 14px;
+		}
+	}
+
+	// Conta com o caixa
+	&__conta {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		padding: 14px 16px;
+		background: var(--bg-100);
+		border: 1px solid var(--line-200);
+		border-radius: var(--radius-md);
+
+		dl {
+			margin: 0;
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+			gap: 8px;
+		}
+
+		dd {
+			margin: 2px 0 0;
+			font-family: var(--font-display);
+			font-weight: 600;
+			font-size: 17px;
+			font-variant-numeric: tabular-nums;
+			white-space: nowrap;
+		}
+	}
+
+	&__saldo {
+		display: flex;
+		align-items: baseline;
+		gap: 12px;
+		padding-top: 10px;
+		border-top: 1px solid var(--line-100);
+
+		.rh-label {
+			color: var(--ink-100);
+		}
+	}
+
+	&__saldo-v {
+		margin-left: auto;
+		font-family: var(--font-display);
+		font-weight: 700;
+		font-size: 32px;
+		line-height: 34px;
+		font-variant-numeric: tabular-nums;
+	}
+
+	&__historico {
+		border: 1px solid var(--line-200);
+		border-radius: var(--radius-md);
+
+		.rh-li {
+			padding: 9px 12px;
+			gap: 10px;
+			font-size: 14px;
+		}
+	}
+
+	&__h {
+		flex: 1;
+		min-width: 0;
+
+		> .rh-small.rh-muted {
+			display: block;
+		}
+	}
+
+	&__fim {
+		margin-top: auto;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	// Escolhas lado a lado que ocupam a largura do modal (direção e forma do pagamento)
+	&__seg {
+		display: flex;
+		width: 100%;
+
+		button {
+			flex: 1;
+			padding: 0 6px;
+		}
+	}
+
+	&__opcional {
+		display: flex;
+		width: 100%;
+		padding: 8px 0;
+		border-bottom: 1px solid var(--line-100);
+	}
+
+	&__destaque {
+		color: var(--ink-100);
+	}
+
+	&__previa {
+		display: flex;
+		align-items: baseline;
+		flex-wrap: wrap;
+		gap: 4px 10px;
+		padding: 12px 14px;
+		border-radius: var(--radius-md);
+		background: var(--felt-900);
+		border: 1px solid var(--felt-700);
+
+		.rh-num {
+			font-family: var(--font-display);
+			font-weight: 700;
+			font-size: 30px;
+			line-height: 32px;
+		}
+	}
+}

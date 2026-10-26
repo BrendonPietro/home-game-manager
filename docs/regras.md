@@ -73,7 +73,7 @@ Checadas nas Actions (Gate) e com `@can` no Blade para esconder botões.
 | `participantes` | jogo_id, usuario_id, jogo_mesa_id, lugar, status, posicao_final, premio, fichas_finais, cash_out | Únicos: (jogo_id, usuario_id) e (jogo_mesa_id, lugar). `status`: `confirmado` / `jogando` / `eliminado` / `saiu` |
 | `entradas` | uuid (único), jogo_id, participante_id, jogo_item_id, tipo, valor, fichas, destino, vinculada_a, registrado_por, cancelada_em, cancelada_por, motivo_cancelamento | Cada item comprado. `valor`, `fichas` e `destino` copiados do item no momento; `vinculada_a` liga o opcional à entrada com que foi comprado. Nunca apagada |
 | `pagamentos` | uuid (único), jogo_id, participante_id, direcao, valor, forma, observacao, registrado_por, cancelado_em, cancelado_por, motivo_cancelamento | `direcao`: `jogador_pagou` / `jogador_recebeu`. `forma`: `pix` / `dinheiro` / `cartao` / `outro` |
-| `eliminacoes` | jogo_id, participante_id, nivel, definitiva, registrada_por, cancelada_em, cancelada_por, motivo_cancelamento | Um jogador pode cair, voltar com rebuy e cair de novo |
+| `eliminacoes` | jogo_id, participante_id, nivel, definitiva, voltou_com, registrada_por, cancelada_em, cancelada_por, motivo_cancelamento | Um jogador pode cair, voltar com rebuy e cair de novo. `voltou_com` → `entradas`: o rebuy com que voltou de uma eliminação provisória (ela fica como histórico) |
 | `ranking_pontos` | ranking_id, jogo_id, usuario_id, posicao, pontos, detalhe (json) | Gravado ao finalizar; mudar a regra depois não altera pontos já dados |
 | `acertos` | jogo_id, de_participante_id, para_participante_id, valor, pago, pago_em | Sugestão do fechamento. Recebedor nulo = caixa |
 
@@ -92,6 +92,12 @@ Durante `status = em_andamento`, o torneio passa por três fases (`jogos.fase`),
 1. `rebuys` (início até o intervalo): buy-in e rebuy. Eliminação é **provisória**: o jogador pode voltar com rebuy (volta para o mesmo lugar).
 2. `intervalo` — botão **Encerrar rebuys**: rebuy fecha, add-on abre (até `limite_por_jogador`). Quem estava eliminado e não voltou vira eliminação definitiva, na ordem em que caiu.
 3. `sem_entradas` — botão **Fechar entradas**: add-on fecha, `jogo_premiacoes.valor` é gravado. Daqui em diante só eliminações definitivas, e cada uma dá a posição na hora (quem cai fica em último entre os que restam).
+
+Detalhes (`EncerrarRebuys`, `FecharEntradas`, `Services\Jogo\Posicoes`):
+- No intervalo a eliminação já é definitiva, mas a posição só sai ao fechar as entradas: buy-in atrasado ainda vale no intervalo e muda o número de jogadores.
+- Fechar entradas só a partir do intervalo (torneio sem add-on: Encerrar rebuys e depois Fechar entradas) e com pelo menos 2 jogadores com buy-in. Grava em `jogo_premiacoes` o percentual e o valor de cada posição pela `Calculadora` (faixa da regra do clube ou percentuais manuais); sem faixa para o número de jogadores, não fecha.
+- Posição: N = jogadores com buy-in válido; a k-ésima eliminação definitiva, na ordem em que caíram (0, 1, 2…), fica em N − k. Quando sobra um só, ele é o 1º. `participantes.premio` = valor gravado da posição (vazio fora da premiação).
+- As posições são refeitas a cada eliminação e a cada eliminação desfeita (quem caiu depois sobe uma posição).
 
 ## Lista da noite (jogadores confirmados)
 
@@ -120,6 +126,24 @@ O painel do jogador mostra investido, pago, recebido e saldo, e as ações:
 | Cash-out | Cash game | `participantes.fichas_finais/cash_out` |
 | Trocar de lugar ou mesa | Sempre | `participantes.jogo_mesa_id/lugar` (quebra de mesa) |
 | Desfazer última ação | Até finalizar | Marca a última entrada/pagamento/eliminação como cancelada, com motivo |
+
+Regras de cada ação (Actions em `app/Actions/Jogo`):
+
+- **Entrada** (`entradas.registrar`, Operador e Admin; `RegistrarEntrada`): só com o jogo em andamento e item ativo do jogo.
+  - Buy-in: um por jogador, qualquer variação (simples, duplo…); para mais fichas, rebuy. Vale até Fechar entradas (atrasado entra no intervalo).
+  - Rebuy só na fase de rebuys; add-on só no intervalo. Os dois pedem buy-in.
+  - O limite por jogador conta as entradas válidas da mesma linha (ex.: add-on 1); vazio = sem limite.
+  - Opcionais: os marcados e os obrigatórios vão junto da entrada (`vinculada_a`). O "1 por jogador" entra uma vez só e também pode ser comprado sozinho; obrigatório já comprado não repete; marcado já comprado é erro.
+  - Eliminado só volta com rebuy (fase de rebuys): a eliminação provisória ganha `voltou_com` e o jogador volta a jogar, no mesmo lugar.
+  - Cash game: buy-in e recompra (rebuy) a qualquer hora em andamento; sem add-on.
+- **Pagamento** (`pagamentos.registrar`; `RegistrarPagamento`): valor maior que zero, jogador pagou ou recebeu, forma (pix, dinheiro, cartão, outro) e observação opcional. Com o jogo agendado (pagou antes), em andamento ou finalizado (pendências). Pode passar do que deve: o saldo fica negativo (o caixa devolve).
+- **Eliminação** (`eliminacoes.registrar`; `RegistrarEliminacao`): só torneio, jogador jogando e com buy-in, e nunca o último em jogo (quem está sentado sem buy-in não conta; o último é o campeão). Provisória na fase de rebuys; definitiva depois. Guarda o nível atual.
+- **Cash-out** (`eliminacoes.registrar`; `RegistrarCashOut`): só cash game, jogador com buy-in e valor da ficha no jogo. O jogador sai (`saiu`); registrar de novo corrige o valor.
+- **Lugar de quem saiu**: eliminado e quem fez cash-out continuam no lugar (a mesa mostra apagado) até alguém sentar ali, e aí ficam sem lugar em vez de trocar. Diminuir a mesa tira do lugar quem já saiu; tirar a mesa ainda pede que ninguém esteja jogando nela. Quem chega atrasado e senta com o jogo em andamento passa a jogando.
+- **Desfazer** (`acoes.desfazer`, só Admin; `DesfazerAcao`): com motivo, só em andamento, sempre a última ação do jogador (a mais recente entre entrada, eliminação e pagamento; opcional junto de outra entrada vai com ela; no mesmo segundo vale a ordem entrada → eliminação → pagamento).
+  - Entrada leva junto os opcionais comprados com ela e só se desfaz até Fechar entradas. Rebuy que trouxe o jogador de volta devolve a eliminação (definitiva, se os rebuys já acabaram).
+  - Eliminação desfeita: o jogador volta a jogar e as posições são refeitas.
+  - Cash-out não se desfaz: registrar de novo corrige.
 
 ## Cash game
 
@@ -196,7 +220,7 @@ Cash game: posição para o ranking = ordem do resultado (maior lucro = 1º). Po
 - **Prize pool** = premiação bruta − taxas.
 - **Fora da premiação** = arrecadação − premiação bruta.
 - **Prêmio da posição** = prize pool × percentual. Sobra de arredondamento vai para o 1º.
-- **Saldo do jogador** = investido − prêmio − pago + recebido. Positivo: deve ao caixa. Negativo: o caixa deve a ele.
+- **Saldo do jogador** = investido − prêmio − pago + recebido. Positivo: deve ao caixa. Negativo: o caixa deve a ele. No cash game o prêmio é o cash-out. `Services\Jogo\Saldos` soma em centavos a partir das entradas e pagamentos válidos; sem pagamentos, a soma dos saldos é o que fica com a casa (taxas + fora da premiação).
 
 Referência (Poker Night #18): 22 entradas, premiação bruta R$ 2.100; taxa "casa" 10% = R$ 210; prize pool R$ 1.890 → 945 / 567 / 378.
 
@@ -221,6 +245,7 @@ O jogo pode ser finalizado com saldos em aberto: viram pendências do jogador, a
 
 ## Travas
 
+- Buy-in: um por jogador.
 - Rebuy só na fase `rebuys`; add-on só no `intervalo`, até o limite.
 - Rebuy desfaz a eliminação provisória.
 - `uuid` repetido em `entradas`/`pagamentos` é ignorado (toque duplo).
@@ -242,6 +267,7 @@ O jogo pode ser finalizado com saldos em aberto: viram pendências do jogador, a
 |---|---|
 | `Services\Jogo\Calculadora` | Arrecadação, premiação bruta, taxas, prize pool, prêmios |
 | `Services\Jogo\Saldos` | Investido, pago, recebido, saldo por jogador |
+| `Services\Jogo\Posicoes` | Posição e prêmio de quem caiu, com as entradas fechadas |
 | `Services\Jogo\Acertos` | Sugestão de quem paga quem |
 | `Services\Ranking\Pontuacao` | Pontos por ranking e classificação |
 | `Actions\Jogo\RegistrarEntrada`, `RegistrarPagamento`, `RegistrarEliminacao`, `RegistrarCashOut`, `TrocarLugar` | Ações no jogador |
@@ -251,7 +277,7 @@ O jogo pode ser finalizado com saldos em aberto: viram pendências do jogador, a
 
 ## Blinds e relógio (v2)
 
-Na v1 o operador digita nível e blinds (`jogos.nivel_atual`, `blinds_atual`) e encerra rebuys no botão. Na v2:
+Na v1 o Admin do site (`jogo.fases`) digita nível e blinds na faixa da tela ao vivo (`Actions\Jogo\AtualizarNivel`: nível de 1 a 99 ou vazio, blinds até 40 caracteres, "100/200" vira "100 / 200") e encerra rebuys e fecha entradas nos botões da tela. Na v2:
 
 | Tabela | Colunas principais | Observações |
 |---|---|---|

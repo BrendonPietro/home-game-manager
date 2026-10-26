@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
-/** Telas do jogo no site que não são Livewire: 03 (escolher o jogo) e 04 (conferência). */
+/** Telas do jogo no site: 03 (escolher o jogo) e 04 (conferência); as outras só abrem o Livewire da etapa. */
 class JogoController extends Controller
 {
     /** aba => status, na ordem das abas */
@@ -66,6 +66,18 @@ class JogoController extends Controller
     public function mesas(Jogo $jogo): View
     {
         return view('site.pages.mesas', ['jogo' => $jogo]);
+    }
+
+    /** Telas 07–09 e 11: a noite ao vivo (Livewire Jogo\AoVivo, de ponta a ponta). */
+    public function aoVivo(Jogo $jogo): View
+    {
+        return view('site.pages.ao-vivo', ['jogo' => $jogo]);
+    }
+
+    /** Tela 10: resumo ao vivo (Livewire Jogo\Resumo). */
+    public function resumo(Jogo $jogo): View
+    {
+        return view('site.pages.resumo', ['jogo' => $jogo]);
     }
 
     /** O jogo ao vivo; se não houver, o agendado para hoje. */

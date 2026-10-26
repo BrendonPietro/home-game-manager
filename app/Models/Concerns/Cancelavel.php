@@ -2,6 +2,7 @@
 
 namespace App\Models\Concerns;
 
+use App\Models\Usuario;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
@@ -29,5 +30,17 @@ trait Cancelavel
     public function estaCancelada(): bool
     {
         return $this->getAttribute(static::colunaCancelamento()) !== null;
+    }
+
+    /** Desfaz: marca quando, quem (`cancelada_por` / `cancelado_por`) e o motivo. Só pelo DesfazerAcao. */
+    public function cancelar(Usuario $quem, string $motivo): void
+    {
+        $coluna = static::colunaCancelamento();
+
+        $this->forceFill([
+            $coluna => now(),
+            str_replace('_em', '_por', $coluna) => $quem->id,
+            'motivo_cancelamento' => $motivo,
+        ])->save();
     }
 }

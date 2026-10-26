@@ -7,11 +7,15 @@ use App\Enums\StatusJogo;
 use App\Exceptions\RegraDoJogo;
 use App\Models\Jogo;
 use App\Models\JogoMesa;
+use App\Models\Participante;
 use App\Models\Usuario;
 use App\Services\Jogo\EventoDoJogo;
 use Illuminate\Support\Facades\DB;
 
-/** Tira uma mesa do jogo, se ninguém estiver sentado nela. A agenda acompanha. */
+/**
+ * Tira uma mesa do jogo, se ninguém estiver jogando nela (quem já saiu do jogo perde o lugar).
+ * A agenda acompanha.
+ */
 class RemoverMesa
 {
     use ChecaRegras;
@@ -26,10 +30,13 @@ class RemoverMesa
             $jogo = Jogo::query()->lockForUpdate()->findOrFail($jogoMesa->jogo_id);
             $this->exigirStatus($jogo, [StatusJogo::Agendado, StatusJogo::EmAndamento], 'As mesas só mudam com o jogo agendado ou em andamento.');
 
-            if ($jogoMesa->participantes()->exists()) {
+            $sentados = $jogoMesa->participantes()->get();
+
+            if ($sentados->contains(fn (Participante $p) => ! $p->estaFora())) {
                 throw new RegraDoJogo("Tire os jogadores da {$jogoMesa->mesa->nome} antes de removê-la.");
             }
 
+            $sentados->each->update(['jogo_mesa_id' => null, 'lugar' => null]);
             $jogoMesa->delete();
             $this->evento->sincronizar($jogo);
         });

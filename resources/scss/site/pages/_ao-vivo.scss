@@ -1,0 +1,339 @@
+// ============================================================================
+// Telas 07 e 07m: a noite ao vivo (LIVE_CSS do protótipo)
+// Faixa no topo, mesa no palco e coluna lateral; no tablet a lateral some (o prize pool fica na
+// faixa) e no celular a faixa vira a barra presa embaixo.
+// ============================================================================
+
+@use "../vars" as *;
+
+.rh-aovivo {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-width: 0;
+
+	&__grade {
+		display: grid;
+		grid-template-columns: 1fr 330px;
+		min-height: calc(100vh - 170px);
+
+		@include ate(tablet) {
+			grid-template-columns: 1fr;
+			min-height: 0;
+		}
+	}
+
+	&__palco {
+		padding: 16px 24px;
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		min-width: 0;
+
+		@include ate(tablet) {
+			padding: 12px;
+		}
+	}
+
+	&__barra {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		flex-wrap: wrap;
+	}
+
+	&__legenda {
+		display: flex;
+		gap: 14px;
+		flex-wrap: wrap;
+		font-size: 13px;
+		color: var(--ink-200);
+
+		> span {
+			display: inline-flex;
+			gap: 6px;
+			align-items: center;
+		}
+
+		.rh-dealer-btn {
+			width: 18px;
+			height: 18px;
+			font-size: 10px;
+		}
+	}
+
+	&__mesa {
+		flex: 1;
+		display: grid;
+		place-items: center;
+		min-height: 0;
+
+		// Cabe na altura da tela (topbar, fluxo, faixa e barra ocupam ~250px): largura = altura × proporção.
+		.rh-ptable {
+			max-width: max(300px, min(960px, calc((100svh - 252px) * var(--ar, 1.7))));
+
+			&.is-retrato {
+				max-width: max(300px, min(520px, calc((100svh - 252px) * var(--ar, 0.82))));
+			}
+		}
+	}
+
+	// Modo "mudar de lugar": o próximo lugar clicado recebe o jogador
+	&__mudando {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 8px 10px;
+		padding: 10px 14px;
+		border-radius: var(--radius-md);
+		border: 1px solid var(--red-500);
+		background: var(--bg-100);
+		font-size: 14px;
+
+		> .rh-ic {
+			color: var(--red-300);
+		}
+	}
+
+	&__espera {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 8px;
+
+		.rh-pcard {
+			width: auto;
+			padding: 6px 10px;
+		}
+	}
+
+	&__lado {
+		border-left: 1px solid var(--line-200);
+		background: var(--bg-100);
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
+
+		@include ate(tablet) {
+			display: none;
+		}
+	}
+
+	&__sec {
+		padding: 16px 18px;
+		border-bottom: 1px solid var(--line-100);
+	}
+
+	&__prize {
+		font-family: var(--font-display);
+		font-weight: 700;
+		font-size: 48px;
+		line-height: 50px;
+		font-variant-numeric: tabular-nums;
+	}
+
+	&__numeros {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 8px;
+
+		.rh-stat__v {
+			font-size: 26px;
+		}
+	}
+
+	&__titulo {
+		display: flex;
+		align-items: center;
+		padding-bottom: 8px;
+		border-bottom: 0;
+	}
+
+	&__feed {
+		flex: 1;
+		overflow: auto;
+
+		.rh-li {
+			padding: 9px 18px;
+			font-size: 14px;
+		}
+	}
+
+	&__quem {
+		flex: 1;
+		min-width: 0;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	&__valor {
+		font-weight: 600;
+		font-size: 16px;
+	}
+
+	&__sem-ficha {
+		display: inline-grid;
+		place-items: center;
+		width: 20px;
+		height: 20px;
+		flex: none;
+		color: var(--ink-300);
+
+		.rh-ic {
+			width: 14px;
+			height: 14px;
+		}
+	}
+
+	// Nível e blinds clicáveis (Admin): a célula da faixa e da barra do celular vira botão
+	&__nivel {
+		font: inherit;
+		color: inherit;
+		text-align: left;
+		background: none;
+		border: 0;
+		border-right: 1px solid var(--line-100);
+		cursor: pointer;
+
+		&:hover {
+			background: var(--bg-200);
+		}
+
+		.rh-label {
+			display: inline-flex;
+			align-items: center;
+			gap: 6px;
+		}
+
+		.rh-ic {
+			width: 12px;
+			height: 12px;
+			color: var(--ink-300);
+		}
+	}
+
+	// Botão da fase: no fim da lateral; no tablet e no celular (sem lateral), numa linha da barra
+	&__acao {
+		border-top: 1px solid var(--line-200);
+		border-bottom: 0;
+	}
+
+	&__fase-curta {
+		display: none;
+
+		@include ate(tablet) {
+			display: inline-flex;
+			order: 10;
+			flex-basis: 100%;
+		}
+	}
+
+	// Premiação gravada (entradas fechadas)
+	&__premio {
+		display: flex;
+		align-items: baseline;
+		gap: 10px;
+		padding: 5px 0;
+		font-size: 14px;
+	}
+
+	&__pos {
+		font-family: var(--font-display);
+		font-weight: 700;
+		width: 26px;
+		color: var(--ink-300);
+	}
+
+	// Conta do modal de fechar entradas (tela 11)
+	&__conta {
+		border: 1px solid var(--line-200);
+		border-radius: var(--radius-md);
+		overflow: hidden;
+
+		> div {
+			display: flex;
+			align-items: baseline;
+			gap: 12px;
+			padding: 12px 16px;
+			border-bottom: 1px solid var(--line-100);
+
+			&:last-child {
+				border-bottom: 0;
+			}
+		}
+
+		.v {
+			margin-left: auto;
+			font-family: var(--font-display);
+			font-weight: 700;
+			font-size: 24px;
+			font-variant-numeric: tabular-nums;
+			white-space: nowrap;
+		}
+
+		> .is-prize {
+			background: var(--felt-900);
+
+			.rh-label {
+				color: var(--ink-100);
+			}
+
+			.v {
+				font-size: 36px;
+				line-height: 38px;
+			}
+		}
+	}
+
+	&__rodape {
+		display: none;
+	}
+
+	@include ate(celular) {
+		padding-bottom: 64px;
+
+		&__faixa,
+		&__legenda {
+			display: none;
+		}
+
+		&__barra .rh-btn:not(.rh-aovivo__fase-curta) {
+			margin-left: auto;
+		}
+
+		&__rodape {
+			position: fixed;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			z-index: 15;
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			background: var(--bg-100);
+			border-top: 1px solid var(--line-200);
+
+			> * {
+				padding: 10px 12px;
+				border-right: 1px solid var(--line-100);
+				display: flex;
+				flex-direction: column;
+				gap: 2px;
+				min-width: 0;
+			}
+
+			> .is-prize {
+				background: var(--bg-200);
+			}
+
+			.v {
+				font-family: var(--font-display);
+				font-weight: 700;
+				font-size: 22px;
+				line-height: 24px;
+				font-variant-numeric: tabular-nums;
+				white-space: nowrap;
+			}
+		}
+	}
+}

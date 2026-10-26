@@ -120,13 +120,9 @@ class Mesas extends Component
         }
 
         $jogo = $this->jogo->refresh();
-        $destino = EtapaDoJogo::url($jogo);
 
-        session()->flash('aviso', $destino
-            ? "{$jogo->nome} começou."
-            : "{$jogo->nome} começou. A tela ao vivo chega na fase 3; por enquanto o jogo aparece em Em andamento.");
-
-        $this->redirect($destino ?? route('jogos.index'));
+        session()->flash('aviso', "{$jogo->nome} começou.");
+        $this->redirect(EtapaDoJogo::url($jogo) ?? route('jogos.index'));
     }
 
     /** Roda uma Action e mostra a mensagem de regra ou de permissão, sem derrubar a tela. */

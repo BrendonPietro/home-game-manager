@@ -10,6 +10,86 @@ Registro das atualizações do sistema do Rodrigues Home Game, organizadas por:
 - Docs: documentação;
 - Chore: manutenção.
 
+## 0.4.4
+
+Fim da fase 3 (telas 07–11).
+
+### Feat
+- Resumo ao vivo (tela 10, `/jogos/{jogo}/resumo`, Livewire `Jogo\Resumo`): jogando, buy-ins, rebuys, add-ons, entradas, arrecadação, taxas e prize pool; pendências com o caixa (jogadores devem, caixa deve, entrou no caixa); tabela de jogadores com mesa, buy-in, rebuys, add-on, fichas, total, prêmio ou cash-out, pago e saldo, do maior total para o menor. Filtros por mesa e "Só pendentes"; clicar na linha abre o painel do jogador (sem mudar de lugar). Atualiza a cada 5 s. O link "Resumo" da tela ao vivo e o passo do fluxo da noite passam a abrir.
+
+### Fix
+- Eliminação: quem está sentado sem buy-in não conta para "o último em jogo". Antes, com gente sentada sem buy-in, dava para eliminar o último com buy-in (o campeão); agora o botão nem aparece para ele.
+
+### Test
+- `Site\ResumoTest` (a noite #18: números, ordem da tabela, fichas 230.000 e filtros) e o caso do último em jogo.
+
+## 0.4.3
+
+### Feat
+- Fases na tela ao vivo (Admin): ENCERRAR REBUYS (modal com o que fecha, o add-on que abre e quem fica eliminado de vez) e FECHAR ENTRADAS (tela 11: o que deixa de valer, arrecadação, cada taxa, prize pool, prêmio de cada posição e aviso de quem está jogando sem buy-in). No tablet e no celular o botão fica acima da mesa.
+- Depois de fechar as entradas, a lateral mostra a premiação: posição, quem já está nela e o valor.
+- Nível e blinds pela faixa (e pela barra do celular): modal com nível (+1) e blinds; `Actions\Jogo\AtualizarNivel` ("100/200" vira "100 / 200").
+
+### Docs
+- `CLAUDE.md`: `assertSeeInOrder` do Livewire depois de `call()` compara com o JSON (acentos escapados).
+
+### Test
+- `Jogo\NivelTest` e `Site\FasesAoVivoTest` (a noite #18 fechando as entradas pela tela: R$ 2.100 / 210 / 1.890 → 945 / 567 / 378).
+
+## 0.4.2
+
+### Feat
+- Painel do jogador na tela ao vivo (telas 08, 08b e 09, Livewire `Jogo\AcoesJogador`): clicar no assento (ou em quem está sem lugar) abre o drawer com BUY-IN / REBUY / ADD-ON conforme a fase, opcionais "1 por jogador" avulsos, o que ele comprou, a conta com o caixa e o histórico.
+  - Modal de entrada: escolhe a variação (buy-in simples / duplo…), marca os opcionais (obrigatórios já vêm marcados) e mostra o novo total.
+  - Pagamento (sugere o saldo; jogador pagou ou recebeu; pix, dinheiro, cartão ou outro), eliminação (diz se é provisória ou a posição e o prêmio), cash-out com a prévia do valor e do resultado, desfazer a última ação com motivo.
+  - MUDAR DE LUGAR / SENTAR NA MESA: a tela ao vivo entra no modo de mudança e o próximo lugar clicado recebe o jogador (quebra de mesa); dá para tirar do lugar ou cancelar.
+  - Operador lança; desfazer e mudar de lugar só aparecem para o Admin. Esc fecha o modal e depois o painel.
+- `Dinheiro::lerTexto()` (lê '100', '100,50', '1.234,50') e `paraTexto()`.
+
+### Fix
+- Sortear lugares de novo deixava sem mesa quem já estava sentado e caía na mesma mesa (o lugar ficava gravado sem a mesa).
+
+### Test
+- `Site\AcoesJogadorTest` e o caso do sorteio em `MesasDoJogoTest`.
+
+## 0.4.1
+
+### Feat
+- Tela ao vivo (telas 07 e 07m, `/jogos/{jogo}/ao-vivo`, Livewire `Jogo\AoVivo`): faixa com nível e blinds, fase, jogando, entradas, arrecadação e prize pool; mesa escolhida com o total e as fichas de cada jogador (B/2/3, R, A), quem saiu apagado e quem está sem lugar embaixo; lateral com prize pool, taxas, contagem e últimos registros; legenda e GIRAR MESA. Atualiza a cada 5 s. No tablet a lateral some; no celular a mesa abre em pé e blinds, entradas e prize pool ficam presos embaixo.
+- Iniciar jogo e o Abrir de jogo em andamento passam a levar para a tela ao vivo.
+- `Services\Jogo\Entradas::porJogador()` (buy-in, rebuys, add-ons, opcionais, fichas e total de cada jogador), `Jogo::fichaDoBuyin()` e a prop `rodapes` da mesa.
+- `<x-site.operacao larga>`: conteúdo de ponta a ponta.
+
+### Style
+- Na tela ao vivo a mesa cabe na altura da tela, deitada ou em pé (notebook de 768px de altura sem rolar).
+- Assento: o valor não quebra em duas linhas; sem espaço (celular, três fichas), as fichas descem.
+
+### Test
+- `Site\AoVivoTest`.
+
+## 0.4.0
+
+Início da fase 3 (durante a noite): as regras do caixa e das fases, ainda sem tela.
+
+### Feat
+- `RegistrarEntrada`: buy-in (um por jogador), rebuy e add-on conforme a fase, opcionais marcados e obrigatórios junto da entrada, opcional "1 por jogador" sozinho, limite por jogador, recompra no cash game; rebuy traz de volta quem caiu na fase de rebuys. uuid repetido devolve a entrada que já existe.
+- `RegistrarPagamento`: jogador pagou ou recebeu, parcial ou total, também com o jogo agendado e depois de finalizar (pendências).
+- `RegistrarEliminacao` (provisória nos rebuys, definitiva depois, nunca o último na mesa) e `RegistrarCashOut` (fichas × valor da ficha; registrar de novo corrige).
+- `EncerrarRebuys` (quem caiu e não voltou fica fora de vez) e `FecharEntradas` (grava o prêmio de cada posição e as posições de quem já caiu).
+- `DesfazerAcao`: cancela a última ação do jogador com motivo; entrada leva os opcionais junto, rebuy desfeito devolve a eliminação, eliminação desfeita refaz as posições.
+- `Services\Jogo\Saldos` (investido, prêmio ou cash-out, pago, recebido e saldo em centavos) e `Services\Jogo\Posicoes`.
+- `eliminacoes.voltou_com`: o rebuy com que o jogador voltou (a eliminação provisória fica como histórico).
+- `Dinheiro::multiplicar()` (fichas × valor da ficha com 4 casas) e `cancelar()` no trait `Cancelavel`.
+
+### Fix
+- Eliminado e quem fez cash-out só guardam o lugar: quem senta ali não troca com eles (eles ficam sem lugar), diminuir a mesa tira-os do lugar e tirar a mesa não conta com eles. Quem chega atrasado e senta com o jogo em andamento passa a jogando.
+
+### Docs
+- `regras.md`: regras de cada ação no jogador, posições e prêmios ao fechar entradas, saldo no cash game e a coluna `voltou_com`.
+
+### Test
+- `EntradasTest`, `PagamentosESaldosTest`, `EliminacoesTest`, `DesfazerAcaoTest`, `CashGameTest` e `NoiteDeReferenciaTest` (a noite #18 inteira pelas Actions: R$ 2.100 / 210 / 1.890 → 945 / 567 / 378), com o trait `MontaNoite`.
+
 ## 0.3.4
 
 Fim da fase 2 (telas 01–06).

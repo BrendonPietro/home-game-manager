@@ -11,13 +11,19 @@
 
 	<x-site.window.fluxo-da-noite :jogo="$jogo" :etapa="$etapa" />
 
-	{{ $faixa ?? '' }}
-
-	<main class="rh-page">
-		<div class="rh-wrap rh-col" style="gap:16px">
-			<x-site.props.aviso />
+	@if ($larga)
+		<main class="rh-page rh-page--larga">
+			<x-site.props.aviso class="rh-page__aviso" />
 
 			{{ $slot }}
-		</div>
-	</main>
+		</main>
+	@else
+		<main class="rh-page">
+			<div class="rh-wrap rh-col" style="gap:16px">
+				<x-site.props.aviso />
+
+				{{ $slot }}
+			</div>
+		</main>
+	@endif
 </x-site.app>

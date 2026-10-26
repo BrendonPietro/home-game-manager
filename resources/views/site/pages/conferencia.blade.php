@@ -11,18 +11,6 @@
 	$nomeDoJogo = $torneio ? 'torneio' : 'jogo';
 	$doTipo = fn (TipoItem $tipo) => $jogo->itens->where('tipo', $tipo);
 	$padrao = $jogo->buyinPadrao();
-
-	// Ficha do buy-in: B no padrão, 2 / 3 nas variações que valem 2× / 3× o padrão.
-	$fichaDoBuyin = function ($item) use ($padrao): string {
-		$base = $padrao ? Dinheiro::centavos($padrao->valor) : 0;
-		$valor = Dinheiro::centavos($item->valor);
-
-		if ($item->is($padrao) || $base === 0 || $valor % $base !== 0 || $valor / $base < 2 || $valor / $base > 9) {
-			return 'B';
-		}
-
-		return (string) intdiv($valor, $base);
-	};
 	$limite = fn ($item): string => $item->limite_por_jogador
 		? $item->limite_por_jogador.' por jogador'
 		: 'sem limite';
@@ -57,7 +45,7 @@
 					<span class="rh-small rh-muted">fichas · valor</span>
 				</div>
 				@forelse ($doTipo(TipoItem::Buyin)->where('ativo', true) as $item)
-					<x-site.props.linha-item :ficha="$fichaDoBuyin($item)" :titulo="$item->nome" :fichas="$item->fichas" :valor="$item->valor">
+					<x-site.props.linha-item :ficha="$jogo->fichaDoBuyin($item)" :titulo="$item->nome" :fichas="$item->fichas" :valor="$item->valor">
 						{{ $item->is($padrao) ? 'Entrada padrão' : 'Conta como 1 entrada' }} · {{ $limite($item) }}
 					</x-site.props.linha-item>
 				@empty

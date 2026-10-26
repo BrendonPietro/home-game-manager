@@ -52,6 +52,45 @@ class Dinheiro
         return intdiv($produto + ($produto >= 0 ? 5000 : -5000), 10000);
     }
 
+    /**
+     * Quantidade × valor unitário com até 4 casas (valor da ficha), em centavos, meio centavo para cima.
+     * Ex.: multiplicar(25000, '0.0100') → 25000 (25 mil fichas de R$ 0,01 = R$ 250).
+     */
+    public static function multiplicar(int $quantidade, string|int $valorUnitario): int
+    {
+        if (! preg_match('/^(\d+)(?:\.(\d{1,4}))?$/', trim((string) $valorUnitario), $partes)) {
+            throw new InvalidArgumentException("Valor unitário inválido: [{$valorUnitario}]");
+        }
+
+        // Décimos de milésimo de real: 0.0100 → 100.
+        $unitario = (int) $partes[1] * 10000 + (int) str_pad($partes[2] ?? '0', 4, '0');
+
+        return intdiv($quantidade * $unitario + 50, 100);
+    }
+
+    /**
+     * Valor digitado num campo (jeito brasileiro) → centavos, ou null se não der para ler.
+     * Aceita '100', '100,50', '1.234,50', 'R$ 1.234' e também '100.50'.
+     */
+    public static function lerTexto(?string $texto): ?int
+    {
+        $texto = preg_replace('/[\s\x{00A0}]+|R\$/u', '', (string) $texto);
+
+        if (str_contains($texto, ',')) {
+            $texto = str_replace(['.', ','], ['', '.'], $texto);
+        } elseif (preg_match('/^\d{1,3}(\.\d{3})+$/', $texto)) {
+            $texto = str_replace('.', '', $texto); // '1.500' = mil e quinhentos
+        }
+
+        return preg_match('/^\d+(\.\d{1,2})?$/', $texto) ? self::centavos($texto) : null;
+    }
+
+    /** Centavos → texto para um campo de valor ('1.234,50', '100'), o inverso de lerTexto(). */
+    public static function paraTexto(int $centavos): string
+    {
+        return substr(self::brlCentavos(abs($centavos)), strlen('R$ '));
+    }
+
     /** Centavos → decimal para gravar no banco ('1890.00'). */
     public static function decimal(int $centavos): string
     {

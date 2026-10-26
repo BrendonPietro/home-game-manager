@@ -141,10 +141,12 @@
 		text-overflow: ellipsis;
 	}
 
+	// Sem espaço (assento estreito com três fichas), as fichas descem e o valor não quebra.
 	&__ft {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
-		gap: 6px;
+		gap: 3px 6px;
 	}
 
 	&__total {
@@ -152,6 +154,7 @@
 		font-weight: 700;
 		font-size: 17px;
 		font-variant-numeric: tabular-nums;
+		white-space: nowrap;
 		margin-right: auto;
 	}
 
