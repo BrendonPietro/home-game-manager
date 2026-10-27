@@ -38,6 +38,17 @@ Route::middleware('auth:web')->group(function () {
     Route::get('/jogos/{jogo}/resumo', [JogoController::class, 'resumo'])
         ->middleware('jogo.etapa:resumo')
         ->name('jogos.resumo');
+
+    // Final da noite: abre com as entradas fechadas (cash game: a qualquer hora) e depois de finalizar.
+    Route::get('/jogos/{jogo}/premiacao', [JogoController::class, 'premiacao'])
+        ->middleware('jogo.etapa:premiacao')
+        ->name('jogos.premiacao');
+    Route::get('/jogos/{jogo}/resultado', [JogoController::class, 'resultado'])
+        ->middleware('jogo.etapa:resultado')
+        ->name('jogos.resultado');
+    Route::get('/jogos/{jogo}/fechamento', [JogoController::class, 'fechamento'])
+        ->middleware('jogo.etapa:fechamento')
+        ->name('jogos.fechamento');
 });
 
 // Vitrine do design system, só para desenvolvimento.

@@ -1,0 +1,83 @@
+// ============================================================================
+// Tela 14: fechamento financeiro (por jogador, acertos e Finalizar)
+// ============================================================================
+
+@use "../vars" as *;
+
+.rh-fechamento {
+	&__grade {
+		grid-template-columns: 1.35fr 1fr;
+		align-items: start;
+
+		@include ate(tablet) {
+			grid-template-columns: 1fr;
+		}
+	}
+
+	&__confere {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		font-size: 22px;
+	}
+
+	&__tabela {
+		overflow-x: auto;
+	}
+
+	&__linha {
+		cursor: pointer;
+	}
+
+	&__resultado {
+		font-size: 18px;
+	}
+
+	&__hd {
+		flex-wrap: wrap;
+		gap: 4px 12px;
+	}
+
+	&__forma {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+
+		.rh-select {
+			height: 30px;
+			width: auto;
+			font-size: 13px;
+		}
+	}
+
+	// Acerto com a coluna do "feito" depois de finalizar
+	&__acerto:has(.rh-fechamento__feito) {
+		grid-template-columns: 1fr 28px 1fr auto auto;
+
+		@include ate(celular) {
+			grid-template-columns: 1fr 20px 1fr;
+
+			.rh-xfer__v,
+			.rh-fechamento__feito {
+				grid-column: span 3;
+				text-align: right;
+			}
+		}
+	}
+
+	&__acerto.is-feito {
+		opacity: 0.55;
+	}
+
+	&__finalizar {
+		height: 60px;
+		font-size: 20px;
+	}
+}
+
+// O caixa nos acertos: ficha vermelha com o naipe
+.rh-avatar--casa {
+	background: var(--red-500);
+	border-color: var(--red-500);
+	color: var(--on-red);
+}

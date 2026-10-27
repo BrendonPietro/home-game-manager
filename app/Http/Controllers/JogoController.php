@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\MetodoPremiacao;
 use App\Enums\StatusJogo;
 use App\Models\Jogo;
+use App\Models\RegraPremiacao;
 use App\Services\Jogo\Calculadora;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -78,6 +80,33 @@ class JogoController extends Controller
     public function resumo(Jogo $jogo): View
     {
         return view('site.pages.resumo', ['jogo' => $jogo]);
+    }
+
+    /** Tela 14: fechamento financeiro e Finalizar (Livewire Jogo\Fechamento). */
+    public function fechamento(Jogo $jogo): View
+    {
+        return view('site.pages.fechamento', ['jogo' => $jogo]);
+    }
+
+    /** Tela 13: resultado e posições (Livewire Jogo\Resultado). */
+    public function resultado(Jogo $jogo): View
+    {
+        return view('site.pages.resultado', ['jogo' => $jogo]);
+    }
+
+    /** Tela 12: do arrecadado ao prize pool e a distribuição gravada ao fechar as entradas (só torneio). */
+    public function premiacao(Jogo $jogo, Calculadora $calculadora): View
+    {
+        $jogo->load(['taxas', 'premiacoes']);
+
+        return view('site.pages.premiacao', [
+            'jogo' => $jogo,
+            'resumo' => $calculadora->doJogo($jogo),
+            'naPosicao' => $jogo->participantes()->with('usuario')->whereNotNull('posicao_final')->get()->keyBy('posicao_final'),
+            'regras' => $jogo->metodo_premiacao === MetodoPremiacao::Regra
+                ? RegraPremiacao::query()->orderBy('jogadores_min')->get()
+                : collect(),
+        ]);
     }
 
     /** O jogo ao vivo; se não houver, o agendado para hoje. */

@@ -5,19 +5,23 @@ namespace Tests\Feature\Jogo;
 use App\Actions\Jogo\ConfirmarJogador;
 use App\Actions\Jogo\EncerrarRebuys;
 use App\Actions\Jogo\FecharEntradas;
+use App\Actions\Jogo\FinalizarJogo;
 use App\Actions\Jogo\IniciarJogo;
 use App\Actions\Jogo\RegistrarEliminacao;
 use App\Actions\Jogo\RegistrarEntrada;
 use App\Actions\Jogo\TrocarLugar;
 use App\Enums\CalculoTaxa;
+use App\Enums\Periodicidade;
 use App\Enums\TipoItem;
 use App\Models\Item;
 use App\Models\Jogo;
 use App\Models\Mesa;
 use App\Models\Participante;
+use App\Models\Ranking;
 use App\Models\Usuario;
 use App\Services\Jogo\Calculadora;
 use App\Services\Jogo\Saldos;
+use App\Support\Dinheiro;
 use Database\Seeders\PermissoesSeeder;
 use Database\Seeders\PokerNight18Seeder;
 use Database\Seeders\RegrasPremiacaoSeeder;
@@ -108,5 +112,29 @@ class NoiteDeReferenciaTest extends TestCase
         $saldos = app(Saldos::class)->doJogo($jogo);
         $this->assertSame(21000, $saldos->sum('saldo'));
         $this->assertSame(25000 - 94500, $saldos[$final['Marcos']->id]->saldo);
+
+        // Finalizar: os acertos fecham o saldo de cada um e levam a taxa para a casa; os pontos saem da posição.
+        $ranking = Ranking::query()->create([
+            'nome' => 'Anual 2026', 'periodicidade' => Periodicidade::Anual, 'ft_pontua' => true, 'pontos_mesa_final' => 2,
+            'participacao_pontua' => true, 'pontos_participacao' => 1,
+        ]);
+        $ranking->pontuacoes()->createMany([['posicao' => 1, 'pontos' => 10], ['posicao' => 2, 'pontos' => 6], ['posicao' => 3, 'pontos' => 4]]);
+        $jogo->rankings()->attach($ranking);
+
+        app(FinalizarJogo::class)($jogo, $admin);
+
+        $liquido = [];
+        foreach ($jogo->acertos()->get() as $acerto) {
+            $valor = Dinheiro::centavos($acerto->valor);
+            $liquido[$acerto->de_participante_id ?? 'casa'] = ($liquido[$acerto->de_participante_id ?? 'casa'] ?? 0) + $valor;
+            $liquido[$acerto->para_participante_id ?? 'casa'] = ($liquido[$acerto->para_participante_id ?? 'casa'] ?? 0) - $valor;
+        }
+        $this->assertSame(-21000, $liquido['casa']);
+        foreach ($saldos as $id => $saldo) {
+            $this->assertSame($saldo->saldo, $liquido[$id] ?? 0, "acertos do participante {$id}");
+        }
+
+        $pontos = $ranking->pontos()->with('usuario')->get()->pluck('pontos', 'usuario.nome');
+        $this->assertSame([13, 9, 7, 3, 1, 1], [$pontos['Marcos'], $pontos['Felipe'], $pontos['Diego'], $pontos['Rafael'], $pontos['Carlos'], $pontos['João']]);
     }
 }

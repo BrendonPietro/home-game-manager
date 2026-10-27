@@ -33,7 +33,9 @@
 		StatusParticipante::Confirmado => 'Confirmado',
 		default => null,
 	};
-	$podeDesfazer = $quem->can('acoes.desfazer') && $ultima
+	// Desfazer e cash-out só com o jogo em andamento; finalizado, o painel serve para pagar pendências.
+	$emAndamento = $jogo->status === \App\Enums\StatusJogo::EmAndamento;
+	$podeDesfazer = $emAndamento && $quem->can('acoes.desfazer') && $ultima
 		&& (! $ultima instanceof Entrada || $jogo->entradasAbertas());
 @endphp
 
@@ -176,9 +178,9 @@
 						<div class="rh-li rh-muted">Nada lançado ainda.</div>
 					@endforelse
 				</div>
-				@can('acoes.desfazer')
+				@if ($emAndamento && $quem->can('acoes.desfazer'))
 					<div class="rh-field__help" style="margin-top:6px">Só o último registro pode ser desfeito, com o motivo.</div>
-				@endcan
+				@endif
 			</div>
 
 			<div class="rh-jogador__fim">
@@ -192,7 +194,7 @@
 					{{-- Sem buy-in ou último em jogo não cai (o último é o campeão). --}}
 					@if ($podeSerEliminado)
 						<button type="button" class="rh-btn rh-btn--danger rh-btn--block rh-btn--lg" wire:click="abrirEliminacao">@svg('rh-skull') REGISTRAR ELIMINAÇÃO</button>
-					@elseif (! $torneio && $temBuyin && in_array($participante->status, [StatusParticipante::Jogando, StatusParticipante::Saiu], true))
+					@elseif ($emAndamento && ! $torneio && $temBuyin && in_array($participante->status, [StatusParticipante::Jogando, StatusParticipante::Saiu], true))
 						<button type="button" class="rh-btn rh-btn--danger rh-btn--block rh-btn--lg" wire:click="abrirCashOut">@svg('rh-coins') {{ $participante->cash_out !== null ? 'CORRIGIR CASH-OUT' : 'REGISTRAR CASH-OUT' }}</button>
 					@endif
 				@endcan

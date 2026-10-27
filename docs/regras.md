@@ -208,6 +208,8 @@ Cada ranking configura, sem nada fixo no código:
 
 Cash game: posição para o ranking = ordem do resultado (maior lucro = 1º). Pontos gravados em `ranking_pontos` ao finalizar (`Services\Ranking\Pontuacao`); classificação = soma por usuário no período do ranking.
 
+Detalhes da `Pontuacao`: vale nos rankings **ativos** ligados ao jogo; entra quem tem buy-in, com uma linha por jogador em `ranking_pontos` (mesmo com 0 ponto, para contar participação). `detalhe` = `{posicao, mesa_final, participacao}`; `pontos` = a soma. Finalizar de novo (não acontece pelo site) refaz as linhas do jogo.
+
 ## Torneios modelo
 
 `jogos.e_modelo = true` guarda um modelo com entradas, opcionais, taxas, premiação, rankings e mesas. Modelos não aparecem no site nem no calendário. `Actions\Jogo\CriarDeModelo` copia tudo e recebe só nome, data e horário. No `JogoResource`, a ação "Salvar como modelo" faz o caminho inverso.
@@ -240,6 +242,19 @@ Com pagamentos registrados durante a noite, quase tudo se acerta pelo caixa. O f
 2. Primeiro, devedores (ou combinações pequenas) que fecham exatamente o saldo de um credor.
 3. Depois, guloso: maior devedor paga o maior credor aberto até zerar um dos dois.
 4. Se o caixa tiver dinheiro, ele entra como credor/devedor intermediário (recebedor nulo).
+
+Detalhes (`Services\Jogo\Acertos`, em centavos):
+- O caixa (a casa) entra como mais um, com saldo = −(soma dos saldos dos jogadores): ele recebe as taxas e o que ficou fora da premiação, menos o que já tem em mãos dos pagamentos da noite. Com dinheiro sobrando, é ele quem paga. Em `acertos`, participante nulo = o caixa (de um lado ou do outro).
+- "Combinações pequenas" = um, dois ou três devedores somando exatamente o saldo de um credor (do maior credor para o menor). A cada transferência a busca recomeça; sem combinação exata, o maior devedor paga o maior credor.
+- Cada um termina com o próprio saldo fechado (a soma do que paga menos o que recebe é o saldo dele).
+
+**Resultado** (`Actions\Jogo\DefinirResultado`, `jogo.fases`): com as entradas fechadas, o Admin define a posição de quem ainda está em jogo (acordo na mesa final, horário). Quem está em jogo ocupa do 1º ao Nº, sem repetir; cada um vira uma eliminação definitiva, do último colocado para o 2º, e o 1º fica. Assim a posição continua saindo só das eliminações. Cash game não tem posições.
+
+**Finalizar** (`Actions\Jogo\FinalizarJogo`, `jogo.finalizar`): só em andamento. Torneio: entradas fechadas e posição de todos que fizeram buy-in. Cash game: cash-out de todos que fizeram buy-in. Grava os acertos sugeridos e os pontos dos rankings.
+
+Premiação, resultado e fechamento abrem no site com as entradas fechadas (no cash game, a qualquer hora em andamento) e continuam abertos depois de finalizar; o **Finalizar** fica no fechamento.
+
+**Acerto feito** (`Actions\Jogo\MarcarAcerto`, `pagamentos.registrar`, só depois de finalizar): vira pagamentos para os saldos fecharem. Quem paga ganha um "jogador pagou" e quem recebe um "jogador recebeu", na forma escolhida, com a observação "Acerto: pagou a …" / "recebeu de …"; o caixa não tem linha (o dinheiro dele muda só quando ele é uma das pontas). Marcar de novo não vale.
 
 O jogo pode ser finalizado com saldos em aberto: viram pendências do jogador, aparecem em "Valores pendentes" no painel e são pagas depois pela ação de pagamento.
 

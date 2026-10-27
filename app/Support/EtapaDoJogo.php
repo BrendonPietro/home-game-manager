@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Enums\FaseTorneio;
 use App\Enums\StatusJogo;
 use App\Models\Jogo;
 use Illuminate\Support\Facades\Route;
@@ -36,12 +37,19 @@ class EtapaDoJogo
         ));
     }
 
-    /** @return list<string> etapas que o status atual deixa abrir */
+    /**
+     * Etapas que o status atual deixa abrir. As finais (premiação, resultado, fechamento) abrem com
+     * as entradas fechadas no torneio, e a qualquer hora no cash game; o Finalizar fica no fechamento.
+     *
+     * @return list<string>
+     */
     public static function permitidas(Jogo $jogo): array
     {
         $etapas = match ($jogo->status) {
             StatusJogo::Agendado => ['conferencia', 'jogadores', 'mesas'],
-            StatusJogo::EmAndamento => ['ao-vivo', 'resumo', 'premiacao'],
+            StatusJogo::EmAndamento => self::finaisAbertas($jogo)
+                ? ['ao-vivo', 'resumo', 'premiacao', 'resultado', 'fechamento']
+                : ['ao-vivo', 'resumo'],
             StatusJogo::Finalizado => ['premiacao', 'resultado', 'fechamento'],
             default => [],
         };
@@ -52,6 +60,12 @@ class EtapaDoJogo
     public static function permite(Jogo $jogo, string $etapa): bool
     {
         return in_array($etapa, self::permitidas($jogo), true);
+    }
+
+    /** Em andamento, as etapas finais já abrem? (entradas fechadas no torneio; sempre no cash game) */
+    public static function finaisAbertas(Jogo $jogo): bool
+    {
+        return $jogo->eCashGame() || $jogo->fase === FaseTorneio::SemEntradas;
     }
 
     /** Onde o jogo está agora: a primeira etapa que o status permite. */

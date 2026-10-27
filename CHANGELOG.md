@@ -10,6 +10,59 @@ Registro das atualizações do sistema do Rodrigues Home Game, organizadas por:
 - Docs: documentação;
 - Chore: manutenção.
 
+## 0.5.4
+
+Fim da fase 4 (telas 12–14). Portão cumprido: uma cópia agendada da Poker Night #18 jogada inteira pelo site (conferência, 12 confirmados, sorteio, iniciar, 12 buy-ins com o duplo do Rafael, eliminação e volta do Lucas, 6 rebuys, nível e blinds, encerrar rebuys, 4 add-ons, fechar entradas, 9 eliminações, resultado do trio final, fechamento, finalizar e acertos feitos) bate R$ 2.100 / 210 / 1.890 → 945 / 567 / 378.
+
+### Fix
+- Resultado: o select de posição dava erro 500 no navegador quando o array de posições ainda estava vazio (o Livewire manda o array inteiro, sem chave).
+- Resultado: quem ainda está em jogo vem no topo da tabela (vai ficar do 1º ao Nº), não no fim, abaixo de todos os eliminados.
+- Tela ao vivo: o aviso de sucesso (fase, nível) some sozinho depois de alguns segundos, em vez de ficar a noite toda.
+
+### Test
+- Resultado com o array inteiro vindo do navegador.
+
+## 0.5.3
+
+### Feat
+- Fechamento financeiro (tela 14, `/jogos/{jogo}/fechamento`, Livewire `Jogo\Fechamento`): total investido, prêmios (ou cash-outs), o que fica com a casa e a conferência; por jogador (investiu, premiação, resultado e saldo); acertos (quem paga quem, com o caixa) e "Copiar acertos". Avisa quem ainda falta (posição ou cash-out).
+- FINALIZAR com confirmação (somente leitura, acertos e pontos gravados, quem fica com pendência); recarrega a página já finalizada.
+- Depois de finalizar, cada acerto se marca como FEITO na forma escolhida (`MarcarAcerto`: vira pagamentos e os saldos fecham); clicar no jogador abre o painel só com o pagamento (sem desfazer nem cash-out).
+
+### Test
+- `Site\FechamentoTest` (a noite #18 finalizada pela tela) e o acerto feito em `FinalDaNoiteTest`.
+
+## 0.5.2
+
+### Feat
+- Resultado e posições (tela 13, `/jogos/{jogo}/resultado`, Livewire `Jogo\Resultado`): pódio das posições premiadas com quem está nelas e o valor; tabela com posição, jogador (ITM), mesa, investido, prêmio e resultado. Quem caiu já vem com a posição; quem ainda está em jogo ganha um select (posição repetida tira do outro) e GRAVAR RESULTADO (`DefinirResultado`). Cash game: cash-outs do maior lucro para o menor, quem está na mesa pendente; clicar na linha abre o painel do jogador.
+- O REGISTRAR RESULTADO da premiação passa a aparecer; jogo finalizado em outro aparelho leva a tela ao vivo para o resultado.
+
+### Test
+- `Site\ResultadoTest`.
+
+## 0.5.1
+
+### Feat
+- Premiação (tela 12, `/jogos/{jogo}/premiacao`, só torneio): do arrecadado ao prize pool (arrecadação, o que ficou fora da premiação, cada taxa, valor retirado antes da premiação), a distribuição gravada ao fechar as entradas (posição, percentual, barra, valor e quem já está na posição) e a regra de distribuição do clube com a faixa da noite marcada. Abre com as entradas fechadas e depois de finalizar.
+
+### Test
+- `Site\PremiacaoTest`.
+
+## 0.5.0
+
+Início da fase 4 (final da noite): as regras do resultado, do fechamento e dos rankings, ainda sem tela.
+
+### Feat
+- `Services\Jogo\Acertos`: quem paga quem a partir dos saldos, com o caixa como mais um (recebe taxas e o que ficou fora da premiação, ou paga com o dinheiro que já tem); primeiro combinações exatas de 1, 2 ou 3 devedores, depois o maior paga o maior.
+- `Services\Ranking\Pontuacao`: pontos por posição, mesa final e participação em cada ranking ativo do jogo; no cash game a posição é a ordem do lucro.
+- `DefinirResultado`: com as entradas fechadas, a posição de quem ainda está em jogo (acordo na mesa final), gravada como eliminações do último para o 2º.
+- `FinalizarJogo`: confere posições (torneio) ou cash-outs (cash game), finaliza e grava acertos e pontos.
+- Fluxo da noite: premiação, resultado e fechamento abrem com as entradas fechadas (cash game a qualquer hora); o aviso diz "abre depois de fechar as entradas".
+
+### Test
+- `AcertosTest` (unidade), `FinalDaNoiteTest` e a noite #18 pelas Actions indo até finalizar (acertos levam os R$ 210 para a casa; pontos 13 / 9 / 7…).
+
 ## 0.4.4
 
 Fim da fase 3 (telas 07–11).

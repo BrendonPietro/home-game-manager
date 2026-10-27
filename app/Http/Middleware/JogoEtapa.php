@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\StatusJogo;
 use App\Models\Jogo;
 use App\Support\EtapaDoJogo;
 use Closure;
@@ -26,7 +27,9 @@ class JogoEtapa
 
         if (! EtapaDoJogo::permite($jogo, $etapa)) {
             $rotulo = EtapaDoJogo::ETAPAS[$etapa][0] ?? $etapa;
-            $aviso = "{$rotulo} não abre agora: o jogo está ".mb_strtolower($jogo->status->label()).'.';
+            $aviso = $jogo->status === StatusJogo::EmAndamento && in_array($etapa, ['premiacao', 'resultado', 'fechamento'], true) && $jogo->eTorneio()
+                ? "{$rotulo} abre depois de fechar as entradas."
+                : "{$rotulo} não abre agora: o jogo está ".mb_strtolower($jogo->status->label()).'.';
 
             return redirect(EtapaDoJogo::url($jogo) ?? route('jogos.index'))->with('aviso', $aviso);
         }

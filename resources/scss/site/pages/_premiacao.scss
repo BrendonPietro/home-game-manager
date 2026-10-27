@@ -1,0 +1,123 @@
+// ============================================================================
+// Tela 12: premiação (do arrecadado ao prêmio, distribuição e regra)
+// ============================================================================
+
+@use "../vars" as *;
+
+.rh-premiacao {
+	grid-template-columns: 1fr 1.5fr;
+	align-items: start;
+
+	@include ate(tablet) {
+		grid-template-columns: 1fr;
+	}
+
+	&__pool {
+		margin-top: 18px;
+		padding: 18px;
+		border-radius: var(--radius-md);
+		background: var(--felt-900);
+		border: 1px solid var(--felt-700);
+
+		.rh-label {
+			color: var(--ink-100);
+		}
+	}
+
+	&__pool-v {
+		font-family: var(--font-display);
+		font-weight: 700;
+		font-size: 56px;
+		line-height: 58px;
+		font-variant-numeric: tabular-nums;
+
+		@include ate(celular) {
+			font-size: 44px;
+			line-height: 46px;
+		}
+	}
+
+	&__posicao {
+		display: flex;
+		align-items: center;
+		gap: 16px;
+		padding: 18px 20px;
+		border-bottom: 1px solid var(--line-100);
+
+		@include ate(celular) {
+			gap: 12px;
+			padding: 14px 16px;
+		}
+	}
+
+	&__lugar {
+		width: 64px;
+		flex: none;
+		font-family: var(--font-display);
+		font-weight: 700;
+		font-size: 40px;
+		color: var(--ink-200);
+		font-variant-numeric: tabular-nums;
+
+		&.is-primeiro {
+			color: var(--ink-100);
+		}
+
+		@include ate(celular) {
+			width: 44px;
+			font-size: 30px;
+		}
+	}
+
+	&__meio {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+
+	&__barra {
+		height: 8px;
+		border-radius: 4px;
+		background: var(--bg-300);
+		overflow: hidden;
+
+		> span {
+			display: block;
+			height: 100%;
+			background: var(--felt-300);
+			border-radius: 4px;
+		}
+	}
+
+	&__valor {
+		min-width: 150px;
+		text-align: right;
+		font-family: var(--font-display);
+		font-weight: 700;
+		font-size: 36px;
+		font-variant-numeric: tabular-nums;
+		white-space: nowrap;
+
+		@include ate(celular) {
+			min-width: 0;
+			font-size: 26px;
+		}
+	}
+
+	&__tabela {
+		overflow-x: auto;
+	}
+
+	&__soma {
+		display: flex;
+		align-items: baseline;
+		padding: 14px 20px;
+
+		.rh-num {
+			font-weight: 700;
+			font-size: 22px;
+		}
+	}
+}

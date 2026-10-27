@@ -53,7 +53,7 @@ Site e painel **nunca gravam entradas ou status direto pelo model**. Tudo passa 
 | `App\Services\Jogo\Calculadora` | Arrecadação, premiação bruta, taxas, prize pool e prêmios, a partir de `entradas` |
 | `App\Services\Jogo\Saldos` | Investido, pago, recebido e saldo por jogador (`entradas` + `pagamentos`), em `SaldoDoJogador` (centavos) |
 | `App\Services\Jogo\Posicoes` | Posição e prêmio de quem caiu, refeitos a cada eliminação depois de fechar entradas |
-| `App\Services\Jogo\Acertos` | Sugestão de "quem paga quem" no fechamento |
+| `App\Services\Jogo\Acertos` | Sugestão de "quem paga quem" no fechamento (`Transferencia`; o caixa é o participante nulo) |
 | `App\Services\Ranking\Pontuacao` | Pontos por ranking (posição + bônus de mesa final + participação) |
 | `App\Actions\Jogo\RegistrarEntrada` | Buy-in (um por jogador), rebuy, add-on e opcionais marcados/obrigatórios, conforme a fase; rebuy traz de volta quem caiu |
 | `App\Actions\Jogo\RegistrarPagamento` | Pagamento parcial ou total (jogador pagou / recebeu), também depois de finalizar |
@@ -67,7 +67,9 @@ Site e painel **nunca gravam entradas ou status direto pelo model**. Tudo passa 
 | `App\Actions\Jogo\IniciarJogo` | Agendado → em andamento (torneio na fase de rebuys); sentados viram "jogando" |
 | `App\Actions\Jogo\EncerrarRebuys`, `FecharEntradas` | Rebuys → intervalo (quem caiu e não voltou fica fora de vez) → sem entradas (grava os prêmios e as posições) |
 | `App\Actions\Jogo\AtualizarNivel` | Nível e blinds digitados na tela ao vivo (v1; "100/200" vira "100 / 200") |
-| `App\Actions\Jogo\FinalizarJogo` | Em andamento → finalizado (fase 4) |
+| `App\Actions\Jogo\DefinirResultado` | Com as entradas fechadas, posição de quem ainda está em jogo (vira eliminações do último para o 2º) |
+| `App\Actions\Jogo\FinalizarJogo` | Em andamento → finalizado: confere posições (ou cash-outs), grava acertos e pontos dos rankings |
+| `App\Actions\Jogo\MarcarAcerto` | Acerto feito depois de finalizar: vira pagamentos (quem pagou / quem recebeu) e os saldos fecham |
 | `App\Services\Jogo\EventoDoJogo` | Cria/atualiza o evento do jogo na agenda (com as mesas); tira modelo, sem data e cancelado |
 | `App\Actions\Jogo\CriarDeModelo` | Novo jogo a partir de um torneio modelo (`jogos.e_modelo`) |
 
@@ -129,6 +131,8 @@ V2. Na v1, `jogos.nivel_atual` e `blinds_atual` são digitados. Detalhes em [doc
 - Componentes Blade em `resources/views/components/site/{core,props,poker,window}`. Já existem: `props/{brand,field,avatar,datebox,status-jogo,aviso,linha-item}`, `window/{topbar,fluxo-da-noite}`, `poker/mesa`. Conteúdo das telas dentro de `<main class="rh-page"><div class="rh-wrap">`.
 - Telas da noite usam `<x-site.operacao :jogo etapa="…" titulo="…">` (topbar com o jogo + fluxo da noite + aviso) e a rota leva `->middleware('jogo.etapa:<etapa>')`. Com `larga`, o conteúdo vai de ponta a ponta (tela ao vivo, que traz a faixa ao vivo dentro do Livewire para atualizar no `wire:poll`).
 - Tela ao vivo: Livewire `Jogo\AoVivo` (`?mesa=` escolhe a mesa; sai sozinha se o jogo deixar de estar em andamento). Assentos com total e fichas via a prop `rodapes` da mesa; contagens por jogador em `Services\Jogo\Entradas::porJogador()`; ficha do buy-in (B, 2, 3) em `Jogo::fichaDoBuyin()`.
+- Fechamento (tela 14): Livewire `Jogo\Fechamento`. Antes de finalizar mostra a sugestão do `Acertos`; depois, os acertos gravados com FEITO. O Finalizar recarrega a página (a topbar e o fluxo da noite ficam fora do Livewire).
+- Resultado (tela 13): Livewire `Jogo\Resultado`; o select de posição só existe para quem está em jogo e grava pelo `DefinirResultado`.
 - Resumo (tela 10): Livewire `Jogo\Resumo` (`?mesa=` e `?pendentes=1` filtram; saldos pelo `Services\Jogo\Saldos`). Clicar na linha abre o mesmo painel do jogador com `:muda-lugar="false"`.
 - Painel do jogador: Livewire filho `Jogo\AcoesJogador` (`:key` pelo participante, então o poll do pai não o redesenha). Conversa com o pai por eventos: `caixa-mudou` (lançou algo: pai redesenha), `fechar-jogador` e `mudar-lugar` (pai entra no modo de mudança e o próximo lugar clicado chama o `TrocarLugar`). O `uuid` de cada lançamento nasce ao abrir o modal. Valor digitado com `Dinheiro::lerTexto()` ('1.234,50' → centavos) e `paraTexto()` para preencher o campo.
 - Datas no site com `App\Support\Datas` ("Domingo, 04/10/2026", "Dom 04/10/2026", "OUT", "Em 4 dias"); o Carbon já está em pt_BR. Etapas da noite e o destino do Abrir em `App\Support\EtapaDoJogo`.
@@ -140,6 +144,7 @@ V2. Na v1, `jogos.nivel_atual` e `blinds_atual` são digitados. Detalhes em [doc
 
 - `phpunit.xml` usa `APP_URL=http://localhost` e SQLite em memória. (No casamento, `APP_URL` sem esquema fazia toda rota dar 404 nos testes.)
 - Em views de componentes Livewire, cada `@if` ganha marcadores `<!--[if BLOCK]>` com quebra de linha: frase que atravessa um `@if` não casa com `assertSee`. Monte o texto numa expressão (`{{ $a ? … : … }}`) ou use `assertSeeText`.
+- `set('prop.chave', …)` no teste manda a chave aninhada, mas o navegador manda o array inteiro quando ele ainda está vazio: hook `updatedProp($valor, $chave)` tem de aceitar `$chave` nula e `$valor` array (ex.: `Jogo\Resultado::updatedPosicoes`). Teste os dois.
 - Depois de um `call()`, o `assertSeeInOrder` do Livewire compara com o JSON da resposta, onde acento e símbolo viram `í`, `−`…: com texto não ASCII, use `assertSee` (que olha o HTML).
 - Factory de `Usuario` sorteia apelido: em teste que procura o nome na tela, crie com `'apelido' => null`.
 - A noite de exemplo **Poker Night #18** é a referência: 12 jogadores, 22 entradas, R$ 2.100 arrecadados, rake R$ 210, prize pool R$ 1.890 pago como 945 / 567 / 378. Se a `Calculadora` não devolver isso, algo quebrou.

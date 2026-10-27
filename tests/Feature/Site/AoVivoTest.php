@@ -122,7 +122,8 @@ class AoVivoTest extends TestCase
 
         $this->noite->forceFill(['status' => StatusJogo::Finalizado])->save();
 
-        $tela->call('selecionar', null)->assertRedirect(route('jogos.index'));
+        // Vai para a etapa atual do jogo finalizado: o resultado.
+        $tela->call('selecionar', null)->assertRedirect(route('jogos.resultado', $this->noite));
         $this->assertSame('Poker Night #18 não está mais em andamento.', session('aviso'));
     }
 

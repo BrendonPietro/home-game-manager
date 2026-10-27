@@ -1,0 +1,65 @@
+// ============================================================================
+// Tela 13: resultado e posições (pódio das posições premiadas e a tabela)
+// ============================================================================
+
+@use "../vars" as *;
+
+.rh-resultado {
+	&__podio.is-primeiro {
+		background: var(--felt-900);
+		border-color: var(--felt-700);
+
+		.rh-label {
+			color: var(--ink-100);
+		}
+	}
+
+	&__quem {
+		margin-top: 4px;
+		flex-wrap: nowrap;
+
+		b {
+			font-size: 20px;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		.rh-stat__v {
+			font-size: 26px;
+		}
+	}
+
+	&__hd {
+		flex-wrap: wrap;
+		gap: 4px 12px;
+	}
+
+	&__tabela {
+		overflow-x: auto;
+	}
+
+	&__linha {
+		cursor: pointer;
+	}
+
+	&__select {
+		height: 34px;
+		width: 96px;
+	}
+
+	&__posicao {
+		font-family: var(--font-display);
+		font-weight: 700;
+		font-size: 18px;
+	}
+
+	&__acao {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 10px;
+		padding: 14px 16px;
+		border-top: 1px solid var(--line-200);
+	}
+}

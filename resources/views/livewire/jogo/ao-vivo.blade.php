@@ -81,8 +81,9 @@
 				</div>
 			@endif
 
+			{{-- Some sozinho: a tela ao vivo fica aberta a noite toda. --}}
 			@if ($aviso)
-				<div class="rh-warn rh-warn--ok" role="status">@svg('rh-check')<div>{{ $aviso }}</div></div>
+				<div class="rh-warn rh-warn--ok" role="status" wire:key="aviso-{{ md5($aviso) }}" x-data="{ ver: true }" x-init="setTimeout(() => ver = false, 6000)" x-show="ver" x-transition.opacity>@svg('rh-check')<div>{{ $aviso }}</div></div>
 			@endif
 
 			@if ($erro && ! $modal)

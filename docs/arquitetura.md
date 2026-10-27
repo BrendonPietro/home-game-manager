@@ -95,11 +95,11 @@ Tudo atrás de `auth` (guard `web`, tabela `usuarios`) e das permissões do site
 | 10 Resumo | `GET /jogos/{jogo}/resumo` | `jogos.resumo` | Livewire `Jogo\Resumo` (saldos e pendências) |
 | 12 Premiação | `GET /jogos/{jogo}/premiacao` | `jogos.premiacao` | `JogoController@premiacao` (só torneio) |
 | 13 Resultado | `GET /jogos/{jogo}/resultado` | `jogos.resultado` | Livewire `Jogo\Resultado` (posições / cash-outs) |
-| 14 Fechamento | `GET /jogos/{jogo}/fechamento`, `POST /jogos/{jogo}/finalizar` | `jogos.fechamento`, `jogos.finalizar` | `JogoController` |
+| 14 Fechamento | `GET /jogos/{jogo}/fechamento` | `jogos.fechamento` | Livewire `Jogo\Fechamento` (conferência, por jogador, acertos, Finalizar e acertos feitos) |
 
 Middleware `jogo.etapa` (`App\Http\Middleware\JogoEtapa`, alias em `bootstrap/app.php`): quem abre uma etapa que o status/fase não permite volta para a etapa atual com aviso (`session('aviso')`, mostrado pelo `<x-site.props.aviso>`). Enquanto a tela da etapa atual não existe, volta para a lista de jogos.
 
-O site só mostra jogos reais agendados, em andamento e finalizados (`Jogo::noSite()`); rascunho e cancelado ficam no painel. `App\Support\EtapaDoJogo` guarda as etapas do fluxo da noite, quais o status permite (agendado: conferência, jogadores, mesas; em andamento: ao vivo, resumo, premiação; finalizado: premiação, resultado, fechamento; cash game sem premiação) e para onde o **Abrir** leva. Enquanto a tela da etapa não existe, o Abrir aparece desabilitado.
+O site só mostra jogos reais agendados, em andamento e finalizados (`Jogo::noSite()`); rascunho e cancelado ficam no painel. `App\Support\EtapaDoJogo` guarda as etapas do fluxo da noite, quais o status permite (agendado: conferência, jogadores, mesas; em andamento: ao vivo e resumo, e também premiação, resultado e fechamento depois de fechar as entradas, ou a qualquer hora no cash game; finalizado: premiação, resultado, fechamento; cash game sem premiação) e para onde o **Abrir** leva. Enquanto a tela da etapa não existe, o Abrir aparece desabilitado.
 
 ## Painel (`/painel`, guard `painel`, tabela `seguranca`)
 
@@ -135,7 +135,7 @@ O site só mostra jogos reais agendados, em andamento e finalizados (`Jogo::noSi
 | 1 Cadastros | Migrations, models, resources básicos do painel, seeder da noite #18 | |
 | 2 Antes da noite | Telas 01–06 | |
 | 3 Durante a noite | Telas 07–11, ações no jogador (entrada, pagamento, eliminação, cash-out), fases, polling | |
-| 4 Final da noite | Telas 12–14, premiação, saldos, acertos, `FinalizarJogo` | Noite #18 inteira pelo site bate R$ 2.100 / 210 / 1.890 |
+| 4 Final da noite | Telas 12–14, premiação, saldos, acertos, `FinalizarJogo` | Noite #18 inteira pelo site bate R$ 2.100 / 210 / 1.890 (cumprido em 26/10/2026) |
 | 5 Painel completo | Dashboard, calendário, aluguéis, relatórios, rankings, modelos, segurança e permissões, configurações | Testes verdes |
 | v2 | Estruturas de blinds e relógio | |
 | 6 No ar | Domínio e hospedagem novos, deploy e piloto numa noite real | |
