@@ -2,6 +2,10 @@
 
 namespace App\Models;
 
+use App\Enums\DirecaoPagamento;
+use App\Enums\Modalidade;
+use App\Enums\StatusJogo;
+use Database\Factories\UsuarioFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -17,7 +21,7 @@ use Spatie\Permission\Traits\HasRoles;
  */
 class Usuario extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UsuarioFactory> */
+    /** @use HasFactory<UsuarioFactory> */
     use HasFactory, HasRoles, Notifiable, SoftDeletes;
 
     protected $table = 'usuarios';
@@ -83,5 +87,36 @@ class Usuario extends Authenticatable
     public function scopeFloors(Builder $query): Builder
     {
         return $query->where('pode_ser_floor', true);
+    }
+
+    /**
+     * Soma dos saldos da pessoa nos jogos finalizados (a mesma conta do Services\Jogo\Saldos, em SQL
+     * para a lista do painel poder ordenar): investido − prêmio (ou cash-out) − pago + recebido.
+     * Positivo: deve ao caixa; negativo: o caixa deve a ela. Coluna `saldo_em_aberto` (decimal).
+     */
+    public function scopeComSaldoEmAberto(Builder $query): Builder
+    {
+        $dosFinalizados = 'join participantes p on p.id = %s.participante_id join jogos j on j.id = p.jogo_id
+            where p.usuario_id = usuarios.id and j.status = ?';
+
+        // selectRaw não põe o "*" sozinho.
+        if ($query->getQuery()->columns === null) {
+            $query->select('usuarios.*');
+        }
+
+        return $query->selectRaw(
+            '(select coalesce(sum(e.valor), 0) from entradas e '.sprintf($dosFinalizados, 'e').' and e.cancelada_em is null)
+            - (select coalesce(sum(case when j.modalidade = ? then coalesce(p.cash_out, 0) else coalesce(p.premio, 0) end), 0)
+                from participantes p join jogos j on j.id = p.jogo_id where p.usuario_id = usuarios.id and j.status = ?)
+            - (select coalesce(sum(pg.valor), 0) from pagamentos pg '.sprintf($dosFinalizados, 'pg').' and pg.cancelado_em is null and pg.direcao = ?)
+            + (select coalesce(sum(pg.valor), 0) from pagamentos pg '.sprintf($dosFinalizados, 'pg').' and pg.cancelado_em is null and pg.direcao = ?)
+            as saldo_em_aberto',
+            [
+                StatusJogo::Finalizado->value,
+                Modalidade::CashGame->value, StatusJogo::Finalizado->value,
+                StatusJogo::Finalizado->value, DirecaoPagamento::JogadorPagou->value,
+                StatusJogo::Finalizado->value, DirecaoPagamento::JogadorRecebeu->value,
+            ],
+        );
     }
 }

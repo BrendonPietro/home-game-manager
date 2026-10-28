@@ -10,6 +10,82 @@ Registro das atualizações do sistema do Rodrigues Home Game, organizadas por:
 - Docs: documentação;
 - Chore: manutenção.
 
+## 0.6.4
+
+Fase 5, etapa 5 (última): segurança, grupos, configurações, simulação do prize pool e saldo dos usuários.
+
+### Feat
+- Segurança (`/painel/seguranca`): contas do painel com usuário, senha, ativo, grupos, permissões avulsas e último acesso. Ninguém dá o que não tem: só aparecem grupos e permissões que a conta logada também tem, não se mexe em conta mais forte (Admin não troca a senha do Desenvolvedor) e a própria conta não se exclui nem se desativa.
+- Grupos (`/painel/grupos`, em Configurações): grupos do painel e do site com a grade de permissões (no painel, uma linha por cadastro: ver, criar, editar, excluir); grupo com gente não se exclui.
+- Configurações (`/painel/configuracoes`, tela 25): padrões de um jogo novo (horário, lugares, mesa final, buy-in, rebuy e add-on com valor e fichas, taxa padrão em %) e as faixas da premiação pela regra do clube, com conferência das faixas e dos percentuais.
+- Jogo: simulação do prize pool no cadastro, com o formulário ainda não salvo (jogadores, rebuys e add-ons → arrecadação, taxas, prize pool e prêmios).
+- Usuários: coluna de saldo em aberto nos jogos finalizados (ordenável, só com `financeiro.ver`).
+
+### Test
+- `Painel\SegurancaTest`, `Painel\ConfiguracoesTest`, simulação e padrões em `Painel\JogosTest` e o saldo em `Painel\UsuariosTest`.
+
+## 0.6.3
+
+Fase 5, etapa 4: relatórios (tela 24).
+
+### Feat
+- Relatórios no painel (`/painel/relatorios`): filtro de período (temporadas, este mês, mês passado, últimos 30 dias, este ano, tudo ou personalizado), de jogo e de jogador; cartões de resumo e a tabela na tela.
+- Seis relatórios: jogos, entradas, prize pools, premiações (por jogador, do melhor resultado para o pior, com ITM; ou os jogos de um jogador com a posição), aluguéis e arrecadação por mês (taxas, fora da premiação e aluguéis).
+- Exportar CSV (no jeito do Excel em português) e Excel (.xlsx, dinheiro como número em R$), para quem tem `relatorios.exportar`.
+- Exportar PDF sem instalar nada: abre em outra aba uma página clara para imprimir, com o mesmo relatório e filtros, e já chama o diálogo do navegador (Salvar como PDF). A4 em pé, ou deitado nos relatórios largos.
+
+### Test
+- `Painel\RelatoriosTest` (os seis relatórios, períodos, CSV, Excel, a página para imprimir e permissões). A noite de três finalizada virou o atalho `noiteFinalizadaDeTres()` do `MontaNoite`, usado também no `Painel\DashboardTest`.
+
+## 0.6.2
+
+Fase 5, etapa 3: dashboard do painel (tela 16).
+
+### Feat
+- Dashboard novo em `/painel` (substitui o padrão do Filament e o widget da conta): mês no subtítulo, botão Novo jogo e grade de 3 colunas, como o protótipo.
+- Próximo jogo num cartão de feltro: o em andamento ou o próximo agendado, com data, confirmados, mesas, Editar e Abrir no site.
+- Números: jogadores cadastrados (ativos e inativos), jogos no mês e mesas disponíveis (quais estão inativas).
+- Financeiro do mês (com `financeiro.ver`): arrecadação, prize pools, aluguéis pagos e valores pendentes, com a lista do que cada jogador deve (ou tem a receber) nos jogos finalizados e dos aluguéis vencidos sem pagar, e quanto o caixa deve.
+- Gráficos de barras em CSS (sem Chart.js): arrecadação, prize pool e jogadores dos últimos 8 jogos finalizados e jogos por mês; o último em vermelho, dica com o nome e o valor.
+- Próximos: a agenda de hoje em diante, com link para o mês no calendário; jogo em rascunho aparece marcado.
+
+### Fix
+- Calendário: a consulta do mês usa `whereDate` (no SQLite a data vem com hora e o último dia ficava de fora).
+
+### Style
+- Cores das telas próprias do painel em variáveis `--rh-*` no `:root` e no `.dark`, divididas entre calendário e dashboard.
+
+### Test
+- `Painel\DashboardTest`: números do mês, valores pendentes e a lista, jogo em andamento antes do agendado, gráficos, próximos e o grupo Geral sem dinheiro.
+
+## 0.6.1
+
+Fase 5, etapa 2: calendário, eventos e aluguéis (telas 17, 18 e 23).
+
+### Feat
+- Calendário no painel (`/painel/calendario`): grade do mês de domingo a sábado com jogos, aluguéis de mesa, reservas e bloqueios nas cores do design system, navegação por mês, Hoje e legenda. Jogo em rascunho aparece tracejado; aluguel cancelado sai da grade.
+- Novo evento (tela 18) clicando no dia ou no botão: tipo, cliente ou nome, data, horários (vazio = dia todo, pode passar da meia-noite), mesas, responsável, valor e status do aluguel (o valor sugere o aluguel das mesas) e observações. Clicar num evento edita ou exclui; o jogo abre um resumo com Ver no painel e Abrir no site.
+- Aviso de mesa ocupada no formulário do evento ("Mesa 01 já tem Poker Night #19 (20:00) nesse horário."), sem impedir de salvar.
+- Aluguéis (tela 23, `/painel/alugueis`): totais por status que seguem o filtro de período, abas por status, filtro de período, Marcar pago, Novo aluguel e Editar com o mesmo formulário do calendário; excluir tira do calendário também.
+- Novo jogo no calendário leva ao cadastro do jogo (o jogo entra no calendário sozinho).
+
+### Test
+- `Painel\CalendarioTest` (grade, criar pelo dia, aviso de conflito, editar e excluir, resumo do jogo, grupo Geral, regras de conflito e de aluguel) e `Painel\AlugueisTest` (lista, totais, abas, período, Marcar pago, novo, editar e excluir).
+
+## 0.6.0
+
+Início da fase 5 (painel completo): modelos, rankings e temporadas.
+
+### Feat
+- Modelos no painel (`/painel/modelos`): torneios modelo com o mesmo formulário do jogo, sem nome nem data (Nome do modelo no lugar). Criar jogo a partir do modelo (nome, data e horário) pelo `CriarDeModelo`.
+- Jogo: Duplicar e Salvar como modelo no editar e no ver (também de jogo finalizado). Copiam entradas, opcionais, taxas, percentuais da premiação, mesas com dealer, rankings e regras (`Services\Jogo\CopiaDoJogo`); a cópia nasce em rascunho, sem lista nem caixa.
+- Rankings no painel: nome, periodicidade, período, ativo, pontos por posição e bônus de mesa final e participação. Classificação por ranking (pontos, jogos, vitórias, melhor posição) só com os jogos do período; empate desfeito por vitórias, melhor posição e jogos.
+- Temporadas em Configurações.
+- Ranking com pontos e temporada com jogo não se excluem.
+
+### Test
+- `Jogo\CopiaDoJogoTest`, `Painel\ModelosTest` e `Painel\RankingsTest`.
+
 ## 0.5.4
 
 Fim da fase 4 (telas 12–14). Portão cumprido: uma cópia agendada da Poker Night #18 jogada inteira pelo site (conferência, 12 confirmados, sorteio, iniciar, 12 buy-ins com o duplo do Rafael, eliminação e volta do Lucas, 6 rebuys, nível e blinds, encerrar rebuys, 4 add-ons, fechar entradas, 9 eliminações, resultado do trio final, fechamento, finalizar e acertos feitos) bate R$ 2.100 / 210 / 1.890 → 945 / 567 / 378.

@@ -43,6 +43,8 @@ class EditJogo extends EditRecord
                 ->modalSubmitActionLabel('Cancelar jogo')
                 ->modalCancelActionLabel('Voltar')
                 ->action(fn () => $this->mudarStatus(app(CancelarJogo::class), 'Jogo cancelado.')),
+            JogoResource::acaoDuplicar(),
+            JogoResource::acaoSalvarComoModelo(),
             ViewAction::make(),
             DeleteAction::make(),
         ];

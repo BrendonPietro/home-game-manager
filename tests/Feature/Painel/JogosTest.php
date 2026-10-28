@@ -15,6 +15,7 @@ use App\Filament\Resources\Jogos\Pages\ListJogos;
 use App\Models\Jogo;
 use App\Models\Mesa;
 use App\Models\Usuario;
+use App\Support\PadroesDoJogo;
 use Database\Seeders\PokerNight18Seeder;
 use Database\Seeders\RegrasPremiacaoSeeder;
 use Filament\Actions\Testing\TestAction;
@@ -236,5 +237,33 @@ class JogosTest extends TestCase
             ->assertActionHidden(TestAction::make('edit')->table($jogo));
 
         $this->get(JogoResource::getUrl('create'))->assertForbidden();
+    }
+
+    public function test_simulacao_do_prize_pool_com_o_formulario_nao_salvo(): void
+    {
+        // 12 × 100 + 6 rebuys × 100 + 4 add-ons × 50 = 2.000; taxas 190 + 2 × 215 = 620; prize pool 1.380.
+        // 12 jogadores pela regra do clube: 50 / 30 / 20 → 690 / 414 / 276.
+        Livewire::test(CreateJogo::class)
+            ->fillForm($this->torneio(['simular_jogadores' => 12, 'simular_rebuys' => 6, 'simular_add_ons' => 4]))
+            ->assertSee(['Simulação do prize pool', 'R$ 2.000', '−R$ 190', '−R$ 430', 'R$ 1.380', 'R$ 690', 'R$ 414', 'R$ 276'])
+            ->fillForm(['metodo_premiacao' => MetodoPremiacao::Manual->value, 'premiacoes' => [['percentual' => '70'], ['percentual' => '30']]])
+            ->assertSee(['R$ 966', 'R$ 414']);
+
+        $this->assertSame(0, Jogo::query()->count());
+    }
+
+    public function test_jogo_novo_vem_com_os_padroes_das_configuracoes(): void
+    {
+        PadroesDoJogo::gravar([
+            ...PadroesDoJogo::INICIAIS,
+            'horario' => '19:30', 'lugares_por_mesa' => 8, 'tamanho_mesa_final' => 8,
+            'buyin_valor' => '120', 'buyin_fichas' => 25000, 'taxa_nome' => 'Casa', 'taxa_percentual' => '10',
+        ]);
+
+        $form = Livewire::test(CreateJogo::class)->get('data');
+
+        $this->assertSame(['19:30', 8, 8], [$form['horario'], $form['lugares_por_mesa'], $form['tamanho_mesa_final']]);
+        $this->assertSame(['120', 25000], [array_values($form['itens_buyin'])[0]['valor'], array_values($form['itens_buyin'])[0]['fichas']]);
+        $this->assertSame([['Casa', 'percentual', '10']], array_map(fn (array $t) => [$t['nome'], $t['calculo'], $t['valor']], array_values($form['taxas'])));
     }
 }

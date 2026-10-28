@@ -2,7 +2,11 @@
 
 namespace Tests\Concerns;
 
+use App\Actions\Jogo\DefinirResultado;
 use App\Actions\Jogo\DesfazerAcao;
+use App\Actions\Jogo\EncerrarRebuys;
+use App\Actions\Jogo\FecharEntradas;
+use App\Actions\Jogo\FinalizarJogo;
 use App\Actions\Jogo\RegistrarEliminacao;
 use App\Actions\Jogo\RegistrarEntrada;
 use App\Actions\Jogo\RegistrarPagamento;
@@ -95,6 +99,32 @@ trait MontaNoite
     protected function desfazer(Participante $participante, string $motivo = 'Lançado errado'): string
     {
         return app(DesfazerAcao::class)($participante, $motivo, $this->admin);
+    }
+
+    /**
+     * Monta e finaliza um torneio de três (Ana, Beto, Caio, buy-in de R$ 100): R$ 300 → 195 / 105.
+     * Ana pagou R$ 100 e foi a 1ª (o caixa deve 195), Beto 2º (o caixa deve 5), Caio 3º (deve 100).
+     *
+     * @return list<Participante> Ana, Beto e Caio
+     */
+    protected function noiteFinalizadaDeTres(string $nome = 'Poker Night #19', string $data = '2026-10-11'): array
+    {
+        $this->montarNoite(Jogo::factory()->emAndamento()->comEntradasPadrao()->create(['nome' => $nome, 'data' => $data]));
+
+        $jogadores = array_map(fn (string $quem) => $this->jogador($quem), ['Ana', 'Beto', 'Caio']);
+        foreach ($jogadores as $jogador) {
+            $this->entrar($jogador, TipoItem::Buyin);
+        }
+        [$ana, $beto, $caio] = $jogadores;
+        $this->pagar($ana, 10000);
+
+        app(EncerrarRebuys::class)($this->jogo, $this->admin);
+        app(FecharEntradas::class)($this->jogo, $this->admin);
+        $this->eliminar($caio);
+        app(DefinirResultado::class)($this->jogo, [$ana->id => 1, $beto->id => 2], $this->admin);
+        app(FinalizarJogo::class)($this->jogo, $this->admin);
+
+        return $jogadores;
     }
 
     /** A ação tem de ser barrada por uma regra do jogo, com esta mensagem. */

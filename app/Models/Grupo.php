@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 
 /**
@@ -10,4 +11,11 @@ use Spatie\Permission\Models\Role;
  */
 class Grupo extends Role
 {
+    public const GUARDS = ['painel' => 'Painel', 'web' => 'Site'];
+
+    /** Contas (painel) ou usuários (site) neste grupo. */
+    public function membros(): int
+    {
+        return DB::table(config('permission.table_names.model_has_roles'))->where('role_id', $this->getKey())->count();
+    }
 }

@@ -13,11 +13,11 @@ Um único app Laravel 13 (PHP 8.5), no molde do site do casamento: site de opera
 | CSS do site | SCSS (padrão do casamento) + tokens `rh-` | Sem Tailwind no site |
 | Build | Vite + `laravel-vite-plugin` | |
 | Banco | MySQL | Laragon local; produção a definir |
-| PDF | `barryvdh/laravel-dompdf` | Relatórios e fechamento |
+| PDF | Página para imprimir (Salvar como PDF do navegador) | Relatórios; sem dompdf. CSV e Excel pelo OpenSpout, que vem com o Filament |
 | Permissões | `spatie/laravel-permission` v6 | Dois guards (`painel`, `web`), tabelas em português |
 | Ícones | `blade-ui-kit/blade-icons` | SVGs do design system em `resources/svg/site/icons` |
 
-Diferenças para o casamento: Laravel 10 → 12, Filament 3 → 5 (API de formulários mudou para Schemas, não copiar resources direto), guard `web` em vez de `guest`, sem Spatie ResponseCache.
+Diferenças para o casamento: Laravel 10 → 13, Filament 3 → 5 (API de formulários mudou para Schemas, não copiar resources direto), guard `web` em vez de `guest`, sem Spatie ResponseCache.
 
 ## Fluxo
 
@@ -33,17 +33,19 @@ Nenhuma das duas portas grava entradas, pagamentos ou muda status direto no mode
 
 ```
 app/
+├── Actions/Agenda/             # SalvarEvento (aluguel, reserva, bloqueio)
 ├── Actions/Jogo/               # RegistrarEntrada, RegistrarPagamento, RegistrarEliminacao, RegistrarCashOut,
 │                               # TrocarLugar, DesfazerAcao, EncerrarRebuys, FecharEntradas, FinalizarJogo, CriarDeModelo
 ├── Enums/                      # Modalidade, StatusJogo, FaseTorneio, TipoItem, DestinoItem, CalculoTaxa, MetodoPremiacao, Periodicidade,
 │                               # DirecaoPagamento, FormaPagamento, StatusParticipante, TipoEvento, StatusAluguel
 ├── Filament/
-│   ├── Pages/                  # Calendario, Relatorios, Configuracoes
-│   ├── Resources/              # Jogo, Modelo, Ranking, Usuario, Seguranca, Grupo, Mesa, Evento, Aluguel, Temporada
-│   └── Widgets/                # ProximoJogo, NumerosDoMes, Financeiro, gráficos
+│   ├── Pages/                  # Dashboard (tela 16), Calendario, Relatorios, Configuracoes
+│   ├── Schemas/                # EventoForm (calendário e aluguéis)
+│   ├── Resources/              # Jogo, Modelo, Ranking, Usuario, Seguranca, Grupo, Mesa, Aluguel, Temporada
+│   └── Widgets/                # VisaoGeral, Proximos, GraficoDeBarras (Arrecadacao/PrizePool/JogadoresPorJogo, JogosPorMes)
 ├── Helpers/                    # DateHelper, ViewHelper
 ├── Http/
-│   ├── Controllers/            # AuthController, HomeController, JogoController
+│   ├── Controllers/            # AuthController, HomeController, JogoController; Painel/ImprimirRelatorio (PDF)
 │   └── Middleware/             # GlobalConfig, JogoEtapa
 ├── Livewire/Jogo/              # Jogadores, Mesas, AoVivo, AcoesJogador, Resumo, Resultado
 ├── Models/                     # Seguranca, Usuario, Grupo, Permissao, Mesa, Temporada, Ranking, RankingPontuacao, RankingPonto,
@@ -53,9 +55,12 @@ app/
 ├── Policies/                   # uma por model, consultando as permissões
 ├── Providers/Filament/PainelPanelProvider.php
 ├── Services/
-│   ├── Jogo/                   # Calculadora, Saldos, Posicoes, Acertos, EventoDoJogo
+│   ├── Agenda/                 # Conflitos (mesa ocupada no horário)
+│   ├── Jogo/                   # Calculadora, Saldos, Posicoes, Acertos, EventoDoJogo, CopiaDoJogo
+│   ├── Painel/                 # Indicadores (números do dashboard)
+│   ├── Relatorios/             # Relatorios, Filtro, Relatorio, Coluna, Exportacao (CSV e Excel)
 │   └── Ranking/                # Pontuacao
-├── Support/Dinheiro.php
+├── Support/                    # Dinheiro, Datas, EtapaDoJogo, PadroesDoJogo (padrões das Configurações), Permissoes (nomes e "não dá o que não tem")
 └── View/Components/Site/       # App, Operacao
 
 resources/
@@ -106,9 +111,9 @@ O site só mostra jogos reais agendados, em andamento e finalizados (`Jogo::noSi
 | Tela | Onde | Tipo |
 |---|---|---|
 | 15 Login | `/painel/login` | Login do Filament com as contas de `seguranca` |
-| 16 Dashboard | `/painel` | Widgets (com valores pendentes) |
+| 16 Dashboard | `/painel` | `App\Filament\Pages\Dashboard` + widgets Blade (próximo jogo, números, valores pendentes, gráficos, próximos) |
 | 17 Calendário | `/painel/calendario` | Página custom (grade `rh-cal` em Blade) |
-| 18 Criar/editar evento | modal no calendário | Ação com formulário do `EventoResource` |
+| 18 Criar/editar evento | modal no calendário | Ação com o `Filament\Schemas\EventoForm` (o mesmo dos aluguéis) |
 | 19 Lista de jogos | `/painel/jogos` | `JogoResource` |
 | 20 Criar/editar jogo | `/painel/jogos/{id}/edit` | `JogoResource` (modalidade, entradas, opcionais, taxas, premiação, rankings, mesas, floor) |
 | Modelos | `/painel/modelos` | `ModeloResource` + ação Criar a partir do modelo |
@@ -116,7 +121,7 @@ O site só mostra jogos reais agendados, em andamento e finalizados (`Jogo::noSi
 | 21 Usuários | `/painel/usuarios` | `UsuarioResource` |
 | 22 Mesas | `/painel/mesas` | `MesaResource` |
 | 23 Aluguéis | `/painel/alugueis` | `AluguelResource` |
-| 24 Relatórios | `/painel/relatorios` | Página custom com exportação |
+| 24 Relatórios | `/painel/relatorios` | `App\Filament\Pages\Relatorios`: filtros, seis relatórios, prévia e exportação CSV/Excel; PDF pela página para imprimir `/painel/relatorios/imprimir` |
 | 25 Configurações | `/painel/configuracoes` | Página custom |
 | Segurança | `/painel/seguranca` | `SegurancaResource` + `GrupoResource` (contas, grupos e permissões) |
 

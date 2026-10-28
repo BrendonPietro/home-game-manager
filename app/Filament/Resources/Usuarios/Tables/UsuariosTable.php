@@ -3,9 +3,11 @@
 namespace App\Filament\Resources\Usuarios\Tables;
 
 use App\Models\Usuario;
+use App\Support\Dinheiro;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\RestoreAction;
+use Filament\Facades\Filament;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -60,10 +62,22 @@ class UsuariosTable
                     ->numeric()
                     ->placeholder('0')
                     ->sortable(),
+                TextColumn::make('saldo_em_aberto')
+                    ->label('Saldo em aberto')
+                    ->tooltip('Jogos finalizados. Positivo: deve ao caixa; negativo: o caixa deve.')
+                    ->formatStateUsing(fn (?string $state): string => Dinheiro::centavos($state) === 0 ? '—' : Dinheiro::brl($state, true))
+                    ->color(fn (?string $state): ?string => match (true) {
+                        Dinheiro::centavos($state) > 0 => 'warning',
+                        Dinheiro::centavos($state) < 0 => 'info',
+                        default => null,
+                    })
+                    ->alignEnd()
+                    ->sortable()
+                    ->visible(fn (): bool => (bool) Filament::auth()->user()?->can('financeiro.ver')),
                 IconColumn::make('ativo')
                     ->boolean(),
             ])
-            ->modifyQueryUsing(fn ($query) => $query->with('roles'))
+            ->modifyQueryUsing(fn ($query) => $query->with('roles')->comSaldoEmAberto())
             ->filters([
                 TernaryFilter::make('ativo'),
                 TernaryFilter::make('pode_ser_dealer')->label('Dealer'),

@@ -72,6 +72,11 @@ Site e painel **nunca gravam entradas ou status direto pelo model**. Tudo passa 
 | `App\Actions\Jogo\MarcarAcerto` | Acerto feito depois de finalizar: vira pagamentos (quem pagou / quem recebeu) e os saldos fecham |
 | `App\Services\Jogo\EventoDoJogo` | Cria/atualiza o evento do jogo na agenda (com as mesas); tira modelo, sem data e cancelado |
 | `App\Actions\Jogo\CriarDeModelo` | Novo jogo a partir de um torneio modelo (`jogos.e_modelo`) |
+| `App\Actions\Agenda\SalvarEvento` | Aluguel de mesa, reserva e bloqueio do calendário (o jogo entra pelo `EventoDoJogo`), com mesas e, no aluguel, cliente, valor e status |
+| `App\Services\Painel\Indicadores` | Números do dashboard do painel: próximo jogo, mês (jogos, arrecadação, prize pools, aluguéis), valores pendentes, últimos jogos e agenda |
+| `App\Services\Relatorios\Relatorios`, `Exportacao` | Relatórios do painel (jogos, entradas, prize pools, premiações, aluguéis, arrecadação) pelo `Filtro`; CSV e Excel (OpenSpout). PDF = página para imprimir (`Painel\ImprimirRelatorio`), sem dompdf |
+| `App\Services\Agenda\Conflitos` | Eventos que já ocupam a mesa no horário (aviso no formulário do evento; não impede) |
+| `App\Services\Jogo\CopiaDoJogo` | Copia a estrutura (entradas, opcionais, taxas, premiação, mesas, rankings) para um jogo novo em rascunho: criar de modelo, Duplicar e Salvar como modelo |
 
 Toda ação roda numa transação com `lockForUpdate()` na linha do jogo. Regra violada (ex.: agendar sem buy-in) lança `App\Exceptions\RegraDoJogo`, com mensagem para mostrar como está a quem usa; falta de permissão lança `AuthorizationException`. O trait `App\Actions\Jogo\Concerns\ChecaRegras` dá `permitir()` e `exigirStatus()`. As telas Livewire pegam as duas exceções e mostram a mensagem em `$erro` (sem derrubar a tela).
 
@@ -101,11 +106,13 @@ Hospedagem compartilhada não roda WebSocket. A tela ao vivo e o resumo usam `wi
 - **Permissões** com `spatie/laravel-permission` v6 nos dois guards (`guard_name` separa painel e site). Tabelas renomeadas em `config/permission.php`: `grupos`, `permissoes`, `grupo_permissoes`, `modelo_grupos`, `modelo_permissoes`. Grupos iniciais (seeder): painel Admin, Desenvolvedor, Geral; site Admin, Operador (Operador só lança entradas, pagamentos e eliminações). Formato `recurso.acao` (ex.: `jogos.editar`, `pagamentos.registrar`). Painel: uma policy por model, estendendo `App\Policies\PoliticaDoPainel` (só define `RECURSO`; `forceDelete` é sempre negado). Site: checar no Action e esconder botão com `@can`.
 - Painel e site dividem a mesma sessão: cada login só volta para a página pretendida do próprio lado (`App\Filament\Auth\LoginResponse` e `AuthController`).
 - Nunca checar permissão comparando nome de grupo; sempre pela permissão.
+- Ninguém dá o que não tem: contas do painel (`SegurancaResource`) só oferecem grupos/permissões que a conta logada cobre (`App\Support\Permissoes::abrange`), e a `SegurancaPolicy` barra editar ou excluir conta mais forte. Grupos (`GrupoResource`, só `grupos.*`) gravam pelo `syncPermissions` para limpar o cache do spatie.
+- Padrões de um jogo novo e regras de premiação do clube: Configurações (`App\Filament\Pages\Configuracoes`, `App\Support\PadroesDoJogo`, `regras_premiacao`).
 
 ### Rankings e modelos
 
 - Vários rankings ao mesmo tempo (`rankings`); o jogo (torneio ou cash game) escolhe em quais vale ponto (`jogo_ranking`). Cada ranking configura posições pontuadas, se FT pontua e se participação pontua. Pontos gravados em `ranking_pontos` ao finalizar.
-- Torneio modelo = `jogos.e_modelo = true`; nunca aparece no site nem no calendário.
+- Torneio modelo = `jogos.e_modelo = true`; nunca aparece no site nem no calendário. No painel fica no `ModeloResource` (mesmo `JogoForm` com `modelo: true`), com permissão `modelos.*` em vez de `jogos.*` (sobrescreve `getAuthorizationResponse`).
 
 ### Blinds e relógio
 
@@ -152,7 +159,8 @@ V2. Na v1, `jogos.nivel_atual` e `blinds_atual` são digitados. Detalhes em [doc
   - `PokerNight18Test` confere os números somando direto em centavos; `CalculadoraTest` confere a `Calculadora` contra a mesma noite e contra o exemplo do sábado do `regras.md`.
   - `Jogo\NoiteDeReferenciaTest` joga a mesma noite só pelas Actions (confirmar, sentar, iniciar, entradas, fases, eliminações) e confere números, prêmios, posições e saldos.
 - Testes das Actions da noite usam o trait `Tests\Concerns\MontaNoite`: torneio em andamento com entradas padrão de R$ 100, uma mesa, `$admin` e `$operador`, e atalhos `jogador()`, `entrar()`, `pagar()`, `eliminar()`, `desfazer()` e `assertRegra($mensagem, fn)`.
-- `Calculadora::doJogo($jogo)` dá os números reais (entradas válidas); `simular($jogo, jogadores, rebuys, addons)` estima pelo cadastro (buy-in, rebuy e add-on padrão + opcionais obrigatórios). Os dois devolvem um `ResumoFinanceiro` em centavos.
+- `Calculadora::doJogo($jogo)` dá os números reais (entradas válidas); `simular($jogo, jogadores, rebuys, addons)` estima pelo cadastro (buy-in, rebuy e add-on padrão + opcionais obrigatórios). Os dois devolvem um `ResumoFinanceiro` em centavos. A simulação do cadastro do jogo no painel passa os itens ainda não salvos no 5º parâmetro (e taxas/premiação pelas relações em memória).
+- Painel: contas e grupos em `Painel\SegurancaTest`, Configurações em `Painel\ConfiguracoesTest`. Factory de `Seguranca` sorteia login com ponto (`john.doe`): o login do painel aceita ponto.
 
 ## Deploy
 

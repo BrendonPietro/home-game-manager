@@ -30,7 +30,9 @@ Permissões dos dois lados com `spatie/laravel-permission` (v6), usando o `guard
 
 Quem cuida do painel e também opera a noite tem uma conta em cada tabela.
 
-Módulo de grupos no painel (`GrupoResource`): em cada grupo marcam-se as permissões numa grade de checkboxes; depois usuários (site) ou contas (painel) são atribuídos ao grupo.
+Módulo de grupos no painel (`GrupoResource`): em cada grupo marcam-se as permissões numa grade de checkboxes; depois usuários (site) ou contas (painel) são atribuídos ao grupo, na própria conta ou no usuário. Grupo com alguém dentro não se exclui.
+
+Ninguém dá o que não tem: na tela de contas do painel só aparecem os grupos e as permissões que a conta logada também tem, e não se edita nem exclui conta com mais permissões que a sua (Admin não troca a senha do Desenvolvedor). A própria conta não se exclui nem se desativa. Rodar o `PermissoesSeeder` de novo volta as permissões dos grupos padrão às do seed.
 
 | Grupo | Guard | Pode (seed inicial, editável) |
 |---|---|---|
@@ -84,6 +86,13 @@ Checadas nas Actions (Gate) e com `@can` no Blade para esconder botões.
 | `eventos` | tipo, nome, data, hora_inicio, hora_fim, responsavel_id, jogo_id, observacoes | `tipo`: `jogo` / `aluguel` / `reserva` / `bloqueio`. Criar um jogo cria o evento |
 | `evento_mesa` | evento_id, mesa_id | Um evento pode ocupar várias mesas |
 | `alugueis` | evento_id, cliente, valor, status, pago_em | `status`: `reservado` / `confirmado` / `pago` / `cancelado` |
+
+Regras da agenda (`Actions\Agenda\SalvarEvento`, `Services\Agenda\Conflitos`):
+- O evento do jogo vem do cadastro do jogo (`EventoDoJogo`) e não se edita pelo calendário. Aluguel, reserva e bloqueio se criam e editam no calendário (aluguel também na tela de aluguéis).
+- Aluguel se chama "Mesa alugada — Cliente" e tem um `alugueis` ligado. Virar reserva ou bloqueio apaga o aluguel; excluir o aluguel apaga o evento.
+- Marcar pago grava `pago_em` uma vez (editar de novo não muda a data); sair de pago limpa.
+- Horário: sem início = dia todo; sem fim = até o fim do dia; fim antes do início = passa da meia-noite (20:00–01:00).
+- Mesa ocupada: outro evento no mesmo dia, com a mesma mesa e horário que se cruza (encostar não conta: 15:00–19:00 e 19:00–23:30 não se cruzam). Só avisa; aluguel cancelado não ocupa mesa e sai do calendário.
 
 ## Fases de um torneio
 
@@ -206,7 +215,7 @@ Cada ranking configura, sem nada fixo no código:
 - `ft_pontua` + `pontos_mesa_final` (mesa final = `posicao_final <= jogos.tamanho_mesa_final`, padrão 9);
 - `participacao_pontua` + `pontos_participacao`.
 
-Cash game: posição para o ranking = ordem do resultado (maior lucro = 1º). Pontos gravados em `ranking_pontos` ao finalizar (`Services\Ranking\Pontuacao`); classificação = soma por usuário no período do ranking.
+Cash game: posição para o ranking = ordem do resultado (maior lucro = 1º). Pontos gravados em `ranking_pontos` ao finalizar (`Services\Ranking\Pontuacao`); classificação = soma por usuário no período do ranking; empate desfeito por mais vitórias, melhor posição e mais jogos.
 
 Detalhes da `Pontuacao`: vale nos rankings **ativos** ligados ao jogo; entra quem tem buy-in, com uma linha por jogador em `ranking_pontos` (mesmo com 0 ponto, para contar participação). `detalhe` = `{posicao, mesa_final, participacao}`; `pontos` = a soma. Finalizar de novo (não acontece pelo site) refaz as linhas do jogo.
 

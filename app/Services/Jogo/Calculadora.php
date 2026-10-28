@@ -44,10 +44,13 @@ class Calculadora
     /**
      * Simulação pelo cadastro: N jogadores com o buy-in padrão, N rebuys e N add-ons padrão,
      * mais os opcionais obrigatórios. Usada no prize pool estimado (dashboard, conferência, painel).
+     *
+     * @param  Collection<int, Item>|null  $itens  itens ainda não gravados (o formulário do painel); as taxas
+     *                                             e a premiação manual vêm das relações `taxas` e `premiacoes`
      */
-    public function simular(Jogo $jogo, int $jogadores, int $rebuys = 0, int $addons = 0): ResumoFinanceiro
+    public function simular(Jogo $jogo, int $jogadores, int $rebuys = 0, int $addons = 0, ?Collection $itens = null): ResumoFinanceiro
     {
-        $itens = $jogo->itens()->ativos()->get();
+        $itens = $itens?->filter(fn (Item $item): bool => (bool) $item->ativo)->values() ?? $jogo->itens()->ativos()->get();
         $padrao = fn (TipoItem $tipo): ?Item => $itens->first(fn (Item $i) => $i->tipo === $tipo && $i->padrao)
             ?? $itens->first(fn (Item $i) => $i->tipo === $tipo);
 

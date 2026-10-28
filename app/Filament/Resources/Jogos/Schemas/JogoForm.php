@@ -8,12 +8,18 @@ use App\Enums\MetodoPremiacao;
 use App\Enums\Modalidade;
 use App\Enums\StatusJogo;
 use App\Enums\TipoItem;
+use App\Models\Item;
 use App\Models\Jogo;
 use App\Models\JogoMesa;
 use App\Models\Mesa;
+use App\Models\Premiacao;
 use App\Models\RegraPremiacao;
+use App\Models\Taxa;
 use App\Models\Usuario;
+use App\Services\Jogo\Calculadora;
+use App\Services\Jogo\ResumoFinanceiro;
 use App\Support\Dinheiro;
+use App\Support\PadroesDoJogo;
 use Closure;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
@@ -34,8 +40,10 @@ use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Text;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Str;
 
 /**
  * Tela 20: cadastro do jogo (docs/painel.md). Entradas, opcionais, taxas, premiação e mesas só mudam
@@ -43,7 +51,8 @@ use Illuminate\Database\Eloquent\Builder;
  */
 class JogoForm
 {
-    public static function configure(Schema $schema): Schema
+    /** @param  bool  $modelo  torneio modelo (ModeloResource): nome do modelo no lugar de nome e data, sem status */
+    public static function configure(Schema $schema, bool $modelo = false): Schema
     {
         return $schema
             ->columns(1)
@@ -60,13 +69,13 @@ class JogoForm
                         ->badge()
                         ->formatStateUsing(fn (StatusJogo $state): string => $state->label())
                         ->color(fn (StatusJogo $state): string => self::corDoStatus($state))
-                        ->visible(fn (?Jogo $record): bool => $record !== null),
+                        ->visible(fn (?Jogo $record): bool => $record !== null && ! $modelo),
                 ]),
 
                 Tabs::make('Jogo')
                     ->persistTabInQueryString()
                     ->tabs([
-                        self::informacoes(),
+                        self::informacoes($modelo),
                         self::dinheiro(),
                         self::premiacao(),
                         self::rankings(),
@@ -98,22 +107,32 @@ class JogoForm
         return ($modalidade instanceof Modalidade ? $modalidade : Modalidade::tryFrom((string) $modalidade)) === Modalidade::Torneio;
     }
 
-    private static function informacoes(): Tab
+    private static function informacoes(bool $modelo): Tab
     {
         return Tab::make('Informações')
             ->columns(2)
             ->schema([
+                TextInput::make('nome_modelo')
+                    ->label('Nome do modelo')
+                    ->required()
+                    ->maxLength(255)
+                    ->placeholder('Torneio de sábado')
+                    ->helperText('Cada jogo criado a partir dele recebe nome, data e horário próprios.')
+                    ->columnSpanFull()
+                    ->visible($modelo),
                 TextInput::make('nome')
                     ->required()
                     ->maxLength(255)
                     ->placeholder('Poker Night #19')
-                    ->columnSpanFull(),
+                    ->columnSpanFull()
+                    ->visible(! $modelo),
                 DatePicker::make('data')
-                    ->required(),
+                    ->required()
+                    ->visible(! $modelo),
                 TimePicker::make('horario')
                     ->label('Horário')
                     ->seconds(false)
-                    ->default('20:00'),
+                    ->default(fn (): ?string => PadroesDoJogo::valor('horario')),
                 Select::make('temporada_id')
                     ->label('Temporada')
                     ->relationship('temporada', 'nome')
@@ -124,14 +143,14 @@ class JogoForm
                     ->integer()
                     ->minValue(2)
                     ->maxValue(12)
-                    ->default(9)
+                    ->default(fn (): int => (int) PadroesDoJogo::valor('lugares_por_mesa'))
                     ->required(),
                 TextInput::make('tamanho_mesa_final')
                     ->label('Mesa final')
                     ->integer()
                     ->minValue(2)
                     ->maxValue(12)
-                    ->default(9)
+                    ->default(fn (): int => (int) PadroesDoJogo::valor('tamanho_mesa_final'))
                     ->required()
                     ->helperText('Até que posição conta como mesa final nos rankings.')
                     ->visible(fn (Get $get): bool => self::eTorneio($get)),
@@ -170,7 +189,81 @@ class JogoForm
                 Section::make('Taxas')
                     ->description('Saem da premiação antes de dividir (dealers, casa…).')
                     ->schema([self::taxas()]),
+                self::simulacao(),
             ]);
+    }
+
+    /**
+     * Simulação do prize pool com o formulário como está (antes de salvar): N jogadores com o buy-in
+     * padrão, rebuys e add-ons padrão e os opcionais obrigatórios, pela Calculadora::simular.
+     */
+    private static function simulacao(): Section
+    {
+        $quantos = fn (string $rotulo, string $exemplo): TextInput => TextInput::make('simular_'.Str::slug($rotulo, '_'))
+            ->label($rotulo)
+            ->integer()
+            ->minValue(0)
+            ->maxValue(500)
+            ->placeholder($exemplo)
+            ->dehydrated(false)
+            ->live(debounce: 500);
+
+        return Section::make('Simulação do prize pool')
+            ->description('Estimativa com o cadastro como está agora (buy-in, rebuy e add-on padrão e os opcionais obrigatórios). Não grava nada.')
+            ->visible(fn (?Jogo $record): bool => self::estruturaAberta($record))
+            ->schema([
+                Grid::make(['md' => 3])->schema([
+                    $quantos('Jogadores', '12'),
+                    $quantos('Rebuys', '0'),
+                    $quantos('Add-ons', '0')->visible(fn (Get $get): bool => self::eTorneio($get)),
+                ]),
+                View::make('filament.painel.simulacao-prize-pool')
+                    ->viewData(fn (Get $get): array => ['resumo' => self::simular($get), 'torneio' => self::eTorneio($get)]),
+            ]);
+    }
+
+    private static function simular(Get $get): ResumoFinanceiro
+    {
+        $numero = fn (mixed $valor): string => is_numeric($valor) ? (string) $valor : '0';
+        $quantos = fn (string $campo, int $padrao): int => is_numeric($get($campo)) ? max(0, (int) $get($campo)) : $padrao;
+
+        $jogo = new Jogo([
+            'modalidade' => $get('modalidade') ?: Modalidade::Torneio->value,
+            'metodo_premiacao' => $get('metodo_premiacao') ?: MetodoPremiacao::Regra->value,
+        ]);
+
+        $itens = collect(TipoItem::entradas())
+            ->flatMap(fn (TipoItem $tipo): array => array_map(fn (array $linha): Item => new Item([
+                'tipo' => $tipo,
+                'valor' => $numero($linha['valor'] ?? null),
+                'padrao' => (bool) ($linha['padrao'] ?? false),
+                'ativo' => (bool) ($linha['ativo'] ?? true),
+                'destino' => DestinoItem::Premiacao,
+            ]), array_values($get('itens_'.$tipo->value) ?? [])))
+            ->merge(array_map(fn (array $linha): Item => new Item([
+                'tipo' => TipoItem::Opcional,
+                'valor' => $numero($linha['valor'] ?? null),
+                'destino' => $linha['destino'] ?? DestinoItem::Fora->value,
+                'obrigatorio' => (bool) ($linha['obrigatorio'] ?? false),
+                'ativo' => (bool) ($linha['ativo'] ?? true),
+                'compravel_com' => ($linha['compravel_com'] ?? 'entrada') === 'jogador'
+                    ? [Item::COMPRAVEL_POR_JOGADOR]
+                    : array_map(fn (TipoItem $tipo): string => $tipo->value, TipoItem::entradas()),
+            ]), array_values($get('opcionais') ?? [])));
+
+        $jogo->setRelation('taxas', collect(array_values($get('taxas') ?? []))->map(fn (array $linha): Taxa => new Taxa([
+            'nome' => $linha['nome'] ?: 'Taxa',
+            'calculo' => $linha['calculo'] ?? CalculoTaxa::Fixo->value,
+            'valor' => $numero($linha['valor'] ?? null),
+            'quantidade' => $linha['quantidade'] ?? 1,
+        ])));
+
+        $jogo->setRelation('premiacoes', collect(array_values($get('premiacoes') ?? []))->map(fn (mixed $item, int $i): Premiacao => new Premiacao([
+            'posicao' => $i + 1,
+            'percentual' => $numero(is_array($item) ? ($item['percentual'] ?? null) : $item),
+        ])));
+
+        return app(Calculadora::class)->simular($jogo, $quantos('simular_jogadores', 12), $quantos('simular_rebuys', 0), $quantos('simular_add_ons', 0), $itens);
     }
 
     private static function entradas(TipoItem $tipo, string $rotulo, ?int $limite): Repeater
@@ -196,16 +289,18 @@ class JogoForm
                     ->minValue(0)
                     ->step(0.01)
                     ->prefix('R$')
+                    ->live(onBlur: true) // atualiza a simulação do prize pool
                     ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : 0),
                 TextInput::make('fichas')->integer()->minValue(0)->default(0),
                 TextInput::make('limite_por_jogador')->integer()->minValue(1)->placeholder('Sem limite'),
-                Toggle::make('ativo')->default(true),
+                Toggle::make('ativo')->default(true)->live(),
             ])
-            ->default([[
+            // Valor e fichas da linha padrão vêm das Configurações (PadroesDoJogo).
+            ->default(fn (): array => [[
                 'padrao' => true,
                 'nome' => $rotulo,
-                'valor' => null,
-                'fichas' => 0,
+                'valor' => PadroesDoJogo::valor($tipo->value.'_valor'),
+                'fichas' => (int) PadroesDoJogo::valor($tipo->value.'_fichas'),
                 'limite_por_jogador' => $limite,
                 'ativo' => true,
             ]])
@@ -236,12 +331,13 @@ class JogoForm
             ])
             ->schema([
                 TextInput::make('nome')->required()->maxLength(60)->placeholder('Churrasco'),
-                TextInput::make('valor')->required()->numeric()->minValue(0)->step(0.01)->prefix('R$'),
+                TextInput::make('valor')->required()->numeric()->minValue(0)->step(0.01)->prefix('R$')->live(onBlur: true),
                 TextInput::make('fichas')->integer()->minValue(0)->default(0),
                 Select::make('compravel_com')
                     ->options(['entrada' => 'Junto de cada entrada', 'jogador' => '1 por jogador'])
                     ->default('entrada')
                     ->selectablePlaceholder(false)
+                    ->live()
                     ->formatStateUsing(fn ($state): string => is_array($state) && in_array('jogador', $state, true) ? 'jogador' : 'entrada')
                     ->dehydrateStateUsing(fn (?string $state): array => $state === 'jogador' ? ['jogador'] : $porEntrada),
                 Select::make('destino')
@@ -252,9 +348,10 @@ class JogoForm
                     ])
                     ->default(DestinoItem::Fora->value)
                     ->selectablePlaceholder(false)
-                    ->required(),
-                Toggle::make('obrigatorio'),
-                Toggle::make('ativo')->default(true),
+                    ->required()
+                    ->live(),
+                Toggle::make('obrigatorio')->live(),
+                Toggle::make('ativo')->default(true)->live(),
             ])
             ->defaultItems(0)
             ->orderColumn('ordem')
@@ -289,14 +386,19 @@ class JogoForm
                     ->step(0.01)
                     ->prefix(fn (Get $get): ?string => $percentual($get) ? null : 'R$')
                     ->suffix(fn (Get $get): ?string => $percentual($get) ? '%' : null)
-                    ->maxValue(fn (Get $get): ?int => $percentual($get) ? 100 : null),
+                    ->maxValue(fn (Get $get): ?int => $percentual($get) ? 100 : null)
+                    ->live(onBlur: true),
                 TextInput::make('quantidade')
                     ->integer()
                     ->minValue(1)
                     ->default(1)
+                    ->live(onBlur: true)
                     ->visible(fn (Get $get): bool => in_array($get('calculo'), [CalculoTaxa::PorUnidade->value, CalculoTaxa::PorUnidade], true)),
             ])
-            ->defaultItems(0)
+            // Taxa padrão das Configurações (ex.: Casa 10%), se houver.
+            ->default(fn (): array => filled(PadroesDoJogo::valor('taxa_nome')) && filled(PadroesDoJogo::valor('taxa_percentual'))
+                ? [['nome' => PadroesDoJogo::valor('taxa_nome'), 'calculo' => CalculoTaxa::Percentual->value, 'valor' => PadroesDoJogo::valor('taxa_percentual'), 'quantidade' => 1]]
+                : [])
             ->orderColumn('ordem')
             ->addActionLabel('Taxa');
     }
@@ -331,7 +433,8 @@ class JogoForm
                             ->minValue(0.01)
                             ->maxValue(100)
                             ->step(0.01)
-                            ->suffix('%'),
+                            ->suffix('%')
+                            ->live(onBlur: true),
                     )
                     ->orderColumn('posicao')
                     ->minItems(1)

@@ -12,12 +12,36 @@ use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
+use Tests\Concerns\MontaNoite;
 use Tests\Concerns\UsaPainel;
 use Tests\TestCase;
 
 class UsuariosTest extends TestCase
 {
-    use RefreshDatabase, UsaPainel;
+    use MontaNoite, RefreshDatabase, UsaPainel;
+
+    public function test_saldo_em_aberto_dos_jogos_finalizados(): void
+    {
+        $this->entrarNoPainel('Admin');
+        // Ana: o caixa deve 195; Beto: deve 5; Caio deve 100 ao caixa.
+        [$ana, $beto, $caio] = array_map(fn ($p) => $p->usuario, $this->noiteFinalizadaDeTres());
+        $semJogo = Usuario::factory()->create(['nome' => 'Zé', 'apelido' => null]);
+
+        $this->assertSame(
+            ['Ana' => '-195.00', 'Beto' => '-5.00', 'Caio' => '100.00', 'Zé' => '0.00'],
+            Usuario::query()->comSaldoEmAberto()->whereKey([$ana->id, $beto->id, $caio->id, $semJogo->id])->orderBy('nome')
+                ->get()->mapWithKeys(fn (Usuario $u) => [$u->nome => number_format((float) $u->saldo_em_aberto, 2, '.', '')])->all(),
+        );
+
+        Livewire::test(ListUsuarios::class)
+            ->assertSee(['+R$ 100', '−R$ 195', '−R$ 5'])
+            ->sortTable('saldo_em_aberto', 'desc')
+            ->assertCanSeeTableRecords([$caio, $semJogo, $beto, $ana], inOrder: true);
+
+        // Sem financeiro.ver, a coluna some.
+        $this->entrarNoPainel('Geral');
+        Livewire::test(ListUsuarios::class)->assertTableColumnHidden('saldo_em_aberto');
+    }
 
     private function grupoDoSite(string $nome): int
     {

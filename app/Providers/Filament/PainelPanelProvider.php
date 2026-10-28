@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Auth\Login;
 use App\Filament\Auth\LoginResponse;
+use App\Http\Controllers\Painel\ImprimirRelatorio;
 use Filament\Auth\Http\Responses\Contracts\LoginResponse as LoginResponseContrato;
 use Filament\Enums\ThemeMode;
 use Filament\FontProviders\LocalFontProvider;
@@ -11,17 +12,16 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\View\PanelsRenderHook;
-use Filament\Widgets\AccountWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Route;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 /**
@@ -74,14 +74,10 @@ class PainelPanelProvider extends PanelProvider
             ->viteTheme('resources/css/filament/painel/theme.css')
             ->sidebarWidth('14.5rem') // 232px, como o AdminShell do design system
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
-            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
-            ->pages([
-                Dashboard::class,
-            ])
+            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages') // Dashboard (tela 16), Calendario
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
-            ->widgets([
-                AccountWidget::class,
-            ])
+            // "Exportar PDF" dos relatórios: página para imprimir (filament.painel.relatorios.imprimir)
+            ->authenticatedRoutes(fn () => Route::get('relatorios/imprimir', ImprimirRelatorio::class)->name('relatorios.imprimir'))
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

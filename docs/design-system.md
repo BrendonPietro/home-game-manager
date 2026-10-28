@@ -47,7 +47,7 @@ Escuro por padrão, grafite + feltro verde discreto + vermelho carta como acento
 - Diferenças em relação ao `bundle.css`:
   - `.rh-scrim` e `.rh-drawer` são `fixed` na janela, não `absolute` dentro da tela.
   - Acréscimos: `.rh-field__error`, `.rh-input[aria-invalid]`, foto no `.rh-avatar` e `.rh-strip > .is-prize` (destaque do prize pool, que no protótipo é um estilo inline).
-- Ficam **fora** do site, porque só aparecem no painel: shell do admin (`rh-app`, `rh-side`, `rh-nav`, `rh-pagehd`, `rh-content`, `rh-mtop`), calendário (`rh-cal`, `rh-ev`, `rh-legend`, `rh-dot`) e gráficos (`rh-bars`, `rh-tip`). Quando o calendário (tela 17) e os gráficos (tela 16) forem feitos, os estilos entram no tema do Filament.
+- Ficam **fora** do site, porque só aparecem no painel: shell do admin (`rh-app`, `rh-side`, `rh-nav`, `rh-pagehd`, `rh-content`, `rh-mtop`), calendário (`rh-cal`, `rh-ev`, `rh-legend`, `rh-dot`) e gráficos (`rh-bars`, `rh-tip`). Os do calendário (tela 17) e do dashboard (tela 16: `rh-stat`, `rh-datebox`, `rh-bars`, `rh-tip`, `rh-li`) estão no tema do Filament (`resources/css/filament/painel/theme.css`), com as cores em variáveis `--rh-*` no claro e no escuro.
 - Conferência: o CSS gerado tem as mesmas declarações do `bundle.css` para todos os seletores portados.
 
 ### Grades

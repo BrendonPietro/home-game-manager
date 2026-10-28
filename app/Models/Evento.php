@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\TipoEvento;
+use App\Support\Datas;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -50,5 +51,24 @@ class Evento extends Model
     public function aluguel(): HasOne
     {
         return $this->hasOne(Aluguel::class);
+    }
+
+    /** "19:00–23:30", "20:00" ou "Dia todo" */
+    public function horario(): string
+    {
+        $inicio = Datas::hora($this->hora_inicio);
+        $fim = Datas::hora($this->hora_fim);
+
+        return match (true) {
+            $inicio === null => 'Dia todo',
+            $fim === null => $inicio,
+            default => "{$inicio}–{$fim}",
+        };
+    }
+
+    /** "Mesa 01 + Mesa 02" ou "—" */
+    public function nomesDasMesas(): string
+    {
+        return $this->mesas->sortBy('nome')->pluck('nome')->join(' + ') ?: '—';
     }
 }

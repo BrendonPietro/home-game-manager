@@ -13,6 +13,8 @@ class ViewJogo extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            JogoResource::acaoDuplicar(),
+            JogoResource::acaoSalvarComoModelo(),
             EditAction::make(),
         ];
     }
