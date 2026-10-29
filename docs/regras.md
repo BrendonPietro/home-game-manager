@@ -37,17 +37,17 @@ Ninguém dá o que não tem: na tela de contas do painel só aparecem os grupos 
 | Grupo | Guard | Pode (seed inicial, editável) |
 |---|---|---|
 | Desenvolvedor | painel | Tudo, inclusive segurança, grupos, permissões e configurações técnicas |
-| Admin | painel | Tudo de negócio (jogos, modelos, rankings, usuários, mesas, agenda, aluguéis, relatórios, financeiro, contas do painel); não edita grupos/permissões |
-| Geral | painel | Ver jogos, agenda, rankings e usuários; cadastrar usuários. Sem financeiro, relatórios, segurança, configurações |
+| Admin | painel | Tudo de negócio (jogos, modelos, estruturas de blinds, rankings, usuários, mesas, agenda, aluguéis, relatórios, financeiro, contas do painel); não edita grupos/permissões |
+| Geral | painel | Ver jogos, estruturas de blinds, agenda, rankings e usuários; cadastrar usuários. Sem financeiro, relatórios, segurança, configurações |
 | Admin | web | Tudo no site, inclusive alterar entradas, opcionais e taxas durante o jogo, fases, desfazer, finalizar |
 | Operador | web | Só lança: buy-in, rebuy, add-on, opcionais, pagamentos, eliminações; confirma jogadores e faz cadastro rápido. Não altera o torneio |
 
 **Permissões do painel** (`guard_name = painel`), formato `recurso.acao`:
-`{jogos,modelos,rankings,usuarios,seguranca,grupos,mesas,eventos,alugueis,temporadas}.{ver,criar,editar,excluir}`, `relatorios.ver`, `relatorios.exportar`, `financeiro.ver`, `configuracoes.editar`. Cada resource do Filament tem uma policy que consulta essas permissões.
+`{jogos,modelos,estruturas,rankings,usuarios,seguranca,grupos,mesas,eventos,alugueis,temporadas}.{ver,criar,editar,excluir}`, `relatorios.ver`, `relatorios.exportar`, `financeiro.ver`, `configuracoes.editar`. Cada resource do Filament tem uma policy que consulta essas permissões.
 
 **Permissões do site** (`guard_name = web`):
 - Operador: `entradas.registrar`, `pagamentos.registrar`, `eliminacoes.registrar`, `jogadores.confirmar`, `usuarios.cadastro_rapido`.
-- Só Admin: `mesas.organizar`, `jogo.fases`, `jogo.finalizar`, `acoes.desfazer`, `estrutura.editar` (entradas e opcionais), `taxas.editar`, `financeiro.ver`.
+- Só Admin: `mesas.organizar`, `jogo.fases`, `relogio.controlar` (v2), `jogo.finalizar`, `acoes.desfazer`, `estrutura.editar` (entradas e opcionais), `taxas.editar`, `financeiro.ver`.
 
 Checadas nas Actions (Gate) e com `@can` no Blade para esconder botões.
 
@@ -66,7 +66,7 @@ Checadas nas Actions (Gate) e com `@can` no Blade para esconder botões.
 
 | Tabela | Colunas principais | Observações |
 |---|---|---|
-| `jogos` | e_modelo, nome_modelo, modalidade, temporada_id, nome, data, horario, status, fase, floor_id, metodo_premiacao, lugares_por_mesa, tamanho_mesa_final, nivel_atual, blinds_atual, valor_ficha, observacoes, iniciado_em, rebuys_encerrados_em, entradas_fechadas_em, finalizado_em | `e_modelo = true` = torneio modelo (só para copiar; fora do site e do calendário). `modalidade`: `torneio` / `cash_game`. `floor_id` → `usuarios` |
+| `jogos` | e_modelo, nome_modelo, modalidade, temporada_id, nome, data, horario, status, fase, floor_id, metodo_premiacao, lugares_por_mesa, tamanho_mesa_final, estrutura_blinds_id, nivel_atual, blinds_atual, relogio_nivel_id, relogio_segundos, relogio_desde, relogio_iniciado_em, valor_ficha, observacoes, iniciado_em, rebuys_encerrados_em, entradas_fechadas_em, finalizado_em | `e_modelo = true` = torneio modelo (só para copiar; fora do site e do calendário). `modalidade`: `torneio` / `cash_game`. `floor_id` → `usuarios` |
 | `jogo_itens` | jogo_id, tipo, nome, valor, fichas, destino, compravel_com (json), obrigatorio, limite_por_jogador, padrao, ativo, ordem | O que o jogador pode comprar. `tipo`: `buyin` / `rebuy` / `addon` / `opcional`. `padrao = true` no buy-in, rebuy e add-on que já vêm no cadastro (não se apagam, só se desativam); variações como "Rebuy duplo" são linhas extras do mesmo tipo. `destino`: `premiacao` / `fora` / `metade` (buy-in, rebuy e add-on sempre `premiacao`). Opcional: `compravel_com` = `[buyin, rebuy, addon]` (junto de cada entrada) ou `[jogador]` (1 por jogador) |
 | `jogo_taxas` | jogo_id, nome, calculo, valor, quantidade, ordem | Tiradas da premiação antes de dividir (dealers, casa…). `calculo`: `fixo` / `percentual` / `por_unidade` / `por_jogador` / `por_entrada` |
 | `jogo_premiacoes` | jogo_id, posicao, percentual, valor | Só torneio. `valor` gravado ao fechar entradas |
@@ -297,18 +297,63 @@ O jogo pode ser finalizado com saldos em aberto: viram pendências do jogador, a
 | `Actions\Jogo\RegistrarEntrada`, `RegistrarPagamento`, `RegistrarEliminacao`, `RegistrarCashOut`, `TrocarLugar` | Ações no jogador |
 | `Actions\Jogo\DesfazerAcao` | Cancela a última ação com motivo |
 | `Actions\Jogo\EncerrarRebuys`, `FecharEntradas`, `FinalizarJogo` | Fases e status |
+| `Services\Jogo\Relogio`, `Actions\Jogo\ControlarRelogio` | v2: relógio do torneio com estrutura de blinds |
 | `Actions\Jogo\CriarDeModelo` | Novo jogo a partir de um modelo |
 
 ## Blinds e relógio (v2)
 
-Na v1 o Admin do site (`jogo.fases`) digita nível e blinds na faixa da tela ao vivo (`Actions\Jogo\AtualizarNivel`: nível de 1 a 99 ou vazio, blinds até 40 caracteres, "100/200" vira "100 / 200") e encerra rebuys e fecha entradas nos botões da tela. Na v2:
+Na v1 (e na v2, para jogo sem estrutura) o Admin do site (`jogo.fases`) digita nível e blinds na faixa da tela ao vivo (`Actions\Jogo\AtualizarNivel`: nível de 1 a 99 ou vazio, blinds até 40 caracteres, "100/200" vira "100 / 200") e encerra rebuys e fecha entradas nos botões da tela. Na v2:
 
 | Tabela | Colunas principais | Observações |
 |---|---|---|
 | `estruturas_blinds` | nome, descricao, ativo | Estruturas reutilizáveis ("Turbo 15 min", "Deepstack 20 min") |
-| `estrutura_niveis` | estrutura_id, ordem, small_blind, big_blind, ante, duracao_minutos, e_intervalo, nome_intervalo | Ante 0 = sem ante. Intervalo é um nível especial |
+| `estrutura_niveis` | estrutura_id, ordem, small_blind, big_blind, ante, duracao_minutos, e_intervalo, nome_intervalo | `ordem` começa em 1. Ante 0 = sem ante. Intervalo é um nível especial: sem blinds, com nome ("Intervalo", "Jantar") |
 
-`jogos` ganha `estrutura_blinds_id`, `nivel_iniciado_em`, `relogio_pausado_em`, `segundos_restantes`. Relógio na faixa ao vivo e em tela cheia para TV; avança sozinho e, no intervalo, sugere **Encerrar rebuys**.
+**Estruturas (etapa 1, feita):**
+
+- Cadastro no painel (`EstruturaBlindsResource`, `estruturas.*`): nome, descrição, ativo e os níveis em ordem (small, big ≥ small, ante, minutos de 1 a 240; ou intervalo com nome e minutos), com ao menos um nível de blinds.
+- O número do nível não conta intervalo: no Turbo, "Nível 6" é o 100 / 200, depois vem o Intervalo e o "Nível 7". "Começa em" é o tempo de relógio desde o nível 1 (`EstruturaBlinds::linhas()`).
+- O torneio escolhe a estrutura na aba **Blinds** do cadastro (`jogos.estrutura_blinds_id`), só em rascunho e agendado, como entradas e mesas. Sem estrutura, nível e blinds continuam digitados na noite. Cash game não tem estrutura (o `Jogo` limpa ao salvar).
+- Duplicar, Salvar como modelo e Criar a partir do modelo levam a estrutura. A conferência (tela 04) mostra o nome e os níveis.
+- Estrutura usada num jogo ou modelo não se exclui: desative. `Duplicar` na lista copia com os níveis, para montar uma variação.
+- Seed (`EstruturasBlindsSeeder`, roda em todo ambiente e só cria a que falta): Turbo 15 min (16 níveis + intervalo depois do 6, 4h15; o nível 6 é o 100 / 200 da Poker Night #18, que usa ela) e Deepstack 20 min (14 níveis + intervalo, ante do big blind a partir do 7, 5h).
+
+**Relógio (etapa 2, a regra; feita):** torneio com estrutura tem relógio (`Jogo::temRelogio()`); cash game e torneio sem estrutura continuam com o nível digitado (`AtualizarNivel` recusa quando há estrutura: "mude o nível pelo relógio").
+
+| Coluna em `jogos` | O que guarda |
+|---|---|
+| `relogio_nivel_id` | Nível da estrutura em que o relógio está (some se o nível for apagado da estrutura) |
+| `relogio_segundos` | Segundos que faltavam no nível quando o relógio foi parado ou posto a correr |
+| `relogio_desde` | Desde quando o relógio corre; nulo = pausado |
+| `relogio_iniciado_em` | Primeira vez que correu (antes disso o botão é INICIAR) |
+
+- **Sem cron nem WebSocket** (`Services\Jogo\Relogio::estado`): o tempo que falta é `relogio_segundos` − o que passou desde `relogio_desde`; quando acaba, o relógio anda para o próximo nível com o tempo cheio, quantos níveis forem preciso (a tela pode ter ficado fechada). No fim do último nível para em 00:00 ("a estrutura acabou").
+- `nivel_atual` e `blinds_atual` seguem o relógio: número do nível de blinds (no intervalo, o último antes dele) e os blinds com ante ("300 / 600 · ante 600"; no intervalo, o nome dele). `Relogio::sincronizar` grava quando o nível muda: a tela ao vivo chama a cada atualização (5 s), o dashboard do site também, e a eliminação e o resultado chamam `avancar` com o jogo travado, para guardar o nível certo.
+- **Iniciar o jogo** põe o relógio no nível 1, com o tempo cheio e parado, até alguém apertar INICIAR.
+- **Comandos** (`Actions\Jogo\ControlarRelogio`, permissão do site `relogio.controlar`, só o Admin no seed): continuar (o INICIAR da primeira vez), pausar, próximo e anterior (o nível começa com o tempo cheio e o relógio continua correndo ou parado), ± 1 a 60 minutos no nível atual (fica entre 0 e 4 h; tirar mais do que falta passa para o próximo nível). Recusa: "O relógio já está correndo/pausado", "Já está no primeiro/último nível", "A estrutura acabou".
+- **Estrutura editada durante o jogo:** o nível atual mantém o tempo que falta; o resto vale do próximo nível em diante. Se o nível atual for apagado da estrutura (ou o jogo começou sem relógio), o relógio parte do nível de blinds com o número de `nivel_atual`, parado e com o tempo cheio.
+- `EstadoDoRelogio`: nível, número, tempo ("14:32", "09:05", "1:05:00"), correndo, próximo nível, segundos até o próximo intervalo e quando o nível termina. O tempo mostrado arredonda para cima; `restanteExato()` traz a fração do segundo, para a contagem no navegador virar no instante certo.
+- A Poker Night #18 (seed) fica com o relógio parado no nível 6 com 14:32, como a faixa do protótipo.
+
+**Relógio na tela ao vivo (etapa 3, feita):**
+
+- A faixa mostra o nível e os blinds do relógio e a célula **Relógio** com o tempo contando no navegador; o poll de 5 s acerta a conta e, em 00:00, a tela pede uma atualização para o servidor passar de nível. Pausado fica em âmbar ("Relógio · pausado"; antes do primeiro INICIAR, "Não iniciado"), o último minuto em vermelho.
+- No intervalo, a célula do relógio leva o nome dele ("Intervalo") e a do nível mostra o que vem depois ("A seguir · nível 7", "150 / 300"); a mesa mostra "Intervalo".
+- Quem tem `relogio.controlar` pausa e inicia no botão ao lado do tempo e, clicando no tempo, abre o modal **Relógio**: o tempo grande, o nível e o que vem depois ("Depois: Intervalo · 15 min", "intervalo em 45 min"), ANTERIOR, INICIAR/CONTINUAR/PAUSAR, PRÓXIMO e −5, −1, +1 e +5 min. Recusa aparece no modal. Os outros só veem o relógio.
+- **Sugestão de encerrar rebuys:** quando o relógio está num intervalo e o torneio ainda está nos rebuys, quem muda a fase (`jogo.fases`) vê acima da mesa "Intervalo: hora de encerrar os rebuys e abrir o add-on." com ENCERRAR REBUYS (abre o mesmo modal da fase). Só sugere: nada encerra sozinho, e a sugestão some quando o intervalo acaba.
+- Celular: a barra de baixo ganha o relógio na frente (nível e tempo; Admin abre o modal por ela) e fica com quatro células (relógio, blinds sem o ante, entradas e prize pool).
+
+**Tela cheia para a TV (etapa 4, feita):** `GET /jogos/{jogo}/tv` (Livewire `Jogo\Tv`), aberta pelo botão **TV** da tela ao vivo numa aba nova.
+
+- **Quem vê:** qualquer conta do site com acesso (é só leitura; não pede permissão). Abre com o jogo agendado, em andamento ou finalizado; rascunho, cancelado e modelo voltam para a lista de jogos.
+- **Em andamento:** o nível ("Nível 6" ou o nome do intervalo), o relógio grande, os blinds e o ante, o que vem depois ("Depois: Intervalo · 15 min", "Próximo: nível 7 · 150 / 300"), o prize pool e a premiação (antes de fechar as entradas, "Premiação até agora", pela `Calculadora`; depois, os prêmios gravados com quem já está em cada posição), jogando, entradas, **stack médio** (fichas das entradas válidas ÷ quem está jogando, só no torneio) e o tempo até o próximo intervalo. No intervalo, os blinds grandes são os da volta ("Na volta · nível 7"). Pausado aparece em âmbar com "Pausado" (antes do primeiro INICIAR, "Aguardando o início").
+- Torneio sem estrutura e cash game: nível e blinds digitados, sem relógio (no cash game, sem prize pool nem premiação).
+- **Antes de começar:** data, horário, nome e quantos confirmaram. **Depois de finalizar:** "Fim de jogo" com cada posição premiada, quem ficou nela e o prêmio.
+- Atualiza a cada 5 s, também com a aba em segundo plano (`wire:poll.5s.keep-alive`), e chama `Relogio::sincronizar` como a tela ao vivo.
+- **Som na troca de nível** (`resources/js/site/tv.js`, Web Audio, sem arquivo): três notas quando o relógio zera ou quando o nível muda por outro aparelho (as duas coisas na mesma troca tocam uma vez só). Desligado por padrão; ligado fica guardado no aparelho. O navegador só deixa tocar depois de um toque na página: com o som ligado e sem toque, a tela pede "Toque na tela para ligar o som".
+- **Tela cheia** pelo botão (ou F11 da TV); os botões e o cursor somem depois de 3 s sem mexer. A tela fica acesa (Screen Wake Lock) onde o navegador deixa (https ou localhost); fora disso, vale a configuração da TV.
+
+Com a etapa 4, a v2 (estruturas de blinds e relógio) está completa.
 
 ## Pontos em aberto
 

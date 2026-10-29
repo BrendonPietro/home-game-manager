@@ -14,7 +14,7 @@ use Illuminate\Support\Collection;
 class Permissoes
 {
     private const RECURSOS = [
-        'jogos' => 'Jogos', 'modelos' => 'Modelos', 'rankings' => 'Rankings', 'usuarios' => 'Usuários',
+        'jogos' => 'Jogos', 'modelos' => 'Modelos', 'estruturas' => 'Estruturas de blinds', 'rankings' => 'Rankings', 'usuarios' => 'Usuários',
         'seguranca' => 'Contas do painel', 'grupos' => 'Grupos', 'mesas' => 'Mesas', 'eventos' => 'Agenda',
         'alugueis' => 'Aluguéis', 'temporadas' => 'Temporadas', 'relatorios' => 'Relatórios',
         'financeiro' => 'Financeiro', 'configuracoes' => 'Configurações',
@@ -28,6 +28,7 @@ class Permissoes
         'usuarios.cadastro_rapido' => 'Cadastro rápido',
         'mesas.organizar' => 'Montar as mesas',
         'jogo.fases' => 'Iniciar e mudar de fase',
+        'relogio.controlar' => 'Controlar o relógio',
         'jogo.finalizar' => 'Finalizar o jogo',
         'acoes.desfazer' => 'Desfazer ações',
         'estrutura.editar' => 'Alterar entradas e opcionais no jogo',

@@ -10,7 +10,8 @@ use App\Models\Usuario;
 use Illuminate\Support\Facades\DB;
 
 /**
- * v1: nível e blinds digitados na tela ao vivo (a estrutura de blinds com relógio é da v2).
+ * Nível e blinds digitados na tela ao vivo, para jogo sem estrutura de blinds (cash game, ou torneio
+ * sem estrutura). Com estrutura, quem muda o nível é o relógio (ControlarRelogio).
  * Blinds ficam como o grupo escreve, só com a barra espaçada: "100/200" → "100 / 200".
  * Vazio limpa. A eliminação guarda o nível da hora.
  */
@@ -35,6 +36,10 @@ class AtualizarNivel
         return DB::transaction(function () use ($jogo, $nivel, $blinds) {
             $jogo = Jogo::query()->lockForUpdate()->findOrFail($jogo->id);
             $this->exigirStatus($jogo, [StatusJogo::EmAndamento], 'Nível e blinds só com o jogo em andamento.');
+
+            if ($jogo->temRelogio()) {
+                throw new RegraDoJogo('Este torneio segue a estrutura de blinds: mude o nível pelo relógio.');
+            }
 
             $jogo->update(['nivel_atual' => $nivel, 'blinds_atual' => $blinds !== '' ? $blinds : null]);
 

@@ -1,0 +1,334 @@
+// ============================================================================
+// v2: tela cheia para a TV (Livewire Jogo\Tv). O protótipo não tem esta tela.
+// Ocupa a altura toda sem rolar: topo, palco (relógio no feltro + prize pool e premiação) e os
+// números embaixo. Tamanhos pela altura da tela (vh) e pela largura do cartão do relógio (cqi),
+// para caber de notebook a TV de 4K.
+// ============================================================================
+
+@use "../vars" as *;
+
+.rh-tv {
+	min-height: 100svh;
+	display: grid;
+	grid-template-rows: auto 1fr auto;
+	gap: 2vh;
+	padding: 2vh 2.5vw;
+	background: var(--bg-000);
+
+	.rh-label {
+		font-size: clamp(12px, 1.8vh, 24px);
+	}
+
+	&__topo {
+		display: flex;
+		align-items: center;
+		gap: 2vw;
+	}
+
+	&__jogo {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		min-width: 0;
+
+		b {
+			font-family: var(--font-display);
+			font-weight: 700;
+			font-size: clamp(20px, 3.6vh, 48px);
+			line-height: 1.1;
+		}
+
+		span {
+			color: var(--ink-200);
+			font-size: clamp(14px, 2.2vh, 28px);
+		}
+	}
+
+	// Somem depois de uns segundos sem mexer (tv.js)
+	&__botoes {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+		gap: 8px;
+		transition: opacity 0.4s;
+
+		&.is-escondido {
+			opacity: 0;
+			pointer-events: none;
+		}
+	}
+
+	&__toque {
+		padding: 6px 12px;
+		border: 1px solid var(--amber-300);
+		border-radius: var(--radius-md);
+		color: var(--amber-300);
+		font-size: 14px;
+	}
+
+	&__palco {
+		display: grid;
+		grid-template-columns: 1fr minmax(300px, 30vw);
+		gap: 2vw;
+		min-height: 0;
+
+		&.sem-lado {
+			grid-template-columns: 1fr;
+		}
+	}
+
+	// O relógio no feltro
+	&__relogio {
+		container-type: inline-size;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 1.2vh;
+		min-width: 0;
+		padding: 3vh 2vw;
+		text-align: center;
+		border: 1px solid var(--line-200);
+		border-radius: var(--radius-lg);
+		background: radial-gradient(130% 120% at 50% 0%, var(--felt-700), var(--felt-900) 65%, var(--bg-100));
+
+		&.is-intervalo {
+			border-color: var(--amber-300);
+
+			.rh-tv__titulo {
+				color: var(--amber-300);
+			}
+		}
+	}
+
+	&__titulo {
+		font-family: var(--font-display);
+		font-weight: 600;
+		font-size: clamp(24px, 5.5vh, 80px);
+		line-height: 1;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: var(--ink-200);
+	}
+
+	&__tempo {
+		font-family: var(--font-display);
+		font-weight: 700;
+		font-size: min(34cqi, 34vh);
+		line-height: 0.92;
+
+		&.is-longo {
+			font-size: min(24cqi, 30vh);
+		}
+	}
+
+	&__situacao {
+		font-family: var(--font-display);
+		font-weight: 700;
+		font-size: clamp(18px, 3.6vh, 52px);
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--amber-300);
+	}
+
+	&__blinds {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.4vh;
+
+		.v {
+			font-family: var(--font-display);
+			font-weight: 700;
+			font-size: min(13cqi, 13vh);
+			line-height: 1;
+			font-variant-numeric: tabular-nums;
+		}
+	}
+
+	// Sem estrutura (nível digitado): os blinds tomam o lugar do relógio
+	&__relogio.sem-relogio &__blinds .v {
+		font-size: min(20cqi, 24vh);
+	}
+
+	&__rotulo {
+		font-size: clamp(14px, 2.4vh, 32px);
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--ink-200);
+	}
+
+	&__ante {
+		font-family: var(--font-display);
+		font-weight: 600;
+		font-size: min(6cqi, 6vh);
+		line-height: 1.1;
+		color: var(--ink-200);
+	}
+
+	&__proximo {
+		font-size: clamp(16px, 3.2vh, 44px);
+		color: var(--ink-200);
+	}
+
+	&__lado {
+		display: flex;
+		flex-direction: column;
+		gap: 2vh;
+		min-height: 0;
+		overflow: hidden;
+	}
+
+	&__prize {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6vh;
+		padding: 2.4vh 1.6vw;
+		border: 1px solid var(--line-200);
+		border-radius: var(--radius-lg);
+		background: var(--bg-100);
+
+		.v {
+			font-family: var(--font-display);
+			font-weight: 700;
+			font-size: clamp(36px, 9vh, 140px);
+			line-height: 1;
+			font-variant-numeric: tabular-nums;
+			white-space: nowrap;
+		}
+	}
+
+	&__premios {
+		display: flex;
+		flex-direction: column;
+		gap: 0.4vh;
+		min-height: 0;
+		padding: 2vh 1.6vw;
+		border: 1px solid var(--line-200);
+		border-radius: var(--radius-lg);
+		background: var(--bg-100);
+		overflow: hidden;
+
+		> .rh-label {
+			margin-bottom: 0.6vh;
+		}
+
+		&--final {
+			width: min(720px, 90vw);
+		}
+	}
+
+	&__premio {
+		display: flex;
+		align-items: baseline;
+		gap: 1vw;
+		padding: 0.5vh 0;
+		font-size: clamp(16px, 3.2vh, 44px);
+		border-bottom: 1px solid var(--line-100);
+
+		&:last-child {
+			border-bottom: 0;
+		}
+
+		.v {
+			margin-left: auto;
+			font-family: var(--font-display);
+			font-weight: 700;
+			font-variant-numeric: tabular-nums;
+			white-space: nowrap;
+		}
+	}
+
+	&__pos {
+		font-family: var(--font-display);
+		font-weight: 700;
+		min-width: 2.2em;
+		color: var(--ink-300);
+	}
+
+	&__quem {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	&__numeros {
+		display: grid;
+		grid-auto-flow: column;
+		grid-auto-columns: 1fr;
+		border: 1px solid var(--line-200);
+		border-radius: var(--radius-lg);
+		background: var(--bg-100);
+		overflow: hidden;
+
+		> div {
+			display: flex;
+			flex-direction: column;
+			gap: 0.4vh;
+			padding: 1.6vh 1.6vw;
+			border-right: 1px solid var(--line-100);
+
+			&:last-child {
+				border-right: 0;
+			}
+		}
+
+		.v {
+			font-family: var(--font-display);
+			font-weight: 700;
+			font-size: clamp(24px, 6vh, 88px);
+			line-height: 1;
+			font-variant-numeric: tabular-nums;
+			white-space: nowrap;
+		}
+	}
+
+	// Antes de começar e depois de acabar
+	&__fora {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 3vh;
+		text-align: center;
+	}
+
+	&__nome {
+		font-family: var(--font-display);
+		font-weight: 700;
+		font-size: clamp(40px, 14vh, 200px);
+		line-height: 1;
+	}
+
+	// Tablet e celular em pé: empilha e deixa rolar
+	@include ate(tablet) {
+		&__palco {
+			grid-template-columns: 1fr;
+		}
+
+		&__numeros {
+			grid-auto-flow: row;
+			grid-template-columns: repeat(2, 1fr);
+
+			> div {
+				border-bottom: 1px solid var(--line-100);
+			}
+		}
+
+		&__relogio {
+			padding: 4vh 4vw;
+		}
+
+		&__tempo {
+			font-size: 30cqi;
+		}
+	}
+}
+
+// Na TV, sem mexer o mouse, o cursor some junto com os botões (tv.js)
+.rh-sem-cursor,
+.rh-sem-cursor * {
+	cursor: none !important;
+}

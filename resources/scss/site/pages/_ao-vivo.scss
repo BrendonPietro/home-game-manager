@@ -213,6 +213,76 @@
 		}
 	}
 
+	// v2: o relógio chegou ao intervalo com os rebuys abertos (sugestão, acima da mesa)
+	&__sugestao {
+		align-items: center;
+		flex-wrap: wrap;
+
+		> div {
+			flex: 1 1 220px;
+		}
+
+		> .rh-btn {
+			margin-left: auto;
+		}
+
+		.rh-ic {
+			margin-top: 0;
+		}
+	}
+
+	// Modal do relógio: o tempo grande, o nível e o que vem depois; comandos e ajuste de minutos
+	&__tempo {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 4px;
+		padding: 16px;
+		text-align: center;
+		border: 1px solid var(--line-200);
+		border-radius: var(--radius-md);
+		background: var(--bg-100);
+
+		.v {
+			font-family: var(--font-display);
+			font-weight: 700;
+			font-size: 72px;
+			line-height: 74px;
+		}
+	}
+
+	&__tempo-nivel {
+		font-family: var(--font-display);
+		font-weight: 600;
+		font-size: 22px;
+		line-height: 26px;
+	}
+
+	&__comandos {
+		display: flex;
+		gap: 8px;
+
+		> .rh-btn {
+			flex: 1 1 0;
+			gap: 4px;
+			padding: 0 8px;
+		}
+
+		> .rh-btn--primary {
+			flex-grow: 1.3;
+		}
+	}
+
+	&__ajustes {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 8px;
+
+		.rh-btn {
+			padding: 0 6px;
+		}
+	}
+
 	// Botão da fase: no fim da lateral; no tablet e no celular (sem lateral), numa linha da barra
 	&__acao {
 		border-top: 1px solid var(--line-200);
@@ -294,7 +364,8 @@
 		padding-bottom: 64px;
 
 		&__faixa,
-		&__legenda {
+		&__legenda,
+		&__tv {
 			display: none;
 		}
 
@@ -334,6 +405,45 @@
 				font-variant-numeric: tabular-nums;
 				white-space: nowrap;
 			}
+
+			// v2: o relógio entra na frente e as quatro células apertam
+			&.com-relogio {
+				grid-template-columns: repeat(4, minmax(0, 1fr));
+
+				> * {
+					padding: 8px 10px;
+				}
+
+				.rh-label {
+					overflow: hidden;
+					text-overflow: ellipsis;
+					white-space: nowrap;
+				}
+
+				.v {
+					font-size: 19px;
+					line-height: 22px;
+					overflow: hidden;
+					text-overflow: ellipsis;
+				}
+			}
 		}
+	}
+}
+
+// v2: relógio na faixa. Quem controla abre o modal pelo tempo e pausa (ou inicia) no botão ao lado.
+.rh-strip > .rh-aovivo__relogio {
+	flex-direction: row;
+	align-items: center;
+	padding: 0 14px 0 0;
+
+	> .rh-aovivo__nivel {
+		align-self: stretch;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		gap: 2px;
+		padding: 10px 12px 10px 20px;
+		border-right: 0;
 	}
 }

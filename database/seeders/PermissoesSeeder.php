@@ -14,7 +14,7 @@ use Spatie\Permission\PermissionRegistrar;
 class PermissoesSeeder extends Seeder
 {
     public const RECURSOS_PAINEL = [
-        'jogos', 'modelos', 'rankings', 'usuarios', 'seguranca',
+        'jogos', 'modelos', 'estruturas', 'rankings', 'usuarios', 'seguranca',
         'grupos', 'mesas', 'eventos', 'alugueis', 'temporadas',
     ];
 
@@ -35,6 +35,7 @@ class PermissoesSeeder extends Seeder
     public const SITE_ADMIN = [
         'mesas.organizar',
         'jogo.fases',
+        'relogio.controlar', // v2: relógio do torneio com estrutura de blinds
         'jogo.finalizar',
         'acoes.desfazer',
         'estrutura.editar', // entradas e opcionais durante o jogo
@@ -64,7 +65,7 @@ class PermissoesSeeder extends Seeder
         )));
 
         $this->grupo('Geral', 'painel', [
-            'jogos.ver', 'eventos.ver', 'rankings.ver', 'usuarios.ver', 'usuarios.criar',
+            'jogos.ver', 'estruturas.ver', 'eventos.ver', 'rankings.ver', 'usuarios.ver', 'usuarios.criar',
         ]);
 
         // ── Site ──

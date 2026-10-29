@@ -66,7 +66,8 @@ Site e painel **nunca gravam entradas ou status direto pelo model**. Tudo passa 
 | `App\Actions\Jogo\SortearLugares`, `AjustarMesa`, `AdicionarMesa`, `RemoverMesa` | Montar as mesas (tela 06): sorteio equilibrado, lugares e dealer, mesas do jogo (a agenda acompanha) |
 | `App\Actions\Jogo\IniciarJogo` | Agendado → em andamento (torneio na fase de rebuys); sentados viram "jogando" |
 | `App\Actions\Jogo\EncerrarRebuys`, `FecharEntradas` | Rebuys → intervalo (quem caiu e não voltou fica fora de vez) → sem entradas (grava os prêmios e as posições) |
-| `App\Actions\Jogo\AtualizarNivel` | Nível e blinds digitados na tela ao vivo (v1; "100/200" vira "100 / 200") |
+| `App\Actions\Jogo\AtualizarNivel` | Nível e blinds digitados na tela ao vivo, só sem estrutura de blinds ("100/200" vira "100 / 200") |
+| `App\Services\Jogo\Relogio`, `App\Actions\Jogo\ControlarRelogio` | v2: relógio do torneio com estrutura (estado sem cron, `sincronizar` grava `nivel_atual`/`blinds_atual`); continuar, pausar, próximo, anterior e ± minutos (`relogio.controlar`) |
 | `App\Actions\Jogo\DefinirResultado` | Com as entradas fechadas, posição de quem ainda está em jogo (vira eliminações do último para o 2º) |
 | `App\Actions\Jogo\FinalizarJogo` | Em andamento → finalizado: confere posições (ou cash-outs), grava acertos e pontos dos rankings |
 | `App\Actions\Jogo\MarcarAcerto` | Acerto feito depois de finalizar: vira pagamentos (quem pagou / quem recebeu) e os saldos fecham |
@@ -116,7 +117,7 @@ Hospedagem compartilhada não roda WebSocket. A tela ao vivo e o resumo usam `wi
 
 ### Blinds e relógio
 
-V2. Na v1, `jogos.nivel_atual` e `blinds_atual` são digitados. Detalhes em [docs/regras.md](docs/regras.md).
+V2 (feita em 28/10/2026). Estruturas de blinds (`EstruturaBlinds` com os `EstruturaNivel` em ordem, a partir de 1; intervalo é um nível sem blinds que não conta no número) cadastradas no painel (`EstruturaBlindsResource`, `estruturas.*`) e escolhidas na aba Blinds do torneio (`jogos.estrutura_blinds_id`; cash game não tem, o `Jogo` limpa ao salvar). `EstruturaBlinds::linhas()` numera os níveis e diz quando cada um começa (prévia, aba Blinds, conferência). Sem estrutura, `jogos.nivel_atual` e `blinds_atual` continuam digitados na tela ao vivo (v1). Com estrutura, o relógio (`Services\Jogo\Relogio`) manda: guarda nível, segundos e `relogio_desde` (nulo = pausado) e calcula o agora andando pelos níveis, sem cron; quem lê o nível para gravar (eliminação, resultado) chama `avancar` com o jogo travado, e as telas chamam `sincronizar`. Iniciar o jogo deixa o nível 1 parado. Na tela ao vivo, o tempo conta no navegador (`<x-site.poker.relogio>` + `resources/js/site/relogio.js`, acertado pelo poll) e quem tem `relogio.controlar` pausa na faixa e abre o modal com próximo, anterior e ± minutos; no intervalo com os rebuys abertos, a tela sugere ENCERRAR REBUYS. A tela cheia para a TV (`/jogos/{jogo}/tv`, Livewire `Jogo\Tv`, qualquer conta do site) mostra relógio, blinds e ante, próximo nível, prize pool, premiação, jogando, entradas e stack médio, e toca um som na troca de nível (`resources/js/site/tv.js`, Web Audio). Detalhes em [docs/regras.md](docs/regras.md).
 
 ## Convenções
 
@@ -135,7 +136,7 @@ V2. Na v1, `jogos.nivel_atual` e `blinds_atual` são digitados. Detalhes em [doc
 - SCSS em `resources/scss/site/` (`vars`, `core`, `components`, `pages`), classes com prefixo `rh-`. Tokens como variáveis CSS em `vars/_tokens.scss` (mesmos nomes do `bundle.css`: `--bg-000`, `--radius-md`…); breakpoints com `@include ate(largo|tablet|celular)`. Grades responsivas `rh-grid--2…6` e `rh-grid--side` no lugar de `grid-template-columns` inline. Sem Tailwind e sem WPF3 no site.
 - Ícones: SVGs em `resources/svg/site/icons/` (set `rh` do blade-icons, registrado no `AppServiceProvider`): `@svg('rh-home')`.
 - Layout base: `<x-site.app titulo="...">` (`app/View/Components/Site/App.php` → `site/layouts/app.blade.php`). Livewire e Alpine vêm num bundle só (`resources/js/site/app.js` importa o ESM do Livewire; o layout usa `@livewireScriptConfig`): não importar Alpine de novo.
-- Componentes Blade em `resources/views/components/site/{core,props,poker,window}`. Já existem: `props/{brand,field,avatar,datebox,status-jogo,aviso,linha-item}`, `window/{topbar,fluxo-da-noite}`, `poker/mesa`. Conteúdo das telas dentro de `<main class="rh-page"><div class="rh-wrap">`.
+- Componentes Blade em `resources/views/components/site/{core,props,poker,window}`. Já existem: `props/{brand,field,avatar,datebox,status-jogo,aviso,linha-item}`, `window/{topbar,fluxo-da-noite}`, `poker/{mesa,relogio}`. Conteúdo das telas dentro de `<main class="rh-page"><div class="rh-wrap">`.
 - Telas da noite usam `<x-site.operacao :jogo etapa="…" titulo="…">` (topbar com o jogo + fluxo da noite + aviso) e a rota leva `->middleware('jogo.etapa:<etapa>')`. Com `larga`, o conteúdo vai de ponta a ponta (tela ao vivo, que traz a faixa ao vivo dentro do Livewire para atualizar no `wire:poll`).
 - Tela ao vivo: Livewire `Jogo\AoVivo` (`?mesa=` escolhe a mesa; sai sozinha se o jogo deixar de estar em andamento). Assentos com total e fichas via a prop `rodapes` da mesa; contagens por jogador em `Services\Jogo\Entradas::porJogador()`; ficha do buy-in (B, 2, 3) em `Jogo::fichaDoBuyin()`.
 - Fechamento (tela 14): Livewire `Jogo\Fechamento`. Antes de finalizar mostra a sugestão do `Acertos`; depois, os acertos gravados com FEITO. O Finalizar recarrega a página (a topbar e o fluxo da noite ficam fora do Livewire).

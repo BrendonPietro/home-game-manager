@@ -881,6 +881,27 @@
         white-space: nowrap;
     }
 
+    /* ── Níveis da estrutura de blinds (prévia e aba Blinds do jogo) ── */
+
+    .rh-tabela--niveis td {
+        font-variant-numeric: tabular-nums;
+    }
+
+    .rh-tabela--niveis tr.is-intervalo td {
+        background: var(--rh-elevado);
+        font-family: var(--font-display);
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--color-warning-400);
+    }
+
+    .rh-tabela--niveis tfoot td {
+        border-bottom: 0;
+        font-weight: 600;
+        color: var(--rh-ink);
+    }
+
     /* ── Simulação do prize pool (cadastro do jogo) e Configurações (tela 25) ── */
 
     .rh-simulacao {

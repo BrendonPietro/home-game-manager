@@ -1,32 +1,76 @@
-{{-- Telas 07, 07m e 11: a noite ao vivo e as fases do torneio (docs/prototipo, telas 07, 07m e 11). Atualiza a cada 5 s. --}}
+{{-- Telas 07, 07m e 11: a noite ao vivo e as fases do torneio (docs/prototipo, telas 07, 07m e 11). Atualiza a cada 5 s; o relógio (v2) conta no navegador. --}}
 @php
 	use App\Enums\FaseTorneio;
+	use App\Models\EstruturaBlinds;
 	use App\Support\Dinheiro;
 
 	$torneio = $jogo->eTorneio();
 	$blinds = $jogo->blinds_atual ?: '—';
 	$nivel = $jogo->nivel_atual ? 'Nível '.$jogo->nivel_atual : 'Blinds';
+	$blindsCurto = $blinds; // barra do celular: sem o ante
+	$subtitulo = $jogo->blinds_atual ? 'Blinds '.$jogo->blinds_atual : null;
+
+	// v2: com estrutura de blinds, nível e blinds vêm do relógio; no intervalo, o que vem depois dele.
+	$podeRelogio = $relogio && auth('web')->user()->can('relogio.controlar');
+	if ($relogio?->noIntervalo()) {
+		$depois = $relogio->proximo();
+		$nivel = $depois && ! $depois->e_intervalo ? 'A seguir · nível '.(($relogio->ultimoNumero ?? 0) + 1) : 'A seguir';
+		[$blinds, $blindsCurto] = [$depois?->blindsComAnte() ?? '—', $depois?->blinds() ?? '—'];
+		$subtitulo = $relogio->titulo();
+	} elseif ($relogio) {
+		$nivel = $relogio->titulo();
+		[$blinds, $blindsCurto] = [$relogio->nivel()->blindsComAnte(), $relogio->nivel()->blinds()];
+		$subtitulo = 'Blinds '.$blinds;
+	}
+	$situacao = $relogio ? match (true) {
+		$relogio->rodando => $relogio->noIntervalo() ? $relogio->titulo() : 'Relógio',
+		$relogio->acabou() => 'Fim da estrutura',
+		! $relogio->iniciado => 'Não iniciado',
+		default => ($relogio->noIntervalo() ? $relogio->titulo() : 'Relógio').' · pausado',
+	} : null;
+	$comandoPlay = $relogio && ! $relogio->acabou() ? ($relogio->rodando ? 'pausar' : 'continuar') : null;
+	$rotuloPlay = match (true) {
+		$comandoPlay === 'pausar' => 'PAUSAR',
+		$relogio?->iniciado => 'CONTINUAR',
+		default => 'INICIAR',
+	};
+
 	$prizePool = Dinheiro::brlCentavos($resumo->prizePool);
 	$numeros = $torneio
 		? ['Buy-ins' => $contagem['buyins'], 'Rebuys' => $contagem['rebuys'], 'Add-ons' => $contagem['addons']]
 		: ['Buy-ins' => $contagem['buyins'], 'Recompras' => $contagem['rebuys'], 'Cash-outs' => $contagem['cashOuts']];
 	$podeFases = auth('web')->user()->can('jogo.fases');
+	$digitaNivel = $podeFases && ! $jogo->temRelogio(); // com estrutura de blinds, o nível segue o relógio
 	$botaoFase = $torneio && $podeFases ? match ($jogo->fase) {
 		FaseTorneio::Rebuys => 'ENCERRAR REBUYS',
 		FaseTorneio::Intervalo => 'FECHAR ENTRADAS',
 		default => null,
 	} : null;
+	// O relógio chegou ao intervalo com os rebuys abertos: sugere encerrar (não encerra sozinho).
+	$sugereEncerrar = $relogio?->noIntervalo() && $botaoFase && $jogo->fase === FaseTorneio::Rebuys;
 	$quantos = fn (int $n, string $coisa): string => $n.' '.$coisa.($n === 1 ? '' : 's');
 @endphp
 
 <div class="rh-aovivo" wire:poll.5s>
 	<div class="rh-strip rh-aovivo__faixa">
-		@if ($podeFases)
+		@if ($digitaNivel)
 			<button type="button" class="rh-aovivo__nivel" wire:click="abrirNivel" title="Mudar o nível e os blinds">
 				<span class="rh-label">{{ $nivel }} @svg('rh-edit')</span><span class="v">{{ $blinds }}</span>
 			</button>
 		@else
 			<div><span class="rh-label">{{ $nivel }}</span><span class="v">{{ $blinds }}</span></div>
+		@endif
+		@if ($podeRelogio)
+			<div class="rh-aovivo__relogio">
+				<button type="button" class="rh-aovivo__nivel" wire:click="abrirRelogio" title="Controlar o relógio">
+					<span class="rh-label">{{ $situacao }} @svg('rh-clock')</span><span class="v"><x-site.poker.relogio :estado="$relogio" /></span>
+				</button>
+				@if ($comandoPlay)
+					<button type="button" class="rh-btn rh-btn--icon rh-aovivo__play" wire:click="controlarRelogio('{{ $comandoPlay }}')" title="{{ ucfirst(mb_strtolower($rotuloPlay)) }} o relógio" aria-label="{{ ucfirst(mb_strtolower($rotuloPlay)) }} o relógio">@svg($comandoPlay === 'pausar' ? 'rh-pause' : 'rh-play')</button>
+				@endif
+			</div>
+		@elseif ($relogio)
+			<div><span class="rh-label">{{ $situacao }}</span><span class="v"><x-site.poker.relogio :estado="$relogio" /></span></div>
 		@endif
 		@if ($torneio)
 			<div><span class="rh-label">Fase</span><span class="v">{{ $jogo->fase?->label() ?? '—' }}</span></div>
@@ -65,8 +109,11 @@
 					<button type="button" class="rh-btn" x-on:click="$dispatch('girar-mesa', {{ $mesaAtual->id }})">@svg('rh-rotate') GIRAR MESA</button>
 				@endif
 
-				{{-- Tablet e celular: a lateral some, o botão da fase vem para cá. --}}
-				@if ($botaoFase)
+				{{-- v2: tela cheia para a TV, numa aba nova (no celular não aparece). --}}
+				<a class="rh-btn rh-aovivo__tv" href="{{ route('jogos.tv', $jogo) }}" target="_blank" rel="noopener" title="Abrir a tela da TV numa aba nova">@svg('rh-tv') TV</a>
+
+				{{-- Tablet e celular: a lateral some, o botão da fase vem para cá (ou fica na sugestão do intervalo). --}}
+				@if ($botaoFase && ! $sugereEncerrar)
 					<button type="button" class="rh-btn rh-btn--danger rh-aovivo__fase-curta" wire:click="abrirFase">@svg('rh-lock') {{ $botaoFase }}</button>
 				@endif
 			</div>
@@ -90,6 +137,14 @@
 				<div class="rh-warn" role="alert">@svg('rh-alert')<div>{{ $erro }}</div></div>
 			@endif
 
+			@if ($sugereEncerrar)
+				<div class="rh-warn rh-aovivo__sugestao" role="status">
+					@svg('rh-clock')
+					<div><b>{{ $relogio->titulo() }}:</b> hora de encerrar os rebuys e abrir o add-on.</div>
+					<button type="button" class="rh-btn rh-btn--danger rh-btn--sm" wire:click="abrirFase">@svg('rh-lock') ENCERRAR REBUYS</button>
+				</div>
+			@endif
+
 			<div class="rh-aovivo__mesa">
 				@if ($mesaAtual)
 					<x-site.poker.mesa
@@ -99,7 +154,7 @@
 						:rodapes="$rodapes"
 						:selecionado="$movendo ?? $selecionado"
 						acao="clicarAssento"
-						:subtitulo="$jogo->blinds_atual ? 'Blinds '.$jogo->blinds_atual : null"
+						:subtitulo="$subtitulo"
 					/>
 				@else
 					<p class="rh-muted">Nenhuma mesa neste jogo: adicione uma no painel.</p>
@@ -192,12 +247,17 @@
 		<livewire:jogo.acoes-jogador :jogo="$jogo" :participante-id="$selecionado" :key="'acoes-'.$selecionado" />
 	@endif
 
-	{{-- Celular: a faixa some e blinds, entradas e prize pool ficam presos embaixo. --}}
-	<div class="rh-aovivo__rodape">
-		@if ($podeFases)
-			<button type="button" class="rh-aovivo__nivel" wire:click="abrirNivel" title="Mudar o nível e os blinds"><span class="rh-label">Blinds @svg('rh-edit')</span><span class="v">{{ $blinds }}</span></button>
+	{{-- Celular: a faixa some e blinds, entradas e prize pool ficam presos embaixo (com o relógio na frente, se tiver). --}}
+	<div @class(['rh-aovivo__rodape', 'com-relogio' => $relogio])>
+		@if ($podeRelogio)
+			<button type="button" class="rh-aovivo__nivel" wire:click="abrirRelogio" title="Controlar o relógio"><span class="rh-label">{{ $relogio->noIntervalo() ? $relogio->titulo() : $nivel }} @svg('rh-clock')</span><span class="v"><x-site.poker.relogio :estado="$relogio" /></span></button>
+		@elseif ($relogio)
+			<div><span class="rh-label">{{ $relogio->noIntervalo() ? $relogio->titulo() : $nivel }}</span><span class="v"><x-site.poker.relogio :estado="$relogio" /></span></div>
+		@endif
+		@if ($digitaNivel)
+			<button type="button" class="rh-aovivo__nivel" wire:click="abrirNivel" title="Mudar o nível e os blinds"><span class="rh-label">Blinds @svg('rh-edit')</span><span class="v">{{ $blindsCurto }}</span></button>
 		@else
-			<div><span class="rh-label">Blinds</span><span class="v">{{ $blinds }}</span></div>
+			<div><span class="rh-label">{{ $relogio?->noIntervalo() ? 'A seguir' : 'Blinds' }}</span><span class="v">{{ $blindsCurto }}</span></div>
 		@endif
 		<div><span class="rh-label">Entradas</span><span class="v">{{ $resumo->entradas }}</span></div>
 		<div class="is-prize"><span class="rh-label">Prize pool</span><span class="v">{{ $prizePool }}</span></div>
@@ -233,6 +293,51 @@
 						<button type="submit" class="rh-btn rh-btn--primary rh-btn--lg" wire:loading.attr="disabled">SALVAR</button>
 					</div>
 				</form>
+			@elseif ($modal === 'relogio' && $relogio)
+				@php
+					$proximo = $relogio->proximo();
+					$intervaloEm = $proximo?->e_intervalo ? null : $relogio->intervaloEm();
+					$depois = match (true) {
+						! $proximo => 'Último nível da estrutura.',
+						$proximo->e_intervalo => 'Depois: '.$proximo->blinds().' · '.$proximo->duracao_minutos.' min',
+						default => 'Depois: nível '.(($relogio->ultimoNumero ?? 0) + 1).' · '.$proximo->blindsComAnte().' · '.$proximo->duracao_minutos.' min',
+					};
+				@endphp
+				<div class="rh-modal" style="max-width:460px" role="dialog" aria-modal="true" aria-labelledby="relogio-titulo">
+					<div class="rh-modal__hd">
+						<h2 class="rh-heading" id="relogio-titulo">Relógio</h2>
+						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharModal" aria-label="Fechar">@svg('rh-x')</button>
+					</div>
+					<div class="rh-modal__bd rh-col" style="gap:16px">
+						@if ($erro)
+							<div class="rh-warn" role="alert">@svg('rh-alert')<div>{{ $erro }}</div></div>
+						@endif
+						<div class="rh-aovivo__tempo">
+							<span class="rh-label">{{ match (true) { $relogio->rodando => 'Correndo', $relogio->acabou() => 'Fim da estrutura', ! $relogio->iniciado => 'Não iniciado', default => 'Pausado' } }}</span>
+							<span class="v"><x-site.poker.relogio :estado="$relogio" /></span>
+							<span class="rh-aovivo__tempo-nivel">{{ $relogio->noIntervalo() ? $relogio->titulo() : $relogio->titulo().' · '.$relogio->nivel()->blindsComAnte() }}</span>
+							<span class="rh-small rh-muted">{{ $depois }}{{ $intervaloEm !== null ? ' · intervalo em '.EstruturaBlinds::duracao(intdiv($intervaloEm + 59, 60)) : '' }}</span>
+						</div>
+						<div class="rh-aovivo__comandos">
+							<button type="button" class="rh-btn rh-btn--lg" wire:click="controlarRelogio('anterior')" wire:loading.attr="disabled" @disabled(! $relogio->anterior())>@svg('rh-chev-l') ANTERIOR</button>
+							@if ($comandoPlay)
+								<button type="button" class="rh-btn rh-btn--primary rh-btn--lg" wire:click="controlarRelogio('{{ $comandoPlay }}')" wire:loading.attr="disabled">@svg($comandoPlay === 'pausar' ? 'rh-pause' : 'rh-play') {{ $rotuloPlay }}</button>
+							@endif
+							<button type="button" class="rh-btn rh-btn--lg" wire:click="controlarRelogio('proximo')" wire:loading.attr="disabled" @disabled(! $proximo)>PRÓXIMO @svg('rh-chev-r')</button>
+						</div>
+						<div class="rh-field">
+							<span class="rh-field__label">Ajustar o tempo do nível</span>
+							<div class="rh-aovivo__ajustes">
+								@foreach ([-5, -1, 1, 5] as $minutos)
+									<button type="button" class="rh-btn" wire:key="ajuste-{{ $minutos }}" wire:click="controlarRelogio('ajustar', {{ $minutos }})" wire:loading.attr="disabled">{{ ($minutos > 0 ? '+' : '−').abs($minutos) }} min</button>
+								@endforeach
+							</div>
+						</div>
+					</div>
+					<div class="rh-modal__ft">
+						<button type="button" class="rh-btn rh-btn--lg" wire:click="fecharModal">FECHAR</button>
+					</div>
+				</div>
 			@elseif ($modal === 'encerrar')
 				<form class="rh-modal" style="max-width:460px" wire:submit="encerrarRebuys" role="dialog" aria-modal="true" aria-labelledby="encerrar-titulo">
 					<div class="rh-modal__hd">

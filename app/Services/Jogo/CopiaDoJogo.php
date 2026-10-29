@@ -17,6 +17,7 @@ class CopiaDoJogo
     /** O que é da noite e não do cadastro. */
     private const NAO_COPIA = [
         'nome', 'data', 'horario', 'e_modelo', 'nome_modelo', 'status', 'fase', 'nivel_atual', 'blinds_atual',
+        'relogio_nivel_id', 'relogio_segundos', 'relogio_desde', 'relogio_iniciado_em',
         'iniciado_em', 'rebuys_encerrados_em', 'entradas_fechadas_em', 'finalizado_em',
     ];
 

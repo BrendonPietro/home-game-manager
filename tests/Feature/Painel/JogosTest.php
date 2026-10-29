@@ -12,10 +12,12 @@ use App\Filament\Resources\Jogos\JogoResource;
 use App\Filament\Resources\Jogos\Pages\CreateJogo;
 use App\Filament\Resources\Jogos\Pages\EditJogo;
 use App\Filament\Resources\Jogos\Pages\ListJogos;
+use App\Models\EstruturaBlinds;
 use App\Models\Jogo;
 use App\Models\Mesa;
 use App\Models\Usuario;
 use App\Support\PadroesDoJogo;
+use Database\Seeders\EstruturasBlindsSeeder;
 use Database\Seeders\PokerNight18Seeder;
 use Database\Seeders\RegrasPremiacaoSeeder;
 use Filament\Actions\Testing\TestAction;
@@ -201,6 +203,7 @@ class JogosTest extends TestCase
         Livewire::test(EditJogo::class, ['record' => $noite->getRouteKey()])
             ->assertFormFieldIsDisabled('modalidade')
             ->assertFormFieldIsDisabled('itens_buyin')
+            ->assertFormFieldIsDisabled('estrutura_blinds_id')
             ->assertFormFieldIsDisabled('mesas')
             ->assertActionHidden('agendar')
             ->assertActionHidden('cancelar')
@@ -250,6 +253,32 @@ class JogosTest extends TestCase
             ->assertSee(['R$ 966', 'R$ 414']);
 
         $this->assertSame(0, Jogo::query()->count());
+    }
+
+    public function test_torneio_escolhe_a_estrutura_de_blinds(): void
+    {
+        $this->seed(EstruturasBlindsSeeder::class);
+        $turbo = EstruturaBlinds::query()->where('nome', EstruturasBlindsSeeder::TURBO)->sole();
+        $inativa = EstruturaBlinds::query()->create(['nome' => 'Antiga', 'ativo' => false]);
+
+        Livewire::test(CreateJogo::class)
+            ->fillForm($this->torneio(['estrutura_blinds_id' => (string) $turbo->id]))
+            ->assertFormFieldExists('estrutura_blinds_id', fn ($campo): bool => ! array_key_exists($inativa->id, $campo->getOptions()))
+            ->assertSee(['Níveis de 15 min. Intervalo depois do nível 6', '100 / 200', '1:15', '4h15'])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $jogo = Jogo::query()->sole();
+        $this->assertTrue($jogo->estruturaBlinds->is($turbo));
+
+        // Virou cash game: sem estrutura.
+        Livewire::test(EditJogo::class, ['record' => $jogo->getRouteKey()])
+            ->fillForm(['modalidade' => Modalidade::CashGame->value, 'valor_ficha' => '0.01'])
+            ->assertFormFieldIsHidden('estrutura_blinds_id')
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $this->assertNull($jogo->fresh()->estrutura_blinds_id);
     }
 
     public function test_jogo_novo_vem_com_os_padroes_das_configuracoes(): void

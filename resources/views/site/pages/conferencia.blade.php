@@ -3,6 +3,7 @@
 	use App\Enums\DestinoItem;
 	use App\Enums\MetodoPremiacao;
 	use App\Enums\TipoItem;
+	use App\Models\EstruturaBlinds;
 	use App\Support\Datas;
 	use App\Support\Dinheiro;
 	use App\Support\EtapaDoJogo;
@@ -92,6 +93,36 @@
 					@endforeach
 				</section>
 			@endif
+
+			@if ($torneio && $jogo->estruturaBlinds)
+				<section class="rh-panel">
+					<div class="rh-panel__hd">
+						<h3 class="rh-heading">Blinds · {{ $jogo->estruturaBlinds->nome }}</h3>
+						<span class="rh-spacer"></span>
+						<span class="rh-small rh-muted">{{ $jogo->estruturaBlinds->resumo() }}</span>
+					</div>
+					<div class="rh-conferencia__niveis">
+						<table class="rh-table">
+							<thead><tr><th>Nível</th><th>Blinds</th><th class="n">Ante</th><th class="n">Duração</th><th class="n">Começa</th></tr></thead>
+							<tbody>
+								@foreach (EstruturaBlinds::linhas($jogo->estruturaBlinds->niveis) as $linha)
+									<tr @class(['is-intervalo' => $linha['intervalo']])>
+										@if ($linha['intervalo'])
+											<td colspan="3">{{ $linha['blinds'] }}</td>
+										@else
+											<td>{{ $linha['numero'] }}</td>
+											<td>{{ $linha['blinds'] }}</td>
+											<td class="n">{{ $linha['ante'] ?? '—' }}</td>
+										@endif
+										<td class="n">{{ $linha['minutos'] }} min</td>
+										<td class="n">{{ $linha['comeca'] }}</td>
+									</tr>
+								@endforeach
+							</tbody>
+						</table>
+					</div>
+				</section>
+			@endif
 		</div>
 
 		<div class="rh-col" style="gap:16px">
@@ -106,7 +137,9 @@
 						@if ($jogo->temporada)
 							<dt>Temporada</dt><dd>{{ $jogo->temporada->nome }}</dd>
 						@endif
-						@if (! $torneio)
+						@if ($torneio)
+							<dt>Estrutura de blinds</dt><dd>{{ $jogo->estruturaBlinds?->nome ?? 'Digitada na noite' }}</dd>
+						@else
 							<dt>Valor da ficha</dt><dd>R$ {{ str_replace('.', ',', rtrim(rtrim((string) $jogo->valor_ficha, '0'), '.')) }}</dd>
 						@endif
 					</dl>

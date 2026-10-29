@@ -13,6 +13,7 @@ use App\Models\Jogo;
 use App\Models\Participante;
 use App\Models\Usuario;
 use App\Services\Jogo\Posicoes;
+use App\Services\Jogo\Relogio;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -24,7 +25,7 @@ class RegistrarEliminacao
 {
     use ChecaRegras;
 
-    public function __construct(private Posicoes $posicoes) {}
+    public function __construct(private Posicoes $posicoes, private Relogio $relogio) {}
 
     public function __invoke(Participante $participante, Usuario $quem): Eliminacao
     {
@@ -57,6 +58,8 @@ class RegistrarEliminacao
             if ($emJogo < 2) {
                 throw new RegraDoJogo("{$nome} é o último na mesa.");
             }
+
+            $this->relogio->avancar($jogo); // com relógio, o nível é o de agora
 
             $eliminacao = $jogo->eliminacoes()->create([
                 'participante_id' => $participante->id,

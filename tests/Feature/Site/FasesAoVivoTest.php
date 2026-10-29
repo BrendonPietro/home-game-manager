@@ -94,6 +94,17 @@ class FasesAoVivoTest extends TestCase
             ->assertSee(['Nível 7', '200 / 400']);
     }
 
+    public function test_com_estrutura_de_blinds_o_nivel_segue_o_relogio(): void
+    {
+        $this->seed(PokerNight18Seeder::class);
+        $noite = Jogo::query()->where('nome', PokerNight18Seeder::NOME)->sole();
+
+        // Relógio pausado no nível 6 com 14:32 (Turbo 15 min): o nível não se digita.
+        Livewire::test(AoVivo::class, ['jogo' => $noite])
+            ->assertSee(['Nível 6', '100 / 200'])
+            ->assertDontSeeHtml('wire:click="abrirNivel"');
+    }
+
     public function test_operador_nao_muda_fase_nem_nivel(): void
     {
         $this->actingAs($this->operador, 'web');

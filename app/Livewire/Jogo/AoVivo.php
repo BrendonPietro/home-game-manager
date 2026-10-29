@@ -3,9 +3,11 @@
 namespace App\Livewire\Jogo;
 
 use App\Actions\Jogo\AtualizarNivel;
+use App\Actions\Jogo\ControlarRelogio;
 use App\Actions\Jogo\EncerrarRebuys;
 use App\Actions\Jogo\FecharEntradas;
 use App\Actions\Jogo\TrocarLugar;
+use App\Enums\ComandoRelogio;
 use App\Enums\FaseTorneio;
 use App\Enums\StatusParticipante;
 use App\Enums\TipoItem;
@@ -18,6 +20,7 @@ use App\Models\Usuario;
 use App\Services\Jogo\Calculadora;
 use App\Services\Jogo\Entradas;
 use App\Services\Jogo\EntradasDoJogador;
+use App\Services\Jogo\Relogio;
 use App\Support\Dinheiro;
 use App\Support\EtapaDoJogo;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -34,6 +37,9 @@ use Livewire\Component;
  *
  * Clicar num jogador abre o painel dele (Livewire Jogo\AcoesJogador). "Mudar de lugar" no painel
  * põe a tela no modo de mudança: o próximo lugar clicado recebe o jogador (quebra de mesa).
+ *
+ * v2: torneio com estrutura de blinds tem relógio na faixa (conta no navegador, resources/js/site/
+ * relogio.js); quem controla o relógio pausa ali e abre o modal com próximo, anterior e ± minutos.
  */
 class AoVivo extends Component
 {
@@ -49,7 +55,7 @@ class AoVivo extends Component
     /** Jogador mudando de lugar: o próximo lugar clicado é o novo. */
     public ?int $movendo = null;
 
-    /** Modal da tela: nivel, encerrar (rebuys) ou fechar (entradas). */
+    /** Modal da tela: nivel, relogio, encerrar (rebuys) ou fechar (entradas). */
     public ?string $modal = null;
 
     public string $nivel = '';
@@ -156,6 +162,22 @@ class AoVivo extends Component
         }
     }
 
+    // ── Relógio (v2, torneio com estrutura de blinds) ──
+
+    public function abrirRelogio(): void
+    {
+        $this->modal = 'relogio';
+        $this->erro = null;
+    }
+
+    /** continuar (o INICIAR da primeira vez), pausar, proximo, anterior ou ajustar (± minutos). */
+    public function controlarRelogio(string $comando, int $minutos = 0): void
+    {
+        if ($comando = ComandoRelogio::tryFrom($comando)) {
+            $this->executar(fn () => app(ControlarRelogio::class)($this->jogo, $comando, $this->quem(), $minutos));
+        }
+    }
+
     // ── Fases do torneio: Encerrar rebuys (tela 07) e Fechar entradas (tela 11) ──
 
     public function abrirFase(): void
@@ -210,14 +232,17 @@ class AoVivo extends Component
         return auth('web')->user();
     }
 
-    public function render(Calculadora $calculadora, Entradas $entradas): View
+    public function render(Calculadora $calculadora, Entradas $entradas, Relogio $relogio): View
     {
+        $this->jogo = $relogio->sincronizar($this->jogo); // o nível segue o relógio, a cada atualização
+
         $mesas = $this->jogo->mesas()->with(['mesa', 'dealer'])->get();
         $mesaAtual = $mesas->firstWhere('id', $this->mesa) ?? $mesas->first();
         $participantes = $this->jogo->participantes()->with('usuario')->get();
         $porJogador = $entradas->porJogador($this->jogo);
 
         return view('livewire.jogo.ao-vivo', [
+            'relogio' => $relogio->estado($this->jogo),
             'resumo' => $calculadora->doJogo($this->jogo),
             'mesas' => $mesas,
             'mesaAtual' => $mesaAtual,

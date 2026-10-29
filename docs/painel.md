@@ -16,13 +16,13 @@ Painel em `/painel` para configurar jogos (torneio e cash game), usuários, cont
 | Fonte | Barlow (local, via tema custom) |
 | Tema custom | `resources/css/filament/painel/theme.css` (`php artisan make:filament-theme`), entrada no Vite |
 
-Menu (via `navigationSort`): Dashboard, Calendário, Jogos, Modelos, Rankings, Usuários, Mesas, Aluguéis, Relatórios, Segurança, Configurações. Itens sem permissão `.ver` não aparecem.
+Menu (via `navigationSort`): Dashboard, Calendário, Jogos, Modelos, Estruturas de blinds (45), Rankings, Usuários, Mesas, Aluguéis, Relatórios, Segurança, Configurações. Itens sem permissão `.ver` não aparecem.
 
 ## Resources
 
 | Resource | Destaques |
 |---|---|
-| `JogoResource` | Modalidade (torneio / cash game) no topo. Abas: Informações · Dinheiro (Entradas: buy-in, rebuy e add-on padrão com **+** para variações; Opcionais com destino Não vai / Vai / 50-50; Taxas; simulação do prize pool ao lado) · Premiação (só torneio; valida soma 100%) · Rankings (select múltiplo) · Mesas (dealer por mesa, floor do jogo). Ações: Abrir (site), Duplicar, Salvar como modelo, Ver. Somente leitura quando `finalizado` |
+| `JogoResource` | Modalidade (torneio / cash game) no topo. Abas: Informações · Blinds (só torneio: estrutura de blinds e os níveis dela) · Dinheiro (Entradas: buy-in, rebuy e add-on padrão com **+** para variações; Opcionais com destino Não vai / Vai / 50-50; Taxas; simulação do prize pool ao lado) · Premiação (só torneio; valida soma 100%) · Rankings (select múltiplo) · Mesas (dealer por mesa, floor do jogo). Ações: Abrir (site), Duplicar, Salvar como modelo, Ver. Somente leitura quando `finalizado` |
 
 **Jogos, como está (fase 1):**
 - Lista só com jogos reais (modelos ficam no `ModeloResource`), com data, modalidade, status, jogadores e arrecadação.
@@ -30,7 +30,8 @@ Menu (via `navigationSort`): Dashboard, Calendário, Jogos, Modelos, Rankings, U
 - Opcionais com compra "junto de cada entrada" ou "1 por jogador" e destino Não vai / Vai / 50-50. Taxas com os cinco cálculos (valor fixo, %, valor × quantidade, por jogador, por entrada).
 - Premiação: "pela regra do clube" (percentuais definidos ao fechar entradas, pelo número de jogadores) ou manual (percentuais na ordem das posições, somando 100%).
 - Mesas: mesa ativa, dealer e lugares; mesa com jogador sentado não sai da lista.
-- Entradas, opcionais, taxas, premiação e mesas só se editam em rascunho e agendado; durante o jogo quem mexe é o Admin do site. Finalizado e cancelado abrem só para ver.
+- Blinds (v2): a estrutura de blinds do torneio, com a descrição e a tabela dos níveis logo abaixo do select. Sem estrutura, nível e blinds são digitados na noite. A aba some no cash game (e o `Jogo` limpa a estrutura ao salvar).
+- Entradas, opcionais, taxas, premiação, blinds e mesas só se editam em rascunho e agendado; durante o jogo quem mexe é o Admin do site. Finalizado e cancelado abrem só para ver.
 - Botões **Agendar** (rascunho → agendado, pela `AgendarJogo`: exige data, um buy-in ativo com valor e premiação manual somando 100%) e **Cancelar jogo** (`CancelarJogo`). Excluir só rascunho sem entradas.
 - Salvar cria ou atualiza o evento do jogo na agenda, com as mesas (`Services\Jogo\EventoDoJogo`); cancelado sai da agenda.
 - **Duplicar** (nome, padrão "X (cópia)") e **Salvar como modelo** (nome do modelo) no editar e no ver, também de jogo finalizado: copiam a estrutura pelo `Services\Jogo\CopiaDoJogo` e abrem a cópia.
@@ -48,6 +49,7 @@ Menu (via `navigationSort`): Dashboard, Calendário, Jogos, Modelos, Rankings, U
 | Resource | Destaques |
 |---|---|
 | `ModeloResource` | Jogos com `e_modelo`; mesmo formulário, sem data. Colunas: modelo, modalidade, buy-in, horário, mesas, rankings. Ação Criar jogo (nome, data, horário) |
+| `EstruturaBlindsResource` | v2, `/painel/estruturas` (`estruturas.*`, ícone `rh-coins`, depois de Modelos). Nome (único), descrição, ativo e os níveis numa tabela (intervalo, small, big, ante, minutos, nome do intervalo; arrastar reordena). Embaixo, **Como fica**: a prévia numerada (intervalo não conta) com a duração e quando cada nível começa, atualizada antes de salvar. Lista com o resumo ("16 níveis de 15 min · 1 intervalo · 4h15") e quantos jogos usam; **Duplicar** copia com os níveis; estrutura em uso não se exclui. Título "Estruturas de blinds" (o resource sobrescreve o title case do Filament) |
 | `RankingResource` | Nome, periodicidade, período, ativo, pontos por posição (repeater), FT pontua? + pontos, participação pontua? + pontos. Página de classificação |
 | `UsuarioResource` | Seções Dados (foto, nome, apelido, telefone), Na noite ("Pode ser dealer", "Pode ser floor", ativo) e Acesso ao site (e-mail em minúsculas, senha, grupos do site), mais observações. A seção de acesso só aparece para quem tem `usuarios.editar`: o grupo Geral cadastra jogadores, mas não dá acesso ao site. Excluir é soft delete (filtro de excluídos + Restaurar). Colunas: jogos, pontos e **saldo em aberto** (soma dos saldos nos jogos finalizados, em SQL pelo scope `Usuario::comSaldoEmAberto()`, ordenável; positivo = deve ao caixa; só com `financeiro.ver`) |
 | `SegurancaResource` | `/painel/seguranca`, resource simples (modal). Contas do painel: nome, usuário (minúsculo; letras, números, ponto, traço, sublinhado), senha (em branco mantém), ativo (a própria conta não se desativa), grupos e permissões avulsas do painel, último acesso. **Ninguém dá o que não tem** (`App\Support\Permissoes::abrange`): só aparecem os grupos e permissões que a conta logada cobre, e a `SegurancaPolicy` não deixa editar nem excluir conta com mais poder (Admin não mexe no Desenvolvedor) nem excluir a própria |

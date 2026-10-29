@@ -12,6 +12,7 @@ use App\Models\Jogo;
 use App\Models\Participante;
 use App\Models\Usuario;
 use App\Services\Jogo\Posicoes;
+use App\Services\Jogo\Relogio;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -24,7 +25,7 @@ class DefinirResultado
 {
     use ChecaRegras;
 
-    public function __construct(private Posicoes $posicoes) {}
+    public function __construct(private Posicoes $posicoes, private Relogio $relogio) {}
 
     /** @param  array<int|string, int|string>  $posicoes  participanteId => posição */
     public function __invoke(Jogo $jogo, array $posicoes, Usuario $quem): void
@@ -60,6 +61,8 @@ class DefinirResultado
             if ($posicoes->sort()->values()->all() !== range(1, $emJogo->count())) {
                 throw new RegraDoJogo("Quem está em jogo fica do 1º ao {$emJogo->count()}º, sem repetir.");
             }
+
+            $this->relogio->avancar($jogo); // com relógio, o nível é o de agora
 
             // Do último colocado para o 2º: a ordem das eliminações dá a posição.
             foreach ($posicoes->sortDesc() as $participanteId => $posicao) {

@@ -10,6 +10,60 @@ Registro das atualizações do sistema do Rodrigues Home Game, organizadas por:
 - Docs: documentação;
 - Chore: manutenção.
 
+## 0.7.3
+
+v2, etapa 4: tela cheia para a TV. Com ela, a v2 (estruturas de blinds e relógio) está completa.
+
+### Feat
+- Tela da TV em `/jogos/{jogo}/tv` (botão **TV** na tela ao vivo, numa aba nova), para qualquer conta do site: nível, relógio grande, blinds e ante, o que vem depois, prize pool, premiação (até agora ou gravada, com quem está em cada posição), jogando, entradas, stack médio e o tempo até o intervalo. No intervalo mostra os blinds da volta.
+- Som na troca de nível (três notas, gerado no navegador): quando o relógio zera ou quando o nível muda por outro aparelho. Desligado por padrão; o aparelho lembra.
+- Tela cheia, botões e cursor que somem sem mexer e tela acesa (onde o navegador deixa).
+- Antes de começar, a TV mostra data, horário e confirmados; depois de finalizar, "Fim de jogo" com os premiados.
+
+### Test
+- `Site\TvTest` (noite #18, intervalo, prêmios gravados, quem vê, jogo sem estrutura, antes e depois, jogo fora do site).
+
+## 0.7.2
+
+v2, etapa 3: o relógio na tela ao vivo.
+
+### Feat
+- Faixa ao vivo com a célula **Relógio**: o tempo conta no navegador entre um poll e outro, sem pular (o servidor manda a fração do segundo) e, em 00:00, a tela passa de nível na hora. Pausado em âmbar, último minuto em vermelho; no intervalo, a célula do nível mostra o que vem depois ("A seguir · nível 7").
+- Quem tem "Controlar o relógio" pausa e inicia no botão ao lado do tempo e abre o modal **Relógio** clicando nele: ANTERIOR, INICIAR/CONTINUAR/PAUSAR, PRÓXIMO, −5, −1, +1 e +5 min, com o nível e o que vem depois.
+- Sugestão de **ENCERRAR REBUYS** acima da mesa quando o relógio chega ao intervalo com os rebuys abertos (só sugere; some quando o intervalo acaba).
+- Celular: o relógio entra na frente da barra de baixo (quatro células), e o Admin abre o modal por ela.
+
+### Test
+- `Site\RelogioAoVivoTest` (faixa, controles e modal na noite #18, sugestão no intervalo, Operador sem controles, jogo sem estrutura) e a fração do segundo em `Jogo\RelogioTest`.
+
+## 0.7.1
+
+v2, etapa 2: a regra do relógio.
+
+### Feat
+- Relógio do torneio com estrutura de blinds (`Services\Jogo\Relogio`), sem cron: o banco guarda o nível, os segundos que faltavam e desde quando corre; o tempo de agora sai da conta e o relógio passa sozinho pelos níveis (mesmo com a tela fechada). No fim do último nível para em 00:00.
+- O nível e os blinds da noite seguem o relógio (no intervalo, o último nível de blinds e o nome do intervalo; com ante, "300 / 600 · ante 600"). A tela ao vivo e o dashboard do site gravam quando o nível muda; a eliminação e o resultado guardam o nível de agora.
+- Iniciar o jogo deixa o relógio no nível 1, parado, até apertar INICIAR.
+- Comandos (`Actions\Jogo\ControlarRelogio`, permissão nova do site "Controlar o relógio", só o Admin no seed): iniciar/continuar, pausar, próximo e anterior nível (com o tempo cheio) e ± minutos no nível atual.
+- Com estrutura, o nível não se digita mais na faixa ao vivo (o lápis some); sem estrutura e no cash game, continua como na v1.
+- A Poker Night #18 (seed) fica com o relógio parado no nível 6 com 14:32, como no protótipo.
+
+### Test
+- `Jogo\RelogioTest` (início, corre, pausa, passa de nível sozinho, intervalo, fim da estrutura, comandos, eliminação, permissão, jogo sem relógio, formato do tempo) e a faixa da noite #18 em `Site\FasesAoVivoTest`.
+
+## 0.7.0
+
+v2, etapa 1: estruturas de blinds.
+
+### Feat
+- Estruturas de blinds no painel (`/painel/estruturas`, permissão `estruturas.*`): nome, descrição, ativo e os níveis em ordem (small, big, ante, minutos) com intervalos, que não contam no número do nível. A prévia **Como fica** numera os níveis e mostra quando cada um começa, antes de salvar. Duplicar copia com os níveis; estrutura em uso não se exclui.
+- Duas estruturas para começar (seed): Turbo 15 min (o nível 6 é o 100 / 200 da Poker Night #18, que passa a usar ela) e Deepstack 20 min.
+- Jogo: aba **Blinds** no cadastro do torneio, com a estrutura e a tabela dos níveis. Sem estrutura, nível e blinds continuam digitados na noite; cash game não tem estrutura. Duplicar, Salvar como modelo e Criar a partir do modelo levam a estrutura.
+- Conferência (tela 04): "Estrutura de blinds" no Evento e a tabela dos níveis.
+
+### Test
+- `Painel\EstruturasBlindsTest`; aba Blinds em `Painel\JogosTest`, tabela na `Site\ConferenciaTest` e a cópia em `Jogo\CopiaDoJogoTest`.
+
 ## 0.6.4
 
 Fase 5, etapa 5 (última): segurança, grupos, configurações, simulação do prize pool e saldo dos usuários.

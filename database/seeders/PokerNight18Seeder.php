@@ -10,6 +10,7 @@ use App\Enums\StatusJogo;
 use App\Enums\StatusParticipante;
 use App\Enums\TipoEvento;
 use App\Enums\TipoItem;
+use App\Models\EstruturaBlinds;
 use App\Models\Evento;
 use App\Models\Item;
 use App\Models\Jogo;
@@ -18,6 +19,7 @@ use App\Models\Mesa;
 use App\Models\Participante;
 use App\Models\RegraPremiacao;
 use App\Models\Usuario;
+use App\Services\Jogo\Relogio;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -29,7 +31,8 @@ use RuntimeException;
  * R$ 2.100 arrecadados, taxa "Casa" 10% = R$ 210, prize pool R$ 1.890 → 945 / 567 / 378.
  *
  * Fica em andamento, no intervalo (rebuys encerrados, add-ons feitos, ninguém eliminado), como a
- * tela ao vivo do protótipo; as fases 3 e 4 continuam a mesma noite até o fechamento.
+ * tela ao vivo do protótipo; as fases 3 e 4 continuam a mesma noite até o fechamento. Usa a estrutura
+ * Turbo 15 min (v2), com o relógio pausado no nível 6 (100 / 200) com 14:32, como no protótipo.
  *
  * As entradas são gravadas direto, com o horário de cada uma (chegada, rebuys, intervalo), para a
  * noite ter história nas telas. Jogo\NoiteDeReferenciaTest joga a mesma noite pelas Actions e chega
@@ -67,6 +70,8 @@ class PokerNight18Seeder extends Seeder
             return;
         }
 
+        $this->call(EstruturasBlindsSeeder::class);
+
         DB::transaction(function () {
             $inicio = Carbon::parse('2026-10-04 20:00', config('app.timezone'));
 
@@ -78,6 +83,7 @@ class PokerNight18Seeder extends Seeder
                 'metodo_premiacao' => MetodoPremiacao::Regra,
                 'lugares_por_mesa' => 9,
                 'tamanho_mesa_final' => 9,
+                'estrutura_blinds_id' => EstruturaBlinds::query()->where('nome', EstruturasBlindsSeeder::TURBO)->value('id'),
                 'nivel_atual' => 6,
                 'blinds_atual' => '100 / 200',
             ]);
@@ -96,6 +102,12 @@ class PokerNight18Seeder extends Seeder
                 'iniciado_em' => $inicio->copy()->addMinutes(5),
                 'rebuys_encerrados_em' => $inicio->copy()->addMinutes(100),
             ])->save();
+
+            // Relógio como a faixa do protótipo: nível 6 (100 / 200), pausado com 14:32.
+            if ($nivel6 = $jogo->estruturaBlinds?->niveis->where('e_intervalo', false)->values()->get(5)) {
+                app(Relogio::class)->posicionar($jogo, $nivel6, 14 * 60 + 32, false);
+                $jogo->forceFill(['relogio_iniciado_em' => $inicio->copy()->addMinutes(5)])->save();
+            }
         });
     }
 

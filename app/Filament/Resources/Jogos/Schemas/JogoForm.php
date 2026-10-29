@@ -8,6 +8,7 @@ use App\Enums\MetodoPremiacao;
 use App\Enums\Modalidade;
 use App\Enums\StatusJogo;
 use App\Enums\TipoItem;
+use App\Models\EstruturaBlinds;
 use App\Models\Item;
 use App\Models\Jogo;
 use App\Models\JogoMesa;
@@ -46,7 +47,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 
 /**
- * Tela 20: cadastro do jogo (docs/painel.md). Entradas, opcionais, taxas, premiação e mesas só mudam
+ * Tela 20: cadastro do jogo (docs/painel.md). Entradas, opcionais, taxas, premiação, blinds e mesas só mudam
  * no painel em rascunho e agendado; durante o jogo quem mexe é o Admin do site.
  */
 class JogoForm
@@ -76,6 +77,7 @@ class JogoForm
                     ->persistTabInQueryString()
                     ->tabs([
                         self::informacoes($modelo),
+                        self::blinds(),
                         self::dinheiro(),
                         self::premiacao(),
                         self::rankings(),
@@ -167,6 +169,31 @@ class JogoForm
                     ->label('Observações')
                     ->rows(3)
                     ->columnSpanFull(),
+            ]);
+    }
+
+    /** v2: estrutura de blinds do torneio. Sem estrutura, o nível e os blinds são digitados na noite (v1). */
+    private static function blinds(): Tab
+    {
+        return Tab::make('Blinds')
+            ->visible(fn (Get $get): bool => self::eTorneio($get))
+            ->disabled(fn (?Jogo $record): bool => ! self::estruturaAberta($record))
+            ->schema([
+                Select::make('estrutura_blinds_id')
+                    ->label('Estrutura de blinds')
+                    ->options(fn (?string $state) => EstruturaBlinds::query()
+                        ->where(fn (Builder $q) => $q->where('ativo', true)->orWhere('id', $state))
+                        ->orderBy('nome')
+                        ->pluck('nome', 'id'))
+                    ->placeholder('Sem estrutura: nível e blinds digitados na noite')
+                    ->live(), // cash game não tem estrutura: o Jogo limpa ao salvar
+                Text::make(fn (Get $get): ?string => EstruturaBlinds::query()->find($get('estrutura_blinds_id'))?->descricao)
+                    ->visible(fn (Get $get): bool => filled($get('estrutura_blinds_id'))),
+                View::make('filament.painel.estrutura-niveis')
+                    ->viewData(fn (Get $get): array => [
+                        'linhas' => EstruturaBlinds::linhas(EstruturaBlinds::query()->find($get('estrutura_blinds_id'))?->niveis ?? []),
+                    ])
+                    ->visible(fn (Get $get): bool => filled($get('estrutura_blinds_id'))),
             ]);
     }
 

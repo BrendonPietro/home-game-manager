@@ -10,6 +10,7 @@ use App\Enums\TipoItem;
 use App\Exceptions\RegraDoJogo;
 use App\Models\Jogo;
 use App\Models\Usuario;
+use App\Services\Jogo\Relogio;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -19,6 +20,8 @@ use Illuminate\Support\Facades\DB;
 class IniciarJogo
 {
     use ChecaRegras;
+
+    public function __construct(private Relogio $relogio) {}
 
     public function __invoke(Jogo $jogo, Usuario $quem): Jogo
     {
@@ -45,6 +48,8 @@ class IniciarJogo
                 'fase' => $jogo->eTorneio() ? FaseTorneio::Rebuys : null,
                 'iniciado_em' => now(),
             ])->save();
+
+            $this->relogio->preparar($jogo); // com estrutura: nível 1 parado, até apertar INICIAR
 
             return $jogo;
         });

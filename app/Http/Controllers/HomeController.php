@@ -7,6 +7,7 @@ use App\Models\Evento;
 use App\Models\Jogo;
 use App\Models\Usuario;
 use App\Services\Jogo\Calculadora;
+use App\Services\Jogo\Relogio;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
@@ -18,12 +19,13 @@ use Illuminate\View\View;
  */
 class HomeController extends Controller
 {
-    public function index(Calculadora $calculadora): View
+    public function index(Calculadora $calculadora, Relogio $relogio): View
     {
         $proximo = $this->proximoJogo();
         $resumoDoProximo = null;
 
         if ($proximo) {
+            $proximo = $relogio->sincronizar($proximo); // ao vivo com relógio: o nível de agora
             $proximo->loadCount(['participantes', 'mesas'])->load(['itens', 'taxas', 'premiacoes', 'temporada']);
 
             // Ao vivo: números reais. Agendado: estimativa com os confirmados e o buy-in padrão.

@@ -8,6 +8,7 @@ use App\Enums\Modalidade;
 use App\Enums\StatusJogo;
 use App\Enums\TipoItem;
 use App\Support\Dinheiro;
+use Database\Factories\JogoFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -22,7 +23,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  */
 class Jogo extends Model
 {
-    /** @use HasFactory<\Database\Factories\JogoFactory> */
+    /** @use HasFactory<JogoFactory> */
     use HasFactory;
 
     protected $table = 'jogos';
@@ -39,13 +40,14 @@ class Jogo extends Model
         'metodo_premiacao',
         'lugares_por_mesa',
         'tamanho_mesa_final',
+        'estrutura_blinds_id',
         'nivel_atual',
         'blinds_atual',
         'valor_ficha',
         'observacoes',
     ];
 
-    // status, fase e datas de etapa ficam fora do fillable: só mudam pelas Actions.
+    // status, fase, datas de etapa e o relógio (relogio_*) ficam fora do fillable: só mudam pelas Actions.
 
     protected $attributes = [
         'e_modelo' => false,
@@ -69,11 +71,24 @@ class Jogo extends Model
             'tamanho_mesa_final' => 'integer',
             'nivel_atual' => 'integer',
             'valor_ficha' => 'decimal:4',
+            'relogio_segundos' => 'integer',
+            'relogio_desde' => 'datetime',
+            'relogio_iniciado_em' => 'datetime',
             'iniciado_em' => 'datetime',
             'rebuys_encerrados_em' => 'datetime',
             'entradas_fechadas_em' => 'datetime',
             'finalizado_em' => 'datetime',
         ];
+    }
+
+    /** Cash game não tem estrutura de blinds (nem relógio): os blinds são digitados. */
+    protected static function booted(): void
+    {
+        static::saving(function (Jogo $jogo): void {
+            if ($jogo->eCashGame()) {
+                $jogo->estrutura_blinds_id = null;
+            }
+        });
     }
 
     // ── Relações ─────────────────────────────────────────────
@@ -86,6 +101,18 @@ class Jogo extends Model
     public function floor(): BelongsTo
     {
         return $this->belongsTo(Usuario::class, 'floor_id');
+    }
+
+    /** v2: estrutura de blinds do torneio; sem ela, nível e blinds são digitados na noite. */
+    public function estruturaBlinds(): BelongsTo
+    {
+        return $this->belongsTo(EstruturaBlinds::class, 'estrutura_blinds_id');
+    }
+
+    /** Nível da estrutura em que o relógio está (Services\Jogo\Relogio). */
+    public function relogioNivel(): BelongsTo
+    {
+        return $this->belongsTo(EstruturaNivel::class, 'relogio_nivel_id');
     }
 
     /** Entradas e opcionais configurados (jogo_itens). */
@@ -200,6 +227,12 @@ class Jogo extends Model
     public function eCashGame(): bool
     {
         return $this->modalidade === Modalidade::CashGame;
+    }
+
+    /** v2: torneio com estrutura de blinds tem relógio (Services\Jogo\Relogio); sem ela, nível e blinds são digitados. */
+    public function temRelogio(): bool
+    {
+        return $this->eTorneio() && $this->estrutura_blinds_id !== null;
     }
 
     public function estaFinalizado(): bool

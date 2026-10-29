@@ -57,6 +57,24 @@ class ConferenciaTest extends TestCase
             ->assertSee(route('filament.painel.resources.jogos.edit', $noite));
     }
 
+    public function test_mostra_a_estrutura_de_blinds(): void
+    {
+        $noite = $this->noiteAgendada();
+
+        $this->get(route('jogos.conferencia', $noite))
+            ->assertOk()
+            ->assertSeeInOrder(['Estrutura de blinds', 'Turbo 15 min'])
+            ->assertSee('Blinds · Turbo 15 min')
+            ->assertSee('16 níveis de 15 min · 1 intervalo · 4h15')
+            ->assertSeeInOrder(['>6<', '100 / 200', '15 min', '1:15', 'Intervalo', '1:30', '>7<', '150 / 300'], false);
+
+        $noite->update(['estrutura_blinds_id' => null]);
+
+        $this->get(route('jogos.conferencia', $noite))
+            ->assertSeeInOrder(['Estrutura de blinds', 'Digitada na noite'])
+            ->assertDontSee('Blinds · ');
+    }
+
     public function test_fluxo_da_noite_marca_a_etapa_atual(): void
     {
         $noite = $this->noiteAgendada();

@@ -7,7 +7,9 @@ use App\Enums\StatusJogo;
 use App\Models\Jogo;
 use App\Models\RegraPremiacao;
 use App\Services\Jogo\Calculadora;
+use App\Support\EtapaDoJogo;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -49,7 +51,7 @@ class JogoController extends Controller
     /** Tela 04: conferir com o grupo o que foi cadastrado no painel antes de começar. */
     public function conferencia(Jogo $jogo, Calculadora $calculadora): View
     {
-        $jogo->load(['itens', 'taxas', 'premiacoes', 'mesas.mesa', 'mesas.dealer', 'floor', 'temporada'])
+        $jogo->load(['itens', 'taxas', 'premiacoes', 'mesas.mesa', 'mesas.dealer', 'floor', 'temporada', 'estruturaBlinds.niveis'])
             ->loadCount('participantes');
 
         return view('site.pages.conferencia', [
@@ -80,6 +82,16 @@ class JogoController extends Controller
     public function resumo(Jogo $jogo): View
     {
         return view('site.pages.resumo', ['jogo' => $jogo]);
+    }
+
+    /** v2: tela cheia para a TV (Livewire Jogo\Tv). Fica de pé em qualquer status do site. */
+    public function tv(Jogo $jogo): View|RedirectResponse
+    {
+        if ($jogo->e_modelo || ! in_array($jogo->status, EtapaDoJogo::STATUS_NO_SITE, true)) {
+            return redirect()->route('jogos.index')->with('aviso', "{$jogo->nome} não está disponível no site.");
+        }
+
+        return view('site.pages.tv', ['jogo' => $jogo]);
     }
 
     /** Tela 14: fechamento financeiro e Finalizar (Livewire Jogo\Fechamento). */

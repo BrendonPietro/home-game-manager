@@ -39,6 +39,9 @@ Route::middleware('auth:web')->group(function () {
         ->middleware('jogo.etapa:resumo')
         ->name('jogos.resumo');
 
+    // v2: tela cheia para a TV. Abre antes, durante e depois da noite (mostra o que der).
+    Route::get('/jogos/{jogo}/tv', [JogoController::class, 'tv'])->name('jogos.tv');
+
     // Final da noite: abre com as entradas fechadas (cash game: a qualquer hora) e depois de finalizar.
     Route::get('/jogos/{jogo}/premiacao', [JogoController::class, 'premiacao'])
         ->middleware('jogo.etapa:premiacao')

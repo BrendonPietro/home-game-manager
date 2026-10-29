@@ -35,28 +35,29 @@ Nenhuma das duas portas grava entradas, pagamentos ou muda status direto no mode
 app/
 ├── Actions/Agenda/             # SalvarEvento (aluguel, reserva, bloqueio)
 ├── Actions/Jogo/               # RegistrarEntrada, RegistrarPagamento, RegistrarEliminacao, RegistrarCashOut,
-│                               # TrocarLugar, DesfazerAcao, EncerrarRebuys, FecharEntradas, FinalizarJogo, CriarDeModelo
+│                               # TrocarLugar, DesfazerAcao, EncerrarRebuys, FecharEntradas, FinalizarJogo, CriarDeModelo,
+│                               # ControlarRelogio (v2)
 ├── Enums/                      # Modalidade, StatusJogo, FaseTorneio, TipoItem, DestinoItem, CalculoTaxa, MetodoPremiacao, Periodicidade,
-│                               # DirecaoPagamento, FormaPagamento, StatusParticipante, TipoEvento, StatusAluguel
+│                               # DirecaoPagamento, FormaPagamento, StatusParticipante, TipoEvento, StatusAluguel, ComandoRelogio
 ├── Filament/
 │   ├── Pages/                  # Dashboard (tela 16), Calendario, Relatorios, Configuracoes
 │   ├── Schemas/                # EventoForm (calendário e aluguéis)
-│   ├── Resources/              # Jogo, Modelo, Ranking, Usuario, Seguranca, Grupo, Mesa, Aluguel, Temporada
+│   ├── Resources/              # Jogo, Modelo, EstruturaBlinds, Ranking, Usuario, Seguranca, Grupo, Mesa, Aluguel, Temporada
 │   └── Widgets/                # VisaoGeral, Proximos, GraficoDeBarras (Arrecadacao/PrizePool/JogadoresPorJogo, JogosPorMes)
 ├── Helpers/                    # DateHelper, ViewHelper
 ├── Http/
 │   ├── Controllers/            # AuthController, HomeController, JogoController; Painel/ImprimirRelatorio (PDF)
 │   └── Middleware/             # GlobalConfig, JogoEtapa
-├── Livewire/Jogo/              # Jogadores, Mesas, AoVivo, AcoesJogador, Resumo, Resultado
+├── Livewire/Jogo/              # Jogadores, Mesas, AoVivo, AcoesJogador, Resumo, Resultado, Fechamento, Tv (v2)
 ├── Models/                     # Seguranca, Usuario, Grupo, Permissao, Mesa, Temporada, Ranking, RankingPontuacao, RankingPonto,
 │                               # Configuracao, RegraPremiacao, Jogo, Item, Taxa, Premiacao, JogoMesa,
-│                               # Participante, Entrada, Pagamento, Eliminacao, Acerto, Evento, Aluguel
+│                               # Participante, Entrada, Pagamento, Eliminacao, Acerto, Evento, Aluguel, EstruturaBlinds, EstruturaNivel
 │                               # Concerns/Cancelavel (scopes validas/canceladas)
 ├── Policies/                   # uma por model, consultando as permissões
 ├── Providers/Filament/PainelPanelProvider.php
 ├── Services/
 │   ├── Agenda/                 # Conflitos (mesa ocupada no horário)
-│   ├── Jogo/                   # Calculadora, Saldos, Posicoes, Acertos, EventoDoJogo, CopiaDoJogo
+│   ├── Jogo/                   # Calculadora, Saldos, Posicoes, Acertos, EventoDoJogo, CopiaDoJogo, Relogio + EstadoDoRelogio (v2)
 │   ├── Painel/                 # Indicadores (números do dashboard)
 │   ├── Relatorios/             # Relatorios, Filtro, Relatorio, Coluna, Exportacao (CSV e Excel)
 │   └── Ranking/                # Pontuacao
@@ -68,7 +69,7 @@ resources/
 │   ├── components/site/
 │   │   ├── core/               # panel, stat, data-table, modal, drawer, tabs
 │   │   ├── props/              # button, badge, chip, avatar, field
-│   │   ├── poker/              # mesa, assento, dealer, ficha, acerto
+│   │   ├── poker/              # mesa, relogio (v2)
 │   │   └── window/             # topbar, fluxo-da-noite, faixa-ao-vivo
 │   ├── livewire/jogo/
 │   └── site/{layouts,pages}/
@@ -76,10 +77,10 @@ resources/
 ├── css/filament/painel/theme.css
 ├── fonts/barlow/
 ├── svg/site/icons/
-└── js/site/                    # app.js, mesa.js
+└── js/site/                    # app.js, mesa.js, relogio.js e tv.js (v2)
 
 config/permission.php           # tabelas do spatie renomeadas (grupos, permissoes...)
-database/{migrations,factories,seeders}/  # seeders: permissões, grupos padrão, Poker Night #18
+database/{migrations,factories,seeders}/  # seeders: permissões, grupos padrão, estruturas de blinds, Poker Night #18
 docs/
 tests/{Feature,Unit}/
 ```
@@ -98,6 +99,7 @@ Tudo atrás de `auth` (guard `web`, tabela `usuarios`) e das permissões do site
 | 06 Mesas | `GET /jogos/{jogo}/mesas` | `jogos.mesas` | Livewire `Jogo\Mesas` (sem lugar, clicar para mover/trocar, sortear, lugares e dealer por mesa, adicionar/remover mesa, girar, Iniciar jogo). O floor do jogo é escolhido no painel |
 | 07–09, 11 Ao vivo | `GET /jogos/{jogo}/ao-vivo` | `jogos.ao-vivo` | Livewire `Jogo\AoVivo` + `Jogo\AcoesJogador` (entrada, pagamento, eliminação/cash-out, trocar lugar, desfazer) + botões de fase |
 | 10 Resumo | `GET /jogos/{jogo}/resumo` | `jogos.resumo` | Livewire `Jogo\Resumo` (saldos e pendências) |
+| TV (v2) | `GET /jogos/{jogo}/tv` | `jogos.tv` | Livewire `Jogo\Tv`: tela cheia para a TV (relógio, blinds, próximo nível, prize pool, premiação, jogando, entradas, stack médio e som na troca de nível). Sem `jogo.etapa`: abre agendado, em andamento e finalizado |
 | 12 Premiação | `GET /jogos/{jogo}/premiacao` | `jogos.premiacao` | `JogoController@premiacao` (só torneio) |
 | 13 Resultado | `GET /jogos/{jogo}/resultado` | `jogos.resultado` | Livewire `Jogo\Resultado` (posições / cash-outs) |
 | 14 Fechamento | `GET /jogos/{jogo}/fechamento` | `jogos.fechamento` | Livewire `Jogo\Fechamento` (conferência, por jogador, acertos, Finalizar e acertos feitos) |
@@ -117,6 +119,7 @@ O site só mostra jogos reais agendados, em andamento e finalizados (`Jogo::noSi
 | 19 Lista de jogos | `/painel/jogos` | `JogoResource` |
 | 20 Criar/editar jogo | `/painel/jogos/{id}/edit` | `JogoResource` (modalidade, entradas, opcionais, taxas, premiação, rankings, mesas, floor) |
 | Modelos | `/painel/modelos` | `ModeloResource` + ação Criar a partir do modelo |
+| Estruturas de blinds | `/painel/estruturas` | `EstruturaBlindsResource` (v2: níveis, intervalos e a prévia) |
 | Rankings | `/painel/rankings` | `RankingResource` (regras de pontos e classificação) |
 | 21 Usuários | `/painel/usuarios` | `UsuarioResource` |
 | 22 Mesas | `/painel/mesas` | `MesaResource` |
@@ -142,5 +145,5 @@ O site só mostra jogos reais agendados, em andamento e finalizados (`Jogo::noSi
 | 3 Durante a noite | Telas 07–11, ações no jogador (entrada, pagamento, eliminação, cash-out), fases, polling | |
 | 4 Final da noite | Telas 12–14, premiação, saldos, acertos, `FinalizarJogo` | Noite #18 inteira pelo site bate R$ 2.100 / 210 / 1.890 (cumprido em 26/10/2026) |
 | 5 Painel completo | Dashboard, calendário, aluguéis, relatórios, rankings, modelos, segurança e permissões, configurações | Testes verdes |
-| v2 | Estruturas de blinds e relógio | |
+| v2 | Estruturas de blinds e relógio | Etapas 1 (estruturas no painel, no jogo e na conferência), 2 (a regra do relógio), 3 (relógio na tela ao vivo, com os controles e a sugestão de encerrar rebuys) e 4 (tela cheia para a TV) feitas em 28/10/2026 |
 | 6 No ar | Domínio e hospedagem novos, deploy e piloto numa noite real | |

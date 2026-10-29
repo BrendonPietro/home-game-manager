@@ -1,0 +1,16 @@
+// ============================================================================
+// Relógio do torneio (v2, <x-site.poker.relogio>): o tempo que falta no nível
+// Correndo na cor do texto, pausado em âmbar, último minuto em vermelho.
+// ============================================================================
+
+.rh-relogio {
+	font-variant-numeric: tabular-nums;
+
+	&.is-pausado {
+		color: var(--amber-300);
+	}
+
+	.is-acabando {
+		color: var(--red-300);
+	}
+}

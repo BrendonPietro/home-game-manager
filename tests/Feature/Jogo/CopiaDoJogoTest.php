@@ -79,6 +79,7 @@ class CopiaDoJogoTest extends TestCase
             $this->assertSame(0, $jogo->participantes()->count() + $jogo->entradas()->count());
             $this->assertSame(5, $jogo->itens()->count());
             $this->assertSame(2, $jogo->mesas()->count());
+            $this->assertSame($noite->estrutura_blinds_id, $jogo->estrutura_blinds_id); // Turbo 15 min
             $this->assertNull($jogo->evento); // sem data (cópia) ou modelo: fora da agenda
         }
 
