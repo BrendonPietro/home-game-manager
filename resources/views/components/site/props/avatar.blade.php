@@ -2,7 +2,8 @@
 @props(['nome', 'foto' => null, 'tamanho' => null])
 
 @php
-	$iniciais = collect(preg_split('/\s+/', trim($nome)))
+	// Só letras e números contam: "Operador (teste)" → OT, não O(.
+	$iniciais = collect(preg_split('/[^\p{L}\p{N}]+/u', $nome, -1, PREG_SPLIT_NO_EMPTY))
 		->map(fn ($palavra) => mb_substr($palavra, 0, 1))
 		->take(2)
 		->implode('');
