@@ -7,10 +7,10 @@ Os testes automáticos (`php artisan test`) já conferem as regras e as contas. 
 ## Antes de começar
 
 - [ ] Site em `http://rodrigues-home-game.test` e painel em `http://rodrigues-home-game.test/painel`.
-- [ ] Contas: no painel, `dev` ou `teste`; no site, `dev@rodrigues.test` ou `teste@rodrigues.test` (as duas no grupo Admin).
+- [ ] Contas: no painel, `dev` ou `teste` (Admin) e `geral` (grupo Geral); no site, `dev@rodrigues.test` ou `teste@rodrigues.test` (Admin) e `operador@rodrigues.test` (Operador, para o celular). `geral` e `operador@` usam a mesma senha da conta `dev` do lado deles (`PAINEL_SENHA_INICIAL` e `SITE_SENHA_INICIAL` do `.env`) e voltam com `php artisan db:seed --class=ContasDeTesteSeeder`.
 - [ ] Separe três janelas ou aparelhos: o **notebook do Admin**, o **celular do Operador** e a **TV** (pode ser outra janela do navegador).
 - [ ] Para abrir no celular de verdade: o `.test` só existe no PC. Uma saída é `php artisan serve --host=0.0.0.0 --port=8000` e abrir `http://<IP do PC>:8000` no celular, na mesma rede (talvez precise liberar a porta no firewall do Windows). Sem isso, use o modo celular do navegador (F12).
-- [ ] Quer começar do zero? `php artisan migrate:fresh --seed` recria o banco com a Poker Night #18, mas **apaga tudo do banco local**, inclusive as contas `teste`.
+- [ ] Quer começar do zero? `php artisan migrate:fresh --seed` recria o banco com a Poker Night #18, mas **apaga tudo do banco local**, inclusive as contas `teste` (as `geral` e `operador@` o seed cria de novo).
 
 Referência da Poker Night #18: 12 jogadores, 22 entradas, R$ 2.100 arrecadados, casa R$ 210, prize pool R$ 1.890, prêmios 950 / 565 / 375 (arredondados para R$ 5; a diferença vai para o 1º).
 
@@ -24,7 +24,7 @@ Referência da Poker Night #18: 12 jogadores, 22 entradas, R$ 2.100 arrecadados,
 **Usuários**
 - [ ] Cadastre 3 ou 4 jogadores só com o nome → salva; apelido, telefone e foto são opcionais.
 - [ ] Marque um como "Pode ser dealer" e outro como "Pode ser floor" → aparecem nos selects de dealer e floor.
-- [ ] Crie uma pessoa com **acesso ao site** (e-mail e senha) no grupo **Operador** → é a conta do celular.
+- [ ] Crie uma pessoa com **acesso ao site** (e-mail e senha) no grupo **Operador** → entra no site com os mesmos limites do `operador@rodrigues.test`.
 
 **Mesas**
 - [ ] Confira as mesas ativas, a capacidade e o valor do aluguel.

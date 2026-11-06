@@ -16,10 +16,10 @@ class DatabaseSeeder extends Seeder
             AcessoSiteSeeder::class,
         ]);
 
-        // Noite de referência (R$ 2.100 / 210 / 1.890): só no ambiente local. Testes que precisam
-        // dela rodam o PokerNight18Seeder direto.
+        // Noite de referência (R$ 2.100 / 210 / 1.890) e contas de teste (Operador e Geral): só no
+        // ambiente local. Testes que precisam da noite rodam o PokerNight18Seeder direto.
         if (app()->environment('local')) {
-            $this->call(PokerNight18Seeder::class);
+            $this->call([PokerNight18Seeder::class, ContasDeTesteSeeder::class]);
         }
     }
 }
