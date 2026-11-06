@@ -45,6 +45,11 @@ Route::middleware('auth:web')->group(function () {
         ->middleware('jogo.etapa:resumo')
         ->name('jogos.resumo');
 
+    // v3: tela do relógio de quem controla o torneio (botões grandes e o AVISO).
+    Route::get('/jogos/{jogo}/relogio', [JogoController::class, 'relogio'])
+        ->middleware('jogo.etapa:ao-vivo')
+        ->name('jogos.relogio');
+
     // v3: a TV é o link do relógio do torneio (só o relógio); o endereço antigo leva para ele.
     Route::get('/jogos/{jogo}/tv', [JogoController::class, 'tv'])->name('jogos.tv');
 

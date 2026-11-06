@@ -101,6 +101,15 @@ Layouts que não cabem nessas grades (ex.: `1.6fr 1fr 1fr 1fr`) ficam no parcial
 - Mudar de lugar na tela ao vivo: faixa vermelha acima da mesa ("João: clique num lugar vazio…") com Tirar do lugar e Cancelar.
 - A mesa cabe na altura da tela: a largura máxima é a altura que sobra (100svh − 252px) × a proporção (`--ar`), até 960px deitada e 520px em pé. No protótipo a mesa em pé passava da tela num notebook.
 
+### Tela do relógio do gerenciador (v3)
+
+`pages/_controle-relogio.scss`, Livewire `Jogo\ControleDoRelogio`. O protótipo não tem esta tela:
+
+- Topo com voltar (AO VIVO), o nome do jogo e LINK DA TV (no celular, só os ícones). O relógio é o `<x-site.poker.painel-relogio>` do link, com a linha "Intervalo em N níveis · tempo" embaixo.
+- Botões grandes para o dedo: ANTERIOR / PAUSAR (vermelho, mais largo) / PRÓXIMO com 64px de altura, os quatro ajustes de minutos e o **AVISO** (`rh-btn--danger`, largura toda). Celular deitado: botões de 46px e o relógio menor, para caber sem rolar.
+- Em pé, relógio em cima e botões embaixo; deitado (`orientation: landscape`), relógio à esquerda e botões à direita. As regras do celular deitado do link valem só no link (`.rh-tv--relogio`).
+- AVISO no link e aqui: o cartão pisca em vermelho (`@keyframes rh-tv-aviso`) com a etiqueta vermelha "AVISO" no topo, por 6 s.
+
 ### Link do relógio (v3; era a TV da v2)
 
 `pages/_tv.scss` (classe `rh-tv rh-tv--relogio`), página `site/pages/relogio.blade.php`. O protótipo não tem esta tela; segue os tokens e componentes do site:

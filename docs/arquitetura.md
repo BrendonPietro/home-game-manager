@@ -77,7 +77,7 @@ resources/
 ├── css/filament/painel/theme.css
 ├── fonts/barlow/
 ├── svg/site/icons/
-└── js/site/                    # app.js, mesa.js, relogio-torneio.js (v3: o motor do relógio) e tv.js
+└── js/site/                    # app.js, mesa.js, relogio-torneio.js (v3: o motor do relógio), tv.js (link do relógio), som.js (campainha e AVISO), tela-acesa.js e copiar.js
 
 config/permission.php           # tabelas do spatie renomeadas (grupos, permissoes...)
 database/{migrations,factories,seeders}/  # seeders: permissões, grupos padrão, estruturas de blinds, Poker Night #18
@@ -100,6 +100,7 @@ Tudo atrás de `auth` (guard `web`, tabela `usuarios`) e das permissões do site
 | 07–09, 11 Ao vivo | `GET /jogos/{jogo}/ao-vivo` | `jogos.ao-vivo` | Livewire `Jogo\AoVivo` + `Jogo\AcoesJogador` (entrada, pagamento, eliminação/cash-out, trocar lugar, desfazer) + botões de fase |
 | 10 Resumo | `GET /jogos/{jogo}/resumo` | `jogos.resumo` | Livewire `Jogo\Resumo` (saldos e pendências) |
 | TV | `GET /jogos/{jogo}/tv` | `jogos.tv` | v3: leva para o link do relógio do jogo (a tela da TV da v2, Livewire `Jogo\Tv` com prize pool e premiação, saiu) |
+| Relógio do gerenciador (v3) | `GET /jogos/{jogo}/relogio` | `jogos.relogio` | Livewire `Jogo\ControleDoRelogio` (`jogo.etapa:ao-vivo`): relógio grande, ANTERIOR, PAUSAR/CONTINUAR, PRÓXIMO, ± minutos e o AVISO; o Operador só vê |
 | Link do relógio (v3) | `GET /relogio/{codigo}` e `GET /relogio/{codigo}/estado` | `relogio.publico`, `relogio.estado` | `RelogioPublicoController`, **sem login**: só o relógio (nível, tempo, blinds, ante, o que vem depois, intervalo em tempo e níveis), som na troca de nível e tela cheia; o estado em JSON a cada 2 s, sem sessão, cookie nem CSRF |
 | 12 Premiação | `GET /jogos/{jogo}/premiacao` | `jogos.premiacao` | `JogoController@premiacao` (só torneio) |
 | 13 Resultado | `GET /jogos/{jogo}/resultado` | `jogos.resultado` | Livewire `Jogo\Resultado` (posições / cash-outs) |

@@ -24,6 +24,7 @@
 		x-on:pointerdown.window="mexeu(); destravar()"
 		x-on:keydown.window="mexeu(); destravar()"
 		x-on:relogio-trocou="campainha()"
+		x-on:relogio-aviso="aviso()"
 	>
 		<header class="rh-tv__topo">
 			<x-site.props.brand />
@@ -51,6 +52,7 @@
 			x-data="relogioTorneio"
 			data-url="{{ route('relogio.estado', $jogo->relogio_codigo) }}"
 			data-chave="{{ $pacote['chave'] }}"
+			data-aviso="{{ json_encode($pacote['aviso']) }}"
 			@if ($pacote['relogio']) data-relogio="{{ json_encode($pacote['relogio']) }}" @endif
 		>
 			@if ($estado)
@@ -71,7 +73,8 @@
 			@elseif ($pacote['manual'])
 				{{-- Torneio sem estrutura de blinds: nível e blinds digitados na tela ao vivo. --}}
 				<main class="rh-tv__palco sem-lado">
-					<section class="rh-tv__relogio sem-relogio">
+					<section class="rh-tv__relogio sem-relogio" x-bind:class="{ 'is-aviso': avisando }">
+						<span class="rh-tv__aviso" x-show="avisando" x-cloak>AVISO</span>
 						<div class="rh-tv__titulo">{{ $pacote['manual']['titulo'] }}</div>
 						@if ($pacote['manual']['blinds'])
 							<div class="rh-tv__blinds"><span class="v">{{ $pacote['manual']['blinds'] }}</span></div>

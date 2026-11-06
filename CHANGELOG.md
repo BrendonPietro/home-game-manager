@@ -10,6 +10,18 @@ Registro das atualizações do sistema do Rodrigues Home Game, organizadas por:
 - Docs: documentação;
 - Chore: manutenção.
 
+## 0.10.0
+
+v3, etapa 4: tela do relógio do gerenciador e o AVISO. Com ela, a v3 (o relógio no estilo do Poker Depot) está completa.
+
+### Feat
+- **Tela do relógio** `/jogos/{jogo}/relogio` (Livewire `Jogo\ControleDoRelogio`, botão **RELÓGIO** na tela ao vivo): o relógio grande (o mesmo painel do link) e botões grandes de ANTERIOR, PAUSAR/CONTINUAR, PRÓXIMO, −5/−1/+1/+5 min, AVISO e LINK DA TV. Em pé, relógio em cima e botões embaixo; deitado, relógio à esquerda e botões à direita; sem rolar do celular ao PC, com a tela acesa onde o navegador deixa. O Operador vê o relógio sem os botões.
+- **AVISO** (`Actions\Jogo\DispararAviso`, `relogio.controlar`): toca um "ding-dong" no aparelho de quem apertou e, em até 2 s, em todas as telas do link (0,7 s no teste), com o cartão do relógio piscando "AVISO" por 6 s. Aviso velho (a tela estava sem internet) ou de antes de abrir a página não toca.
+- Sons num módulo só (`resources/js/site/som.js`: campainha da troca de nível e o AVISO) e a tela acesa em `resources/js/site/tela-acesa.js`; magics `$tocar` e `$manterAcesa`.
+
+### Test
+- `Site\ControleDoRelogioTest` (Admin controla e avisa, Operador só vê, aviso só em andamento, sem estrutura, botão na tela ao vivo, aviso para o navegador). No navegador: a tela em seis tamanhos e o AVISO do celular para a TV.
+
 ## 0.9.0
 
 v3, etapa 3: o link do relógio do torneio, no lugar da tela da TV.

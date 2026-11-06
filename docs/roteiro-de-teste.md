@@ -75,6 +75,8 @@ Referência da Poker Night #18: 12 jogadores, 22 entradas, R$ 2.100 arrecadados,
 - [ ] Deixe o nível 1 acabar → a faixa, o celular e a TV passam juntos para o nível 2, e a TV toca.
 - [ ] Clique no tempo da faixa → modal do Relógio. Teste PAUSAR (âmbar em todas as telas), +1 min, −1 min, PRÓXIMO e ANTERIOR → a TV acompanha em uns 2 s e toca quando o nível muda.
 - [ ] Botão **TV** da tela ao vivo → "Relógio nas outras telas": COPIAR LINK (cole no WhatsApp ou num bloco de notas) e ABRIR. Abra o link num celular em pé, deitado e num tablet → o relógio cabe sem rolar; só o relógio, nada de dinheiro nem jogadores.
+- [ ] Botão **RELÓGIO** da tela ao vivo → a tela do relógio: no celular em pé (relógio em cima, botões embaixo) e deitado (relógio à esquerda, botões à direita), sem rolar. PAUSAR, PRÓXIMO, ANTERIOR e ± min → a TV acompanha em uns 2 s.
+- [ ] **AVISO** no celular → toca no celular na hora e na TV em até 2 s (com o som da TV ligado), e o relógio da TV pisca "AVISO" por uns segundos. Recarregue a TV → o aviso não toca de novo. Como Operador, a tela do relógio aparece sem os botões e sem o AVISO.
 - [ ] GERAR OUTRO LINK (Admin) → a TV que estava com o link antigo mostra "Este link não vale mais"; o novo abre. Como Operador, o botão de gerar não aparece.
 - [ ] No celular, como Operador → vê o relógio, sem o ▶ e sem o modal.
 - [ ] **Sem internet** (estrutura Teste rápido, relógio correndo): na TV, desligue o Wi-Fi do aparelho → depois de uns 15 s aparece "Sem conexão · o relógio segue contando"; o tempo continua, o nível troca na hora certa (com o som) e o intervalo aparece com "Na volta · nível N". Ligue o Wi-Fi → o aviso some e o relógio acerta com o servidor (se alguém pausou nesse meio tempo, pausa agora).

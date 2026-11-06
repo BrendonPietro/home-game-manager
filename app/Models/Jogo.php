@@ -74,6 +74,8 @@ class Jogo extends Model
             'relogio_segundos' => 'integer',
             'relogio_desde' => 'datetime',
             'relogio_iniciado_em' => 'datetime',
+            'avisos' => 'integer',
+            'aviso_em' => 'datetime',
             'iniciado_em' => 'datetime',
             'rebuys_encerrados_em' => 'datetime',
             'entradas_fechadas_em' => 'datetime',
@@ -110,6 +112,20 @@ class Jogo extends Model
         } while (static::query()->where('relogio_codigo', $codigo)->exists());
 
         return $codigo;
+    }
+
+    /**
+     * AVISO do gerenciador para as telas do relógio (v3): o número sobe a cada aviso e `ha` diz há
+     * quantos segundos foi o último. O navegador toca quando o número sobe e o aviso é recente.
+     *
+     * @return array{numero: int, ha: ?float}
+     */
+    public function avisoParaNavegador(): array
+    {
+        return [
+            'numero' => (int) $this->avisos,
+            'ha' => $this->aviso_em ? round(max(0, $this->aviso_em->diffInMilliseconds(now())) / 1000, 1) : null,
+        ];
     }
 
     /** Link do relógio só para ver, sem login (v3): o que vai para a TV, o tablet e o grupo. */

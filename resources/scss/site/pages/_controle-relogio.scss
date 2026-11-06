@@ -1,0 +1,211 @@
+// ============================================================================
+// v3: tela do relógio de quem controla o torneio (Livewire Jogo\ControleDoRelogio).
+// O relógio é o mesmo painel do link (.rh-tv__relogio, pages/_tv.scss). Em pé (celular, tablet):
+// relógio em cima e botões embaixo. Deitado (celular, tablet, notebook, PC): relógio à esquerda e
+// botões à direita. Botões grandes para o dedo, sem rolar a tela.
+// ============================================================================
+
+@use "../vars" as *;
+
+.rh-controle {
+	min-height: 100svh;
+	display: flex;
+	flex-direction: column;
+	gap: 1.4vh;
+	padding: 1.6vh 2vw;
+	background: var(--bg-000);
+
+	&__topo {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+	}
+
+	&__jogo {
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
+
+		b {
+			font-family: var(--font-display);
+			font-weight: 700;
+			font-size: clamp(18px, 3vh, 32px);
+			line-height: 1.1;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		span {
+			color: var(--ink-200);
+			font-size: clamp(13px, 1.8vh, 18px);
+		}
+	}
+
+	&__corpo {
+		flex: 1;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-rows: minmax(0, 1fr) auto;
+		gap: 1.6vh 2vw;
+		min-height: 0;
+	}
+
+	&__relogio {
+		display: flex;
+		flex-direction: column;
+		gap: 1vh;
+		min-height: 0;
+
+		.rh-tv__relogio {
+			flex: 1;
+			min-height: 0;
+		}
+	}
+
+	&__intervalo {
+		text-align: center;
+		color: var(--ink-200);
+		font-size: clamp(14px, 2.4vh, 24px);
+
+		.rh-relogio {
+			font-family: var(--font-display);
+			font-weight: 700;
+			color: var(--ink-100);
+		}
+	}
+
+	&__comandos {
+		display: grid;
+		align-content: center;
+		gap: 10px;
+	}
+
+	&__principais {
+		display: grid;
+		grid-template-columns: 1fr 1.3fr 1fr;
+		gap: 10px;
+
+		.rh-btn {
+			min-height: 64px;
+			justify-content: center;
+		}
+	}
+
+	&__ajustes {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 8px;
+
+		.rh-btn {
+			min-height: 48px;
+			justify-content: center;
+		}
+	}
+
+	&__aviso.rh-btn {
+		min-height: 64px;
+		justify-content: center;
+		font-size: 20px;
+		letter-spacing: 0.12em;
+	}
+
+	&__so-ver {
+		align-self: center;
+		text-align: center;
+	}
+
+	// Deitado: relógio à esquerda e botões à direita
+	@media (orientation: landscape) {
+		&__corpo {
+			grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
+			grid-template-rows: minmax(0, 1fr);
+
+			&.sem-botoes {
+				grid-template-columns: minmax(0, 1fr);
+			}
+		}
+	}
+
+	// Celular deitado (pouca altura): tudo menor para caber sem rolar
+	@media (orientation: landscape) and (max-height: 520px) {
+		gap: 1vh;
+		padding: 1vh 2vw;
+
+		&__texto {
+			display: none;
+		}
+
+		&__corpo {
+			grid-template-columns: minmax(0, 1.3fr) minmax(250px, 1fr);
+		}
+
+		&__comandos {
+			gap: 6px;
+		}
+
+		&__principais {
+			gap: 6px;
+
+			.rh-btn {
+				min-height: 46px;
+				padding-inline: 8px;
+				font-size: 14px;
+			}
+		}
+
+		&__ajustes {
+			gap: 6px;
+
+			.rh-btn {
+				min-height: 36px;
+			}
+		}
+
+		&__aviso.rh-btn {
+			min-height: 46px;
+			font-size: 17px;
+		}
+
+		.rh-tv__relogio {
+			gap: 0.6vh;
+			padding: 1.6vh 2vw;
+		}
+
+		.rh-tv__titulo {
+			font-size: clamp(16px, 6vh, 32px);
+		}
+
+		.rh-tv__tempo,
+		.rh-tv__tempo.is-longo {
+			font-size: min(24cqi, 30vh);
+		}
+
+		.rh-tv__blinds .v {
+			font-size: min(9cqi, 11vh);
+		}
+
+		.rh-tv__rotulo {
+			display: none;
+		}
+
+		.rh-tv__proximo,
+		.rh-tv__situacao {
+			font-size: clamp(12px, 3.6vh, 20px);
+		}
+	}
+
+	// Celular em pé: botões só com o ícone no topo; os grandes em três colunas apertadas
+	@include ate(celular) {
+		padding: 1.4vh 3vw;
+
+		&__texto {
+			display: none;
+		}
+
+		&__principais .rh-btn {
+			padding-inline: 6px;
+			font-size: 14px;
+		}
+	}
+}

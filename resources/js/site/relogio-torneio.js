@@ -18,6 +18,8 @@ const ACABANDO = 60; // último minuto do nível
 const SEM_CONEXAO = 15000; // ms sem atualização: mostra "sem conexão" (o poll é de 5 s)
 const VOLTOU_DE_VERDADE = 3; // s: o servidor voltar um nível com mais que isso é ANTERIOR, não atraso da rede
 const BUSCA = 2000; // ms entre uma busca e outra, no link do relógio
+const AVISO_RECENTE = 30; // s: aviso mais velho que isso (a tela estava sem internet) não toca
+const AVISO_NA_TELA = 6000; // ms com o painel piscando "AVISO"
 
 export function formatar(segundos) {
     const s = Math.max(0, segundos);
@@ -50,12 +52,15 @@ export default () => ({
     url: '',
     chave: '',
     proximaBusca: null,
+    avisoVisto: -1, // número do último AVISO já visto (data-aviso ou o JSON do link)
+    avisando: false,
+    avisoTimer: null,
 
     init() {
         this.atualizadoEm = performance.now();
         this.lerAtributo(true);
         this.observador = new MutationObserver(() => this.lerAtributo(false));
-        this.observador.observe(this.$el, { attributes: true, attributeFilter: ['data-relogio'] });
+        this.observador.observe(this.$el, { attributes: true, attributeFilter: ['data-relogio', 'data-aviso'] });
         this.tiques = setInterval(() => this.tique(), 250);
 
         this.url = this.$el.dataset.url ?? '';
@@ -70,6 +75,35 @@ export default () => ({
         this.observador?.disconnect();
         clearInterval(this.tiques);
         clearTimeout(this.proximaBusca);
+        clearTimeout(this.avisoTimer);
+    },
+
+    // AVISO do gerenciador: toca (evento relogio-aviso) quando o número sobe e o aviso é recente.
+    verAviso(aviso, primeira = false) {
+        if (!aviso) {
+            return;
+        }
+
+        if (primeira || this.avisoVisto < 0) {
+            this.avisoVisto = aviso.numero;
+
+            return;
+        }
+
+        if (aviso.numero <= this.avisoVisto) {
+            return;
+        }
+
+        this.avisoVisto = aviso.numero;
+
+        if (aviso.ha !== null && aviso.ha <= AVISO_RECENTE) {
+            this.avisando = true;
+            clearTimeout(this.avisoTimer);
+            this.avisoTimer = setTimeout(() => {
+                this.avisando = false;
+            }, AVISO_NA_TELA);
+            this.$dispatch('relogio-aviso');
+        }
     },
 
     // Link do relógio: pede o estado ao servidor. Falhou (sem internet)? Segue contando e tenta de novo.
@@ -97,6 +131,8 @@ export default () => ({
                 } else {
                     this.atualizadoEm = performance.now();
                 }
+
+                this.verAviso(dados.aviso);
             }
         } catch {
             // Sem internet: o relógio segue sozinho.
@@ -107,15 +143,18 @@ export default () => ({
 
     lerAtributo(primeira) {
         const bruto = this.$el.dataset.relogio;
-
-        if (!bruto) {
-            this.temRelogio = false;
-
-            return;
-        }
+        const aviso = this.$el.dataset.aviso;
 
         try {
-            this.aplicar(JSON.parse(bruto), primeira);
+            if (bruto) {
+                this.aplicar(JSON.parse(bruto), primeira);
+            } else {
+                this.temRelogio = false;
+            }
+
+            if (aviso) {
+                this.verAviso(JSON.parse(aviso), primeira);
+            }
         } catch {
             // Pacote quebrado: segue com a conta que já tinha.
         }

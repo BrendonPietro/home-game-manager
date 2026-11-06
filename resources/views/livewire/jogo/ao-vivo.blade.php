@@ -122,7 +122,10 @@
 					<button type="button" class="rh-btn" x-on:click="$dispatch('girar-mesa', {{ $mesaAtual->id }})">@svg('rh-rotate') GIRAR MESA</button>
 				@endif
 
-				{{-- v3: o link do relógio para a TV e outras telas (copiar, abrir, trocar). --}}
+				{{-- v3: a tela do relógio (botões grandes e o AVISO) e o link do relógio para a TV e outras telas. --}}
+				@if ($torneio)
+					<a class="rh-btn" href="{{ route('jogos.relogio', $jogo) }}" title="Tela do relógio: pausar, trocar de nível e AVISO">@svg('rh-clock') RELÓGIO</a>
+				@endif
 				<button type="button" class="rh-btn rh-aovivo__tv" wire:click="abrirLink" title="Link do relógio para a TV e outras telas">@svg('rh-tv') TV</button>
 
 				{{-- Tablet e celular: a lateral some, o botão da fase vem para cá (ou fica na sugestão do intervalo). --}}

@@ -84,6 +84,12 @@ class JogoController extends Controller
         return view('site.pages.resumo', ['jogo' => $jogo]);
     }
 
+    /** v3: tela do relógio de quem controla o torneio (Livewire Jogo\ControleDoRelogio). */
+    public function relogio(Jogo $jogo): View
+    {
+        return view('site.pages.relogio-controle', ['jogo' => $jogo]);
+    }
+
     /** v3: a TV é o link do relógio do torneio (sem login, só o relógio); o endereço antigo leva para ele. */
     public function tv(Jogo $jogo): RedirectResponse
     {

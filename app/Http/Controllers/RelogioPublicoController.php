@@ -66,7 +66,7 @@ class RelogioPublicoController extends Controller
      * O que a página e o motor precisam: o status, a `chave` (quando muda, a página recarrega), o
      * pacote do relógio (com estrutura) e o nível digitado na tela ao vivo (sem estrutura).
      *
-     * @return array{status: string, chave: string, relogio: ?array<string, mixed>, manual: ?array{titulo: string, blinds: ?string}}
+     * @return array{status: string, chave: string, relogio: ?array<string, mixed>, manual: ?array{titulo: string, blinds: ?string}, aviso: array{numero: int, ha: ?float}}
      */
     private function pacote(Jogo $jogo, mixed $estado): array
     {
@@ -79,6 +79,7 @@ class RelogioPublicoController extends Controller
             'chave' => md5(json_encode([$jogo->status->value, $jogo->nome, $estado !== null, $manual])),
             'relogio' => $estado?->paraNavegador(),
             'manual' => $manual,
+            'aviso' => $jogo->avisoParaNavegador(), // o AVISO do gerenciador (som em todas as telas)
         ];
     }
 }
