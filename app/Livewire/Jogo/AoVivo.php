@@ -38,8 +38,9 @@ use Livewire\Component;
  * Clicar num jogador abre o painel dele (Livewire Jogo\AcoesJogador). "Mudar de lugar" no painel
  * põe a tela no modo de mudança: o próximo lugar clicado recebe o jogador (quebra de mesa).
  *
- * v2: torneio com estrutura de blinds tem relógio na faixa (conta no navegador, resources/js/site/
- * relogio.js); quem controla o relógio pausa ali e abre o modal com próximo, anterior e ± minutos.
+ * v2: torneio com estrutura de blinds tem relógio na faixa; quem controla o relógio pausa ali e abre
+ * o modal com próximo, anterior e ± minutos. v3: o tempo conta e passa de nível no navegador
+ * (resources/js/site/relogio-torneio.js, com o pacote de EstadoDoRelogio::paraNavegador()).
  */
 class AoVivo extends Component
 {

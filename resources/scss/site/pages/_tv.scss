@@ -93,6 +93,8 @@
 		border-radius: var(--radius-lg);
 		background: radial-gradient(130% 120% at 50% 0%, var(--felt-700), var(--felt-900) 65%, var(--bg-100));
 
+		position: relative;
+
 		&.is-intervalo {
 			border-color: var(--amber-300);
 
@@ -100,6 +102,24 @@
 				color: var(--amber-300);
 			}
 		}
+	}
+
+	// Contêiner do motor do relógio (x-data="relogioTorneio"): não entra no grid.
+	&__corpo {
+		display: contents;
+	}
+
+	// O motor ficou mais de 15 s sem notícia do servidor: segue contando sozinho.
+	&__conexao {
+		position: absolute;
+		top: 1.6vh;
+		right: 1.2vw;
+		padding: 0.4vh 0.8vw;
+		border: 1px solid var(--amber-300);
+		border-radius: 999px;
+		font-size: clamp(11px, 1.6vh, 20px);
+		color: var(--amber-300);
+		background: rgba(0, 0, 0, 0.35);
 	}
 
 	&__titulo {

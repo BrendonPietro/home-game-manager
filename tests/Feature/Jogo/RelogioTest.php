@@ -208,6 +208,31 @@ class RelogioTest extends TestCase
         $this->assertSame(['09:57', 597.0], [$this->estado()->tempo(), $this->estado()->restanteExato()]);
     }
 
+    public function test_pacote_para_o_navegador_andar_sozinho(): void
+    {
+        $this->relogio(ComandoRelogio::Continuar);
+        $this->travelTo(now()->addSeconds(30));
+
+        $pacote = $this->estado()->paraNavegador();
+
+        $this->assertSame([0, 570.0, true, true], [$pacote['indice'], $pacote['restante'], $pacote['rodando'], $pacote['iniciado']]);
+        $this->assertSame(now()->getTimestampMs(), $pacote['agora']);
+
+        // Cada nível com o que mostrar nele: no intervalo, os blinds da volta; antes dele, quanto falta.
+        $this->assertSame([
+            ['Nível 1', 'Blinds', '100 / 200', null, 'Próximo: nível 2 · 200 / 400', 600, 600, 2],
+            ['Nível 2', 'Blinds', '200 / 400', null, 'Depois: Intervalo · 5 min', 600, 0, 1],
+            ['Intervalo', 'Na volta · nível 3', '300 / 600', 'Ante 600', null, 300, null, null],
+            ['Nível 3', 'Blinds', '300 / 600', 'Ante 600', 'Último nível da estrutura', 600, null, null],
+        ], array_map(fn (array $n): array => [
+            $n['titulo'], $n['rotulo'], $n['blinds'], $n['ante'], $n['depois'], $n['segundos'], $n['ateIntervalo'], $n['niveisAteIntervalo'],
+        ], $pacote['niveis']));
+        $this->assertSame([false, false, true, false], array_column($pacote['niveis'], 'intervalo'));
+
+        // O navegador soma: intervalo em 570 + 600 = 19:30, daqui a 2 níveis (este e o próximo).
+        $this->assertSame(1170, $this->estado()->intervaloEm());
+    }
+
     public function test_formato_do_tempo(): void
     {
         $this->assertSame(['14:32', '09:05', '00:00', '1:05:00'], array_map(EstadoDoRelogio::formatar(...), [872, 545, -3, 3900]));

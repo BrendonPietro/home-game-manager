@@ -3,13 +3,11 @@
 //
 // O som sai do próprio navegador (Web Audio, sem arquivo). O navegador só deixa tocar depois de um
 // toque na página: com o som ligado (fica no localStorage do aparelho) e sem toque ainda, aparece o
-// aviso "Toque na tela para ligar o som". Toca quando o relógio zera (evento relogio-zerou do
-// relogio.js) ou quando o nível muda por outro aparelho (data-nivel do contêiner, que o poll
-// atualiza); as duas coisas na mesma troca tocam uma vez só.
+// aviso "Toque na tela para ligar o som". Toca quando o motor do relógio (relogio-torneio.js) passa
+// para um nível novo: o tempo acabou ou alguém apertou PRÓXIMO. O motor avisa uma vez só por nível.
 
 const CHAVE = 'rh-tv-som';
 const ESCONDE_EM = 3000; // ms sem mexer: os botões e o cursor somem
-const MESMA_TROCA = 8000; // ms entre o relógio zerar e o poll trazer o nível novo
 
 function lerSom() {
     try {
@@ -43,21 +41,21 @@ function nota(audio, frequencia, inicio, duracao) {
 }
 
 export default () => ({
+    // Estado declarado (dentro deste componente fica o motor do relógio, x-data="relogioTorneio").
     som: false,
     travado: false, // som ligado, mas o navegador ainda não deixou tocar
     controles: true,
     cheia: false,
     podeTelaCheia: Boolean(document.fullscreenEnabled),
+    audio: null,
+    trava: null,
+    esconder: null,
+    aoMudarTela: null,
+    aoVoltar: null,
 
     init() {
         this.som = lerSom();
         this.travado = this.som;
-        this.nivel = this.$el.dataset.nivel;
-        this.tocouEm = -Infinity;
-
-        this.observador = new MutationObserver(() => this.nivelMudou());
-        this.observador.observe(this.$el, { attributes: true, attributeFilter: ['data-nivel'] });
-
         this.aoMudarTela = () => {
             this.cheia = Boolean(document.fullscreenElement);
             this.manterAcesa();
@@ -71,7 +69,6 @@ export default () => ({
     },
 
     destroy() {
-        this.observador?.disconnect();
         document.removeEventListener('fullscreenchange', this.aoMudarTela);
         document.removeEventListener('visibilitychange', this.aoVoltar);
         clearTimeout(this.esconder);
@@ -118,24 +115,6 @@ export default () => ({
             this.destravar().then(() => this.campainha()); // toca uma vez para conferir o volume
         } else {
             this.travado = false;
-        }
-    },
-
-    nivelMudou() {
-        const nivel = this.$el.dataset.nivel;
-
-        if (nivel !== this.nivel) {
-            this.nivel = nivel;
-            this.trocou();
-        }
-    },
-
-    trocou() {
-        const agora = performance.now();
-
-        if (agora - this.tocouEm > MESMA_TROCA) {
-            this.tocouEm = agora;
-            this.campainha();
         }
     },
 

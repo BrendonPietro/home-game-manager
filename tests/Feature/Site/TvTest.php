@@ -48,7 +48,7 @@ class TvTest extends TestCase
         // Relógio parado no nível 6 com 14:32; premiação pela conta de agora (entradas abertas).
         Livewire::test(Tv::class, ['jogo' => $noite])
             ->assertSeeHtml('wire:poll.5s.keep-alive')
-            ->assertSeeHtml('data-nivel="'.$noite->relogio_nivel_id.'"')
+            ->assertSeeHtml('x-data="relogioTorneio"')
             ->assertSee(['Poker Night #18', 'Intervalo (add-on)', 'Nível 6', '14:32', 'Pausado', '100 / 200', 'Depois: Intervalo · 15 min'])
             ->assertSee(['Prize pool', 'R$ 1.890', 'Premiação até agora', 'R$ 950', 'R$ 565', 'R$ 375'])
             ->assertSee(['Jogando', 'Entradas', '22', 'Stack médio', EstruturaNivel::fichas((int) round($fichas / 12)), 'Intervalo em'])
@@ -62,7 +62,8 @@ class TvTest extends TestCase
 
         $tela = Livewire::test(Tv::class, ['jogo' => $noite->fresh()])
             ->assertSee(['Intervalo', '15:00', 'Na volta · nível 7', '150 / 300'])
-            ->assertDontSee('Intervalo em');
+            // No intervalo, o "Intervalo em" fica escondido (o motor mostra de novo na volta).
+            ->assertSeeHtml('x-show="intervaloEm !== null"  style="display:none"');
 
         app(FecharEntradas::class)($noite->fresh(), $this->admin);
         $tela->call('$refresh')
@@ -90,7 +91,7 @@ class TvTest extends TestCase
         Livewire::test(Tv::class, ['jogo' => $this->jogo])
             ->assertSee(['Nível 3', '50 / 100', 'Rebuys abertos'])
             ->assertSeeHtml('sem-relogio')
-            ->assertDontSeeHtml('x-data="relogio"')
+            ->assertDontSeeHtml('x-data="relogioTorneio"')
             ->assertDontSee('Intervalo em');
     }
 
@@ -101,7 +102,7 @@ class TvTest extends TestCase
 
         Livewire::test(Tv::class, ['jogo' => $agendado])
             ->assertSee(['Poker Night #19', '1 confirmado · o relógio começa quando o jogo for iniciado'])
-            ->assertDontSeeHtml('x-data="relogio"');
+            ->assertDontSeeHtml('x-data="relogioTorneio"');
 
         // Finalizado: quem ficou com cada prêmio.
         $noite = $this->noite18();
@@ -114,7 +115,7 @@ class TvTest extends TestCase
 
         Livewire::test(Tv::class, ['jogo' => $noite->fresh()])
             ->assertSee(['Fim de jogo', 'Poker Night #18', '1º', $nomes[0], 'R$ 950', '2º', $nomes[1], 'R$ 565', '3º', $nomes[2], 'R$ 375'])
-            ->assertDontSeeHtml('x-data="relogio"');
+            ->assertDontSeeHtml('x-data="relogioTorneio"');
     }
 
     public function test_jogo_fora_do_site_volta_para_a_lista(): void

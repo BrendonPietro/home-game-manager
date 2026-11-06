@@ -51,7 +51,20 @@
 	$quantos = fn (int $n, string $coisa): string => $n.' '.$coisa.($n === 1 ? '' : 's');
 @endphp
 
-<div class="rh-aovivo" wire:poll.5s>
+{{--
+	v3: o motor do relógio (relogio-torneio.js) fica na tela inteira: os tempos (faixa, rodapé e modal)
+	contam e passam de nível sozinhos; quando o nível muda aqui, a tela pede ao servidor o resto (nível,
+	blinds, aviso de intervalo) sem esperar o próximo poll.
+--}}
+<div
+	class="rh-aovivo"
+	wire:poll.5s
+	@if ($relogio)
+		x-data="relogioTorneio"
+		data-relogio="{{ json_encode($relogio->paraNavegador()) }}"
+		x-on:relogio-trocou="$event.detail.local && setTimeout(() => $wire.$refresh(), 800)"
+	@endif
+>
 	<div class="rh-strip rh-aovivo__faixa">
 		@if ($digitaNivel)
 			<button type="button" class="rh-aovivo__nivel" wire:click="abrirNivel" title="Mudar o nível e os blinds">

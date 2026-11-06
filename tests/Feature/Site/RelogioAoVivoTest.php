@@ -35,6 +35,14 @@ class RelogioAoVivoTest extends TestCase
         return Jogo::query()->where('nome', PokerNight18Seeder::NOME)->sole();
     }
 
+    /** Índice, segundos e se corre, do pacote que a tela manda para o motor do relógio no navegador. */
+    private function pacote($tela): array
+    {
+        $pacote = $tela->viewData('relogio')->paraNavegador();
+
+        return [$pacote['indice'], $pacote['restante'], $pacote['rodando']];
+    }
+
     /** Estrutura curta no jogo do MontaNoite (fase de rebuys): N1 e N2 de 10 min, Intervalo de 5, N3. */
     private function comEstruturaCurta(): void
     {
@@ -56,12 +64,12 @@ class RelogioAoVivoTest extends TestCase
         // Seed: parado no nível 6 com 14:32, como a faixa do protótipo.
         $tela = Livewire::test(AoVivo::class, ['jogo' => $noite])
             ->assertSee(['Nível 6', '100 / 200', 'Relógio · pausado', '14:32'])
-            ->assertSeeHtml('data-restante="872"')
-            ->assertSeeHtml('data-rodando="0"')
+            ->assertSeeHtml('x-data="relogioTorneio"')
             ->assertSeeHtml('rh-aovivo__rodape com-relogio')
             ->assertSeeHtml("wire:click=\"controlarRelogio('continuar')\"")
+            ->tap(fn ($t) => $this->assertSame([5, 872.0, false], $this->pacote($t)))
             ->call('controlarRelogio', 'continuar')
-            ->assertSeeHtml('data-rodando="1"')
+            ->tap(fn ($t) => $this->assertTrue($t->viewData('relogio')->rodando))
             ->assertSeeHtml("wire:click=\"controlarRelogio('pausar')\"");
 
         $this->assertNotNull($noite->fresh()->relogio_desde);
@@ -132,7 +140,7 @@ class RelogioAoVivoTest extends TestCase
     public function test_jogo_sem_estrutura_nao_tem_relogio(): void
     {
         Livewire::test(AoVivo::class, ['jogo' => $this->jogo])
-            ->assertDontSeeHtml('x-data="relogio"')
+            ->assertDontSeeHtml('x-data="relogioTorneio"')
             ->assertDontSee('Relógio')
             ->assertDontSeeHtml('com-relogio')
             ->assertSeeHtml('wire:click="abrirNivel"');

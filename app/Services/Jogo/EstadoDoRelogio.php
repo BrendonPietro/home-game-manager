@@ -96,6 +96,102 @@ final readonly class EstadoDoRelogio
         return $this->noIntervalo() ? $this->nivel()->blinds() : 'Nível '.$this->numero;
     }
 
+    /**
+     * Pacote para o navegador (resources/js/site/relogio-torneio.js): o estado agora e, para cada nível
+     * da estrutura, o que mostrar nele. Com isso o navegador anda sozinho de um nível para o outro entre
+     * uma atualização e outra, e continua andando se a internet cair. `agora` muda a cada atualização:
+     * é o sinal de que a conexão está viva (o resto pode ficar igual com o relógio pausado).
+     *
+     * Por nível: título ("Nível 6", "Intervalo"); o que vai grande (blinds e ante; no intervalo, os da
+     * volta, com o rótulo "Na volta · nível 7"); o que vem depois; e quanto falta para o próximo
+     * intervalo a partir do fim dele (segundos e níveis de blinds, contando o próprio).
+     *
+     * @return array{indice: int, restante: float, rodando: bool, iniciado: bool, agora: int, niveis: list<array<string, mixed>>}
+     */
+    public function paraNavegador(): array
+    {
+        $niveis = $this->niveis->values();
+        $contador = 0;
+        $numeros = $niveis->map(function (EstruturaNivel $n) use (&$contador): ?int {
+            return $n->e_intervalo ? null : ++$contador;
+        })->all();
+        $linhas = [];
+
+        foreach ($niveis as $i => $nivel) {
+            $seguinte = $niveis[$i + 1] ?? null;
+
+            if ($nivel->e_intervalo) {
+                $volta = $seguinte && ! $seguinte->e_intervalo ? $seguinte : null;
+                [$titulo, $rotulo, $blinds, $ante, $depois] = [
+                    $nivel->blinds(),
+                    $volta ? 'Na volta · nível '.$numeros[$i + 1] : null,
+                    $volta?->blinds(),
+                    $volta?->ante,
+                    null,
+                ];
+            } else {
+                [$titulo, $rotulo, $blinds, $ante, $depois] = [
+                    'Nível '.$numeros[$i],
+                    'Blinds',
+                    $nivel->blinds(),
+                    $nivel->ante,
+                    match (true) {
+                        $seguinte === null => 'Último nível da estrutura',
+                        $seguinte->e_intervalo => 'Depois: '.$seguinte->blinds().' · '.$seguinte->duracao_minutos.' min',
+                        default => 'Próximo: nível '.$numeros[$i + 1].' · '.$seguinte->blindsComAnte(),
+                    },
+                ];
+            }
+
+            [$ateIntervalo, $niveisAteIntervalo] = $nivel->e_intervalo ? [null, null] : $this->ateOIntervalo($niveis, $i);
+
+            $linhas[] = [
+                'id' => $nivel->id,
+                'intervalo' => $nivel->e_intervalo,
+                'titulo' => $titulo,
+                'rotulo' => $rotulo,
+                'blinds' => $blinds,
+                'ante' => $ante > 0 ? 'Ante '.EstruturaNivel::fichas($ante) : null,
+                'depois' => $depois,
+                'segundos' => $nivel->duracao_minutos * 60,
+                'ateIntervalo' => $ateIntervalo,
+                'niveisAteIntervalo' => $niveisAteIntervalo,
+            ];
+        }
+
+        return [
+            'indice' => $this->indice,
+            'restante' => $this->restanteExato(),
+            'rodando' => $this->rodando,
+            'iniciado' => $this->iniciado,
+            'agora' => (int) $this->agora->getPreciseTimestamp(3),
+            'niveis' => $linhas,
+        ];
+    }
+
+    /**
+     * Do fim do nível `$i` até o próximo intervalo: segundos dos níveis no meio e quantos níveis de
+     * blinds faltam contando o próprio. Nulos quando não há intervalo pela frente.
+     *
+     * @param  Collection<int, EstruturaNivel>  $niveis
+     * @return array{?int, ?int}
+     */
+    private function ateOIntervalo(Collection $niveis, int $i): array
+    {
+        [$segundos, $quantos] = [0, 1];
+
+        foreach ($niveis->slice($i + 1) as $nivel) {
+            if ($nivel->e_intervalo) {
+                return [$segundos, $quantos];
+            }
+
+            $segundos += $nivel->duracao_minutos * 60;
+            $quantos++;
+        }
+
+        return [null, null];
+    }
+
     /** "14:32", "09:05", "1:05:00" */
     public function tempo(): string
     {

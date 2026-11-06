@@ -74,6 +74,7 @@ Referência da Poker Night #18: 12 jogadores, 22 entradas, R$ 2.100 arrecadados,
 - [ ] Deixe o nível 1 acabar → a faixa, o celular e a TV passam juntos para o nível 2, e a TV toca.
 - [ ] Clique no tempo da faixa → modal do Relógio. Teste PAUSAR (âmbar em todas as telas), +1 min, −1 min, PRÓXIMO e ANTERIOR → a TV acompanha em até 5 s e toca quando o nível muda.
 - [ ] No celular, como Operador → vê o relógio, sem o ▶ e sem o modal.
+- [ ] **Sem internet** (estrutura Teste rápido, relógio correndo): na TV, desligue o Wi-Fi do aparelho → depois de uns 15 s aparece "Sem conexão · o relógio segue contando"; o tempo continua, o nível troca na hora certa (com o som) e o intervalo aparece com "Na volta · nível N". Ligue o Wi-Fi → o aviso some e o relógio acerta com o servidor (se alguém pausou nesse meio tempo, pausa agora).
 
 **Entradas e caixa**
 - [ ] Clique num assento → painel do jogador. BUY-IN para todos; para um, o buy-in duplo; para outro, com o opcional marcado.

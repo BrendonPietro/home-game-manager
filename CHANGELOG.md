@@ -10,6 +10,20 @@ Registro das atualizações do sistema do Rodrigues Home Game, organizadas por:
 - Docs: documentação;
 - Chore: manutenção.
 
+## 0.8.1
+
+v3, etapa 2: o relógio anda sozinho no navegador, também sem internet.
+
+### Feat
+- Motor do relógio no navegador (`resources/js/site/relogio-torneio.js`, Alpine `relogioTorneio`, no lugar do `relogio.js`): recebe no `data-relogio` o pacote `EstadoDoRelogio::paraNavegador()` (o estado de agora e o que mostrar em cada nível) e passa de nível sozinho quando o tempo acaba. Sem internet, segue contando e trocando de nível até o fim da estrutura; quando a rede volta, acerta com o servidor.
+- TV: "Sem conexão · o relógio segue contando" depois de 15 s sem notícia do servidor; "Intervalo em" com os níveis que faltam ("Intervalo em 2 níveis").
+- Som da TV na troca de nível pelo motor: uma vez só por nível, sem repetir com o atraso da rede.
+- `<x-site.poker.painel-relogio>`: o bloco grande do relógio, todo pelo motor (vai servir ao link do torneio e à tela do gerenciador).
+- Tela ao vivo: quando o navegador passa de nível, pede ao servidor o resto da tela na hora.
+
+### Test
+- `Jogo\RelogioTest`: pacote para o navegador (títulos, volta do intervalo, depois, até o intervalo). `Site\RelogioAoVivoTest` e `Site\TvTest` olham o motor no lugar dos atributos antigos. Testado no navegador com a rede cortada: nível 1 → 2 → intervalo → 3 → fim da estrutura sem internet, e a volta.
+
 ## 0.8.0
 
 v3, etapa 1: Blinds no painel. A v3 é o relógio no estilo do Poker Depot (link do torneio só com o relógio, relógio que anda sem internet, AVISO); esta etapa deixa o cadastro dos relógios mais rápido e bom no celular.

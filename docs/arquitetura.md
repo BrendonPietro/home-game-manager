@@ -77,7 +77,7 @@ resources/
 ├── css/filament/painel/theme.css
 ├── fonts/barlow/
 ├── svg/site/icons/
-└── js/site/                    # app.js, mesa.js, relogio.js e tv.js (v2)
+└── js/site/                    # app.js, mesa.js, relogio-torneio.js (v3: o motor do relógio) e tv.js
 
 config/permission.php           # tabelas do spatie renomeadas (grupos, permissoes...)
 database/{migrations,factories,seeders}/  # seeders: permissões, grupos padrão, estruturas de blinds, Poker Night #18

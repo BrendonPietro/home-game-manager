@@ -7,32 +7,7 @@
 
 	$andamento = $jogo->status === StatusJogo::EmAndamento;
 	$torneio = $jogo->eTorneio();
-	$intervalo = (bool) $relogio?->noIntervalo();
-	$depois = $relogio?->proximo();
-
-	// O que vai grande: título, blinds e ante. No intervalo, os blinds da volta.
-	if ($relogio && $intervalo) {
-		$volta = $depois && ! $depois->e_intervalo ? $depois : null;
-		[$titulo, $rotuloBlinds, $blinds, $ante] = [$relogio->titulo(), $volta ? 'Na volta · nível '.(($relogio->ultimoNumero ?? 0) + 1) : null, $volta?->blinds(), $volta?->ante];
-	} elseif ($relogio) {
-		[$titulo, $rotuloBlinds, $blinds, $ante] = [$relogio->titulo(), 'Blinds', $relogio->nivel()->blinds(), $relogio->nivel()->ante];
-	} else {
-		[$titulo, $rotuloBlinds, $blinds, $ante] = [$jogo->nivel_atual ? 'Nível '.$jogo->nivel_atual : 'Blinds', null, $jogo->blinds_atual, null];
-	}
-
-	$proximo = match (true) {
-		! $relogio || $intervalo => null,
-		! $depois => 'Último nível da estrutura',
-		$depois->e_intervalo => 'Depois: '.$depois->blinds().' · '.$depois->duracao_minutos.' min',
-		default => 'Próximo: nível '.(($relogio->ultimoNumero ?? 0) + 1).' · '.$depois->blindsComAnte(),
-	};
-	$situacao = match (true) {
-		! $relogio || $relogio->rodando => null,
-		$relogio->acabou() => 'Fim da estrutura',
-		! $relogio->iniciado => 'Aguardando o início',
-		default => 'Pausado',
-	};
-	$intervaloEm = $relogio && ! $intervalo ? $relogio->intervaloEm() : null;
+	// Com estrutura de blinds, o painel do relógio (x-site.poker.painel-relogio) monta título, blinds e o que vem depois.
 	$fase = $torneio ? $jogo->fase?->label() : 'Cash game';
 @endphp
 
@@ -40,11 +15,10 @@
 	class="rh-tv"
 	wire:poll.5s.keep-alive
 	x-data="tv"
-	data-nivel="{{ $relogio?->nivel()->id }}"
 	x-on:mousemove.window.throttle.500ms="mexeu()"
 	x-on:pointerdown.window="mexeu(); destravar()"
 	x-on:keydown.window="mexeu(); destravar()"
-	x-on:relogio-zerou="trocou()"
+	x-on:relogio-trocou="campainha()"
 >
 	<header class="rh-tv__topo">
 		<x-site.props.brand />
@@ -67,30 +41,20 @@
 	</header>
 
 	@if ($andamento)
+		{{-- O motor do relógio (relogio-torneio.js) cobre o palco e os números: anda sozinho entre um poll e outro. --}}
+		<div class="rh-tv__corpo" @if ($relogio) x-data="relogioTorneio" data-relogio="{{ json_encode($relogio->paraNavegador()) }}" @endif>
 		<main @class(['rh-tv__palco', 'sem-lado' => ! $torneio])>
-			<section @class(['rh-tv__relogio', 'is-intervalo' => $intervalo, 'sem-relogio' => ! $relogio])>
-				<div class="rh-tv__titulo">{{ $titulo }}</div>
-				@if ($relogio)
-					<div @class(['rh-tv__tempo', 'is-longo' => $relogio->restante >= 3600])><x-site.poker.relogio :estado="$relogio" /></div>
-					@if ($situacao)
-						<div class="rh-tv__situacao">{{ $situacao }}</div>
+			@if ($relogio)
+				<x-site.poker.painel-relogio :estado="$relogio" />
+			@else
+				{{-- Sem estrutura de blinds (v1): nível e blinds digitados na tela ao vivo. --}}
+				<section class="rh-tv__relogio sem-relogio">
+					<div class="rh-tv__titulo">{{ $jogo->nivel_atual ? 'Nível '.$jogo->nivel_atual : 'Blinds' }}</div>
+					@if ($jogo->blinds_atual)
+						<div class="rh-tv__blinds"><span class="v">{{ $jogo->blinds_atual }}</span></div>
 					@endif
-				@endif
-				@if ($blinds)
-					<div class="rh-tv__blinds">
-						@if ($rotuloBlinds)
-							<span class="rh-tv__rotulo">{{ $rotuloBlinds }}</span>
-						@endif
-						<span class="v">{{ $blinds }}</span>
-						@if ($ante)
-							<span class="rh-tv__ante">Ante {{ EstruturaNivel::fichas($ante) }}</span>
-						@endif
-					</div>
-				@endif
-				@if ($proximo)
-					<div class="rh-tv__proximo">{{ $proximo }}</div>
-				@endif
-			</section>
+				</section>
+			@endif
 
 			@if ($torneio)
 				<aside class="rh-tv__lado">
@@ -120,10 +84,15 @@
 			@if ($stackMedio)
 				<div><span class="rh-label">Stack médio</span><span class="v">{{ EstruturaNivel::fichas($stackMedio) }}</span></div>
 			@endif
-			@if ($intervaloEm !== null)
-				<div><span class="rh-label">Intervalo em</span><span class="v"><x-site.poker.relogio :estado="$relogio" :segundos="$intervaloEm - $relogio->fracao" /></span></div>
+			@if ($relogio)
+				@php $intervaloEm = $relogio->intervaloEm(); @endphp
+				<div wire:ignore x-show="intervaloEm !== null" @if ($intervaloEm === null) style="display:none" @endif>
+					<span class="rh-label">Intervalo em <span x-text="niveisAteIntervalo"></span></span>
+					<span class="v"><x-site.poker.relogio :estado="$relogio" :segundos="($intervaloEm ?? 0) - $relogio->fracao" /></span>
+				</div>
 			@endif
 		</footer>
+		</div>
 	@else
 		{{-- Antes de começar e depois de acabar: o nome grande e o que der para mostrar. --}}
 		<main class="rh-tv__fora">
