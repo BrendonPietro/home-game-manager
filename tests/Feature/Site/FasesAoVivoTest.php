@@ -39,13 +39,13 @@ class FasesAoVivoTest extends TestCase
             ->assertSee('novos add-ons não poderão ser registrados')
             ->assertSeeInOrder(['Total arrecadado', 'R$ 2.100', 'Casa (10%)', 'R$ 210', 'Prize pool', 'R$ 1.890'])
             ->assertSee('−R$ 210')
-            ->assertSee('1º R$ 945 · 2º R$ 567 · 3º R$ 378')
+            ->assertSee('1º R$ 950 · 2º R$ 565 · 3º R$ 375')
             ->assertSee('22 entradas · 12 buy-ins, 6 rebuys, 4 add-ons')
             ->call('fecharEntradas')
             ->assertSet('modal', null)
             ->assertSee('Entradas fechadas e prêmios gravados')
             ->assertDontSee('FECHAR ENTRADAS')
-            ->assertSee(['Premiação', '1º', '2º', '3º', 'em jogo', 'R$ 945', 'R$ 567', 'R$ 378']);
+            ->assertSee(['Premiação', '1º', '2º', '3º', 'em jogo', 'R$ 950', 'R$ 565', 'R$ 375']);
 
         $this->assertSame(FaseTorneio::SemEntradas, $noite->fresh()->fase);
     }

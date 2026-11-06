@@ -230,17 +230,17 @@ Detalhes da `Pontuacao`: vale nos rankings **ativos** ligados ao jogo; entra que
 - **Taxas** = soma de `jogo_taxas` calculadas (percentual sobre a premiação bruta).
 - **Prize pool** = premiação bruta − taxas.
 - **Fora da premiação** = arrecadação − premiação bruta.
-- **Prêmio da posição** = prize pool × percentual. Sobra de arredondamento vai para o 1º.
+- **Prêmio da posição** = prize pool × percentual. Com "Arredondar prêmios para R$ 5" (Configurações, ligado por padrão), do 2º para baixo o prêmio desce para o múltiplo de R$ 5; a sobra vai para o 1º.
 - **Saldo do jogador** = investido − prêmio − pago + recebido. Positivo: deve ao caixa. Negativo: o caixa deve a ele. No cash game o prêmio é o cash-out. `Services\Jogo\Saldos` soma em centavos a partir das entradas e pagamentos válidos; sem pagamentos, a soma dos saldos é o que fica com a casa (taxas + fora da premiação).
 
-Referência (Poker Night #18): 22 entradas, premiação bruta R$ 2.100; taxa "casa" 10% = R$ 210; prize pool R$ 1.890 → 945 / 567 / 378.
+Referência (Poker Night #18): 22 entradas, premiação bruta R$ 2.100; taxa "casa" 10% = R$ 210; prize pool R$ 1.890 → 950 / 565 / 375 (arredondado para R$ 5; sem arredondar, 945 / 567 / 378).
 
 Detalhes da `Calculadora` (tudo em centavos inteiros):
 - A fração do destino vale sobre a soma de cada destino, não lançamento a lançamento.
 - **Jogadores** (taxa por jogador e regra de premiação) = quem tem pelo menos um buy-in válido. **Entradas** (taxa por entrada) = buy-ins, rebuys e add-ons; opcionais não contam.
 - Taxa percentual arredonda meio centavo para cima (7,5% de R$ 606 = R$ 45,45). Taxa por unidade usa quantidade mínima 1.
 - Prize pool não fica negativo: se as taxas passarem da premiação bruta, ele é zero.
-- Prêmios: cada posição leva prize pool × percentual, para baixo; a sobra (centavos) vai para o 1º, quando os percentuais somam 100%. Premiação pela regra usa a faixa do número de jogadores; manual usa os percentuais do jogo. Cash game não tem prêmios.
+- Prêmios: cada posição leva prize pool × percentual, para baixo; a sobra (centavos) vai para o 1º, quando os percentuais somam 100%. Arredondando para R$ 5 (`App\Support\ArredondarPremios`, chave `premios.arredondar`), do 2º para baixo desce para o múltiplo de R$ 5 e o 1º fecha a conta: ele só sai redondo se o prize pool for múltiplo de R$ 5. Prêmio menor que R$ 5 fica como está (não vira zero); premiação manual que não soma 100% arredonda o 1º também. Vale ao fechar as entradas, quando os prêmios são gravados. Premiação pela regra usa a faixa do número de jogadores; manual usa os percentuais do jogo. Cash game não tem prêmios.
 - **Simulação** (prize pool estimado): N jogadores com o buy-in padrão, N rebuys e N add-ons padrão, mais os opcionais obrigatórios (por jogador ou junto de cada entrada).
 
 ## Fechamento e acertos

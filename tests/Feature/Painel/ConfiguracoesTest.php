@@ -4,6 +4,7 @@ namespace Tests\Feature\Painel;
 
 use App\Filament\Pages\Configuracoes;
 use App\Models\RegraPremiacao;
+use App\Support\ArredondarPremios;
 use App\Support\PadroesDoJogo;
 use Database\Seeders\RegrasPremiacaoSeeder;
 use Filament\Forms\Components\Repeater;
@@ -35,7 +36,7 @@ class ConfiguracoesTest extends TestCase
         $this->get(Configuracoes::getUrl())->assertOk();
 
         Livewire::test(Configuracoes::class)
-            ->assertSchemaStateSet(['horario' => '20:00', 'lugares_por_mesa' => 9])
+            ->assertSchemaStateSet(['horario' => '20:00', 'lugares_por_mesa' => 9, 'arredondar_premios' => true])
             ->assertSet('dados.regras', $this->regras([[1, 10, '65 / 35'], [11, 18, '50 / 30 / 20'], [19, null, '45 / 27 / 17 / 11']]));
     }
 
@@ -44,7 +45,7 @@ class ConfiguracoesTest extends TestCase
         Livewire::test(Configuracoes::class)
             ->fillForm([
                 'horario' => '19:30', 'lugares_por_mesa' => 8, 'tamanho_mesa_final' => 8,
-                'buyin_valor' => '120', 'buyin_fichas' => 25000, 'taxa_nome' => 'Casa', 'taxa_percentual' => '10',
+                'buyin_valor' => '120', 'buyin_fichas' => 25000, 'taxa_nome' => 'Casa', 'taxa_percentual' => '10', 'arredondar_premios' => false,
                 'regras' => $this->regras([[1, 9, '60 / 40'], [10, null, '50 / 27,5 / 22,5']]),
             ])
             ->call('salvar')
@@ -56,6 +57,7 @@ class ConfiguracoesTest extends TestCase
         $this->assertSame([60, 40], RegraPremiacao::query()->paraJogadores(5)->first()->percentuais);
         $this->assertSame([50, 27.5, 22.5], RegraPremiacao::query()->paraJogadores(30)->first()->percentuais);
         $this->assertSame(2, RegraPremiacao::query()->count());
+        $this->assertFalse(ArredondarPremios::ativo());
     }
 
     public function test_regras_erradas_nao_salvam(): void

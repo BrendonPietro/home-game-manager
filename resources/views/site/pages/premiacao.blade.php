@@ -12,6 +12,9 @@
 	$maior = (float) ($premios->max(fn ($p) => (float) $p->percentual) ?: 1);
 	$distribuido = $premios->sum(fn ($p) => Dinheiro::centavos($p->valor));
 	$somaPercentuais = $premios->sum(fn ($p) => Dinheiro::centavos($p->percentual));
+	// Gravado com "Arredondar prêmios para R$ 5": algum prêmio do 2º para baixo não é a conta exata.
+	$arredondado = $premios->contains(fn ($p) => $p->posicao > 1
+		&& Dinheiro::centavos($p->valor) !== intdiv($resumo->prizePool * Dinheiro::centavos($p->percentual), 10000));
 	$retirado = $resumo->totalTaxas + $resumo->foraDaPremiacao;
 	$urlResultado = EtapaDoJogo::permite($jogo, 'resultado') ? EtapaDoJogo::url($jogo, 'resultado') : null;
 	$faixa = fn ($regra): string => match (true) {
@@ -93,6 +96,9 @@
 					<span class="rh-spacer"></span>
 					<span class="rh-num">{{ Dinheiro::brlCentavos($distribuido) }} · {{ $pct(Dinheiro::decimal($somaPercentuais)) }}</span>
 				</div>
+				@if ($arredondado)
+					<div class="rh-premiacao__soma rh-small rh-muted">Prêmios arredondados para R$ 5: a diferença foi para o 1º.</div>
+				@endif
 			</section>
 
 			@if ($regras->isNotEmpty())

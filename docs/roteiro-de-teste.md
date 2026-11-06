@@ -12,13 +12,14 @@ Os testes automáticos (`php artisan test`) já conferem as regras e as contas. 
 - [ ] Para abrir no celular de verdade: o `.test` só existe no PC. Uma saída é `php artisan serve --host=0.0.0.0 --port=8000` e abrir `http://<IP do PC>:8000` no celular, na mesma rede (talvez precise liberar a porta no firewall do Windows). Sem isso, use o modo celular do navegador (F12).
 - [ ] Quer começar do zero? `php artisan migrate:fresh --seed` recria o banco com a Poker Night #18, mas **apaga tudo do banco local**, inclusive as contas `teste`.
 
-Referência da Poker Night #18: 12 jogadores, 22 entradas, R$ 2.100 arrecadados, casa R$ 210, prize pool R$ 1.890, prêmios 945 / 567 / 378.
+Referência da Poker Night #18: 12 jogadores, 22 entradas, R$ 2.100 arrecadados, casa R$ 210, prize pool R$ 1.890, prêmios 950 / 565 / 375 (arredondados para R$ 5; a diferença vai para o 1º).
 
 ## 1. Painel: preparar a noite
 
 **Configurações** (menu "Padrões e premiação")
 - [ ] Confira os padrões do jogo (horário, lugares, valores e fichas, taxa da casa) → um jogo novo nasce com eles.
 - [ ] Confira as faixas da regra de premiação (no seed: até 10 jogadores 65 / 35; de 11 a 18, 50 / 30 / 20; 19 ou mais, 45 / 27 / 17 / 11). Tente salvar uma faixa somando 90% → recusa.
+- [ ] "Arredondar prêmios para R$ 5" ligado → no fechar entradas, do 2º para baixo os prêmios saem em múltiplos de R$ 5 e o 1º fica com a diferença.
 
 **Usuários**
 - [ ] Cadastre 3 ou 4 jogadores só com o nome → salva; apelido, telefone e foto são opcionais.

@@ -155,7 +155,7 @@ V2 (feita em 28/10/2026). Estruturas de blinds (`EstruturaBlinds` com os `Estrut
 - `set('prop.chave', …)` no teste manda a chave aninhada, mas o navegador manda o array inteiro quando ele ainda está vazio: hook `updatedProp($valor, $chave)` tem de aceitar `$chave` nula e `$valor` array (ex.: `Jogo\Resultado::updatedPosicoes`). Teste os dois.
 - Depois de um `call()`, o `assertSeeInOrder` do Livewire compara com o JSON da resposta, onde acento e símbolo viram `í`, `−`…: com texto não ASCII, use `assertSee` (que olha o HTML).
 - Factory de `Usuario` sorteia apelido: em teste que procura o nome na tela, crie com `'apelido' => null`.
-- A noite de exemplo **Poker Night #18** é a referência: 12 jogadores, 22 entradas, R$ 2.100 arrecadados, rake R$ 210, prize pool R$ 1.890 pago como 945 / 567 / 378. Se a `Calculadora` não devolver isso, algo quebrou.
+- A noite de exemplo **Poker Night #18** é a referência: 12 jogadores, 22 entradas, R$ 2.100 arrecadados, rake R$ 210, prize pool R$ 1.890 pago como 950 / 565 / 375 (prêmios arredondados para R$ 5, o padrão; sem arredondar, 945 / 567 / 378). Se a `Calculadora` não devolver isso, algo quebrou.
   - `PokerNight18Seeder` cria a noite com os jogadores e lugares do protótipo, em andamento no intervalo (rebuys encerrados, add-ons feitos, ninguém eliminado). O `db:seed` só a cria no ambiente local (testes rodam o seeder dela direto), e rodar de novo não duplica.
   - `PokerNight18Test` confere os números somando direto em centavos; `CalculadoraTest` confere a `Calculadora` contra a mesma noite e contra o exemplo do sábado do `regras.md`.
   - `Jogo\NoiteDeReferenciaTest` joga a mesma noite só pelas Actions (confirmar, sentar, iniciar, entradas, fases, eliminações) e confere números, prêmios, posições e saldos.

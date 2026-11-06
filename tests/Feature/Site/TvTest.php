@@ -50,7 +50,7 @@ class TvTest extends TestCase
             ->assertSeeHtml('wire:poll.5s.keep-alive')
             ->assertSeeHtml('data-nivel="'.$noite->relogio_nivel_id.'"')
             ->assertSee(['Poker Night #18', 'Intervalo (add-on)', 'Nível 6', '14:32', 'Pausado', '100 / 200', 'Depois: Intervalo · 15 min'])
-            ->assertSee(['Prize pool', 'R$ 1.890', 'Premiação até agora', 'R$ 945', 'R$ 567', 'R$ 378'])
+            ->assertSee(['Prize pool', 'R$ 1.890', 'Premiação até agora', 'R$ 950', 'R$ 565', 'R$ 375'])
             ->assertSee(['Jogando', 'Entradas', '22', 'Stack médio', EstruturaNivel::fichas((int) round($fichas / 12)), 'Intervalo em'])
             ->assertSee(['SOM DESLIGADO', 'TELA CHEIA', 'VOLTAR']);
     }
@@ -66,7 +66,7 @@ class TvTest extends TestCase
 
         app(FecharEntradas::class)($noite->fresh(), $this->admin);
         $tela->call('$refresh')
-            ->assertSee(['Entradas fechadas', 'Premiação', 'R$ 945'])
+            ->assertSee(['Entradas fechadas', 'Premiação', 'R$ 950'])
             ->assertDontSee('Premiação até agora');
     }
 
@@ -113,7 +113,7 @@ class TvTest extends TestCase
         $noite->forceFill(['status' => StatusJogo::Finalizado])->save();
 
         Livewire::test(Tv::class, ['jogo' => $noite->fresh()])
-            ->assertSee(['Fim de jogo', 'Poker Night #18', '1º', $nomes[0], 'R$ 945', '2º', $nomes[1], 'R$ 567', '3º', $nomes[2], 'R$ 378'])
+            ->assertSee(['Fim de jogo', 'Poker Night #18', '1º', $nomes[0], 'R$ 950', '2º', $nomes[1], 'R$ 565', '3º', $nomes[2], 'R$ 375'])
             ->assertDontSeeHtml('x-data="relogio"');
     }
 

@@ -245,12 +245,12 @@ class JogosTest extends TestCase
     public function test_simulacao_do_prize_pool_com_o_formulario_nao_salvo(): void
     {
         // 12 × 100 + 6 rebuys × 100 + 4 add-ons × 50 = 2.000; taxas 190 + 2 × 215 = 620; prize pool 1.380.
-        // 12 jogadores pela regra do clube: 50 / 30 / 20 → 690 / 414 / 276.
+        // 12 jogadores pela regra do clube: 50 / 30 / 20 → 690 / 414 / 276, arredondados para R$ 5: 695 / 410 / 275.
         Livewire::test(CreateJogo::class)
             ->fillForm($this->torneio(['simular_jogadores' => 12, 'simular_rebuys' => 6, 'simular_add_ons' => 4]))
-            ->assertSee(['Simulação do prize pool', 'R$ 2.000', '−R$ 190', '−R$ 430', 'R$ 1.380', 'R$ 690', 'R$ 414', 'R$ 276'])
+            ->assertSee(['Simulação do prize pool', 'R$ 2.000', '−R$ 190', '−R$ 430', 'R$ 1.380', 'R$ 695', 'R$ 410', 'R$ 275'])
             ->fillForm(['metodo_premiacao' => MetodoPremiacao::Manual->value, 'premiacoes' => [['percentual' => '70'], ['percentual' => '30']]])
-            ->assertSee(['R$ 966', 'R$ 414']);
+            ->assertSee(['R$ 970', 'R$ 410']); // 966 / 414 arredondados
 
         $this->assertSame(0, Jogo::query()->count());
     }

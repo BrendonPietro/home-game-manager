@@ -28,7 +28,7 @@ use RuntimeException;
 
 /**
  * Noite de referência (docs/prototipo, mesmos jogadores e lugares): 12 jogadores, 22 entradas,
- * R$ 2.100 arrecadados, taxa "Casa" 10% = R$ 210, prize pool R$ 1.890 → 945 / 567 / 378.
+ * R$ 2.100 arrecadados, taxa "Casa" 10% = R$ 210, prize pool R$ 1.890 → 950 / 565 / 375 (945 / 567 / 378 sem arredondar).
  *
  * Fica em andamento, no intervalo (rebuys encerrados, add-ons feitos, ninguém eliminado), como a
  * tela ao vivo do protótipo; as fases 3 e 4 continuam a mesma noite até o fechamento. Usa a estrutura

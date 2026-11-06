@@ -65,7 +65,7 @@ class ResultadoTest extends TestCase
         $this->get(route('jogos.premiacao', $this->noite))->assertSee('REGISTRAR RESULTADO');
 
         Livewire::test(Resultado::class, ['jogo' => $this->noite])
-            ->assertSeeInOrder(['1º lugar · 50%', 'a definir', 'R$ 945', '2º lugar · 30%', 'a definir', 'R$ 567'])
+            ->assertSeeInOrder(['1º lugar · 50%', 'a definir', 'R$ 950', '2º lugar · 30%', 'a definir', 'R$ 565'])
             ->assertSee('Escolha a de quem ainda está em jogo (do 1º ao 3º).')
             // Quem caiu já tem a posição: Thiago foi o último a cair, 4º.
             ->assertSeeInOrder(['4º', 'Thiago', '5º', 'Brendon'])
@@ -77,7 +77,7 @@ class ResultadoTest extends TestCase
             ->set("posicoes.{$diego->id}", '3')
             ->call('salvar')
             ->assertSet('aviso', 'Resultado gravado.')
-            ->assertSee(['Felipe', 'Marcão', 'Diego', '+R$ 845', '+R$ 317', '+R$ 278'])
+            ->assertSee(['Felipe', 'Marcão', 'Diego', '+R$ 850', '+R$ 315', '+R$ 275'])
             ->assertDontSee('a definir')
             ->assertDontSeeHtml('wire:model.live="posicoes');
 

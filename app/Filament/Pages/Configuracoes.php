@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\RegraPremiacao;
+use App\Support\ArredondarPremios;
 use App\Support\Dinheiro;
 use App\Support\PadroesDoJogo;
 use BackedEnum;
@@ -11,6 +12,7 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Fieldset;
@@ -53,6 +55,7 @@ class Configuracoes extends Page
     {
         $this->form->fill([
             ...PadroesDoJogo::todos(),
+            'arredondar_premios' => ArredondarPremios::ativo(),
             'regras' => RegraPremiacao::query()->orderBy('jogadores_min')->get()
                 ->map(fn (RegraPremiacao $regra): array => [
                     'jogadores_min' => $regra->jogadores_min,
@@ -100,6 +103,14 @@ class Configuracoes extends Page
                             ]),
                     ]),
 
+                Section::make('Prêmios')
+                    ->description('Vale para todo torneio, pela regra do clube ou manual, ao fechar as entradas. Quem já fechou não muda.')
+                    ->schema([
+                        Toggle::make('arredondar_premios')
+                            ->label('Arredondar prêmios para R$ 5')
+                            ->helperText('Do 2º lugar para baixo o prêmio desce para o múltiplo de R$ 5 e a diferença vai para o 1º. Ex.: prize pool de R$ 1.890 em 50 / 30 / 20 → R$ 950 / 565 / 375.'),
+                    ]),
+
                 Section::make('Premiação pela regra do clube')
                     ->description('Percentuais de cada posição pelo número de jogadores com buy-in. Valem para os torneios "pela regra do clube" ao fechar as entradas; quem já fechou não muda.')
                     ->schema([
@@ -128,6 +139,8 @@ class Configuracoes extends Page
         $regras = $this->regras($dados['regras'] ?? []);
 
         DB::transaction(function () use ($dados, $regras): void {
+            ArredondarPremios::definir((bool) ($dados['arredondar_premios'] ?? false));
+
             PadroesDoJogo::gravar([
                 ...$dados,
                 'lugares_por_mesa' => (int) $dados['lugares_por_mesa'],

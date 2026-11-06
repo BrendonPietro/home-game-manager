@@ -49,8 +49,9 @@ class PremiacaoTest extends TestCase
             ->assertSee('Final · entradas fechadas às')
             ->assertSeeInOrder(['Total arrecadado', 'R$ 2.100', 'Casa (10%)', '−R$ 210', 'Valor retirado antes da premiação', 'R$ 210', 'Prize pool', 'R$ 1.890'])
             ->assertSeeInOrder(['3 posições premiadas', 'Regra: 50 / 30 / 20'])
-            ->assertSeeInOrder(['1º lugar · 50%', 'em jogo', 'R$ 945', '2º lugar · 30%', 'R$ 567', '3º lugar · 20%', 'R$ 378'])
+            ->assertSeeInOrder(['1º lugar · 50%', 'em jogo', 'R$ 950', '2º lugar · 30%', 'R$ 565', '3º lugar · 20%', 'R$ 375'])
             ->assertSee('R$ 1.890 · 100%')
+            ->assertSee('Prêmios arredondados para R$ 5: a diferença foi para o 1º.')
             ->assertSeeInOrder(['Regra de distribuição', 'até 10', '65% · 35%', '11 a 18', 'hoje: 12', '50% · 30% · 20%', '19 ou mais', '45% · 27% · 17% · 11%']);
     }
 
@@ -67,7 +68,7 @@ class PremiacaoTest extends TestCase
         }
 
         $this->get(route('jogos.premiacao', $this->noite))
-            ->assertSeeInOrder(['1º lugar', 'em jogo', '2º lugar', 'em jogo', '3º lugar', 'Diego', 'R$ 378']);
+            ->assertSeeInOrder(['1º lugar', 'em jogo', '2º lugar', 'em jogo', '3º lugar', 'Diego', 'R$ 375']);
     }
 
     public function test_cash_game_nao_tem_premiacao(): void

@@ -254,9 +254,9 @@
 						<div class="rh-panel__hd"><h3 class="rh-heading">Premiação</h3></div>
 						<div class="rh-panel__bd">
 							<dl class="rh-kv">
-								<dt>1º lugar · 50%</dt><dd>R$ 945</dd>
-								<dt>2º lugar · 30%</dt><dd>R$ 567</dd>
-								<dt>3º lugar · 20%</dt><dd>R$ 378</dd>
+								<dt>1º lugar · 50%</dt><dd>R$ 950</dd>
+								<dt>2º lugar · 30%</dt><dd>R$ 565</dd>
+								<dt>3º lugar · 20%</dt><dd>R$ 375</dd>
 							</dl>
 							<hr class="rh-divider">
 							<dl class="rh-kv"><dt>Prize pool</dt><dd>R$ 1.890</dd></dl>

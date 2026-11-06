@@ -11,12 +11,14 @@ use App\Models\Item;
 use App\Models\Jogo;
 use App\Models\RegraPremiacao;
 use App\Models\Taxa;
+use App\Support\ArredondarPremios;
 use App\Support\Dinheiro;
 use Illuminate\Support\Collection;
 
 /**
  * Arrecadação, premiação bruta, taxas, prize pool e prêmios (docs/regras.md, "Cálculos").
- * Tudo em centavos inteiros. Referência: Poker Night #18 = R$ 2.100 / 210 / 1.890 → 945 / 567 / 378.
+ * Tudo em centavos inteiros. Referência: Poker Night #18 = R$ 2.100 / 210 / 1.890 → 950 / 565 / 375
+ * (prêmios arredondados para R$ 5; sem arredondar, 945 / 567 / 378).
  *
  * Um lançamento é o que importa de uma entrada para a conta: tipo, valor em centavos e destino.
  */
@@ -125,25 +127,35 @@ class Calculadora
 
     /**
      * Prize pool × percentual de cada posição, para baixo; a sobra do arredondamento vai para o 1º.
+     * Com "Arredondar prêmios para R$ 5" (ArredondarPremios), do 2º para baixo o prêmio desce para o
+     * múltiplo de R$ 5 e o 1º leva a diferença: R$ 1.890 em 50/30/20 → 950 / 565 / 375.
      *
      * @return list<array{posicao: int, percentual: string, valor: int}>
      */
     private function premios(Jogo $jogo, int $prizePool, int $jogadores): array
     {
         $percentuais = $this->percentuais($jogo, $jogadores);
+        $somaDosPercentuais = array_sum(array_map(fn ($p) => Dinheiro::centavos($p), $percentuais));
+        $sobraParaO1o = $somaDosPercentuais === 10000;
+        $arredondar = ArredondarPremios::ativo();
         $premios = [];
 
         foreach ($percentuais as $indice => $percentual) {
+            $valor = intdiv($prizePool * Dinheiro::centavos($percentual), 10000);
+
+            // O 1º só não arredonda quando vai receber a sobra (ele fecha a conta do prize pool).
+            if ($arredondar && ($indice > 0 || ! $sobraParaO1o)) {
+                $valor = ArredondarPremios::paraBaixo($valor);
+            }
+
             $premios[] = [
                 'posicao' => $indice + 1,
                 'percentual' => Dinheiro::decimal(Dinheiro::centavos($percentual)),
-                'valor' => intdiv($prizePool * Dinheiro::centavos($percentual), 10000),
+                'valor' => $valor,
             ];
         }
 
-        $somaDosPercentuais = array_sum(array_map(fn ($p) => Dinheiro::centavos($p), $percentuais));
-
-        if ($premios && $somaDosPercentuais === 10000) {
+        if ($premios && $sobraParaO1o) {
             $premios[0]['valor'] += $prizePool - array_sum(array_column($premios, 'valor'));
         }
 

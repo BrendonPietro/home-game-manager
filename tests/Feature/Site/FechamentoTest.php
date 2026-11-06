@@ -81,8 +81,8 @@ class FechamentoTest extends TestCase
         Livewire::test(Fechamento::class, ['jogo' => $this->noite])
             ->assertSeeInOrder(['Total investido', 'R$ 2.100', 'Prêmios', 'R$ 1.890', 'Fica com a casa', 'R$ 210'])
             ->assertSee('R$ 0 de diferença')
-            // Maior resultado primeiro: Marcão (+R$ 695) e Felipe (+R$ 467).
-            ->assertSeeInOrder(['Por jogador', 'Marcão', '+R$ 695', 'Felipe', '+R$ 467'])
+            // Maior resultado primeiro: Marcão (+R$ 700) e Felipe (+R$ 465).
+            ->assertSeeInOrder(['Por jogador', 'Marcão', '+R$ 700', 'Felipe', '+R$ 465'])
             ->assertSee('(sugestão)')
             ->assertSee('Caixa')
             ->assertSee('FINALIZAR TORNEIO')

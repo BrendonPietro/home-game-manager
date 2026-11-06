@@ -10,6 +10,17 @@ Registro das atualizações do sistema do Rodrigues Home Game, organizadas por:
 - Docs: documentação;
 - Chore: manutenção.
 
+## 0.7.4
+
+Prêmios redondos.
+
+### Feat
+- "Arredondar prêmios para R$ 5" nas Configurações (ligado por padrão): do 2º lugar para baixo o prêmio desce para o múltiplo de R$ 5 e a diferença vai para o 1º. Vale para a regra do clube e a premiação manual, ao fechar as entradas. A Poker Night #18 passa a pagar 950 / 565 / 375 (antes 945 / 567 / 378).
+- Tela 12 (premiação) avisa quando os prêmios gravados foram arredondados.
+
+### Test
+- `CalculadoraTest`: arredondamento (prize pool quebrado, redondo, prêmio menor que R$ 5, manual que não soma 100%) e a noite #18 sem arredondar. Testes da noite e do painel com os valores novos.
+
 ## 0.7.3
 
 v2, etapa 4: tela cheia para a TV. Com ela, a v2 (estruturas de blinds e relógio) está completa.

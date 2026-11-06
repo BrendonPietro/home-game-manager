@@ -9,6 +9,7 @@ use App\Enums\TipoItem;
 use App\Models\Entrada;
 use App\Models\Jogo;
 use App\Services\Jogo\Calculadora;
+use App\Support\ArredondarPremios;
 use Database\Seeders\PokerNight18Seeder;
 use Database\Seeders\RegrasPremiacaoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -49,10 +50,53 @@ class CalculadoraTest extends TestCase
         $this->assertSame(0, $resumo->foraDaPremiacao);
         $this->assertSame(22, $resumo->entradas);
         $this->assertSame(12, $resumo->jogadores);
-        $this->assertSame([94500, 56700, 37800], array_column($resumo->premios, 'valor'));
+        // Arredondados para R$ 5 (padrão do clube): 567 → 565 e 378 → 375; os R$ 5 que sobram vão para o 1º.
+        $this->assertSame([95000, 56500, 37500], array_column($resumo->premios, 'valor'));
         $this->assertSame(['50.00', '30.00', '20.00'], array_column($resumo->premios, 'percentual'));
-        $this->assertSame(56700, $resumo->premio(2));
+        $this->assertSame(56500, $resumo->premio(2));
         $this->assertSame(0, $resumo->premio(4));
+    }
+
+    public function test_poker_night_18_sem_arredondar(): void
+    {
+        ArredondarPremios::definir(false);
+        $this->seed(PokerNight18Seeder::class);
+        $noite = Jogo::query()->where('nome', PokerNight18Seeder::NOME)->sole();
+
+        $this->assertSame([94500, 56700, 37800], array_column($this->calculadora->doJogo($noite)->premios, 'valor'));
+    }
+
+    public function test_arredondar_para_5_a_diferenca_vai_para_o_primeiro(): void
+    {
+        $jogo = Jogo::factory()->create(); // regra do clube: 11 a 18 jogadores → 50/30/20
+
+        // R$ 1.123,70: 30% = 337,11 → 335 e 20% = 224,74 → 220; o 1º fica com o resto (568,70).
+        $resumo = $this->calculadora->calcular($jogo, $this->lancamentos(TipoItem::Buyin, 112370, 1), 12);
+        $this->assertSame([56870, 33500, 22000], array_column($resumo->premios, 'valor'));
+        $this->assertSame(112370, array_sum(array_column($resumo->premios, 'valor')));
+
+        // Prize pool em múltiplo de R$ 5: todo mundo redondo. R$ 1.235: 617,50 / 370,50 / 247 → 620 / 370 / 245.
+        $resumo = $this->calculadora->calcular($jogo, $this->lancamentos(TipoItem::Buyin, 123500, 1), 12);
+        $this->assertSame([62000, 37000, 24500], array_column($resumo->premios, 'valor'));
+
+        // Prêmio menor que R$ 5 não vira zero. R$ 15: 7,50 / 4,50 / 3 → 7,50 / 4,50 / 3.
+        $resumo = $this->calculadora->calcular($jogo, $this->lancamentos(TipoItem::Buyin, 1500, 1), 12);
+        $this->assertSame([750, 450, 300], array_column($resumo->premios, 'valor'));
+    }
+
+    public function test_arredondar_premiacao_manual_que_nao_soma_100(): void
+    {
+        // Sem a sobra para o 1º, ele também desce para o múltiplo de R$ 5.
+        $jogo = Jogo::factory()->create(['metodo_premiacao' => MetodoPremiacao::Manual]);
+        $jogo->premiacoes()->createMany([
+            ['posicao' => 1, 'percentual' => 55.5],
+            ['posicao' => 2, 'percentual' => 33.3],
+        ]);
+
+        $resumo = $this->calculadora->calcular($jogo->fresh(), $this->lancamentos(TipoItem::Buyin, 10000, 10), 10);
+
+        // 55,5% de 1.000 = 555 e 33,3% = 333 → 330.
+        $this->assertSame([55500, 33000], array_column($resumo->premios, 'valor'));
     }
 
     public function test_entrada_cancelada_nao_conta(): void
@@ -116,6 +160,7 @@ class CalculadoraTest extends TestCase
 
     public function test_sobra_do_arredondamento_vai_para_o_primeiro(): void
     {
+        ArredondarPremios::definir(false); // só os centavos
         $jogo = Jogo::factory()->create(); // regra do clube: até 10 jogadores → 65/35
 
         $resumo = $this->calculadora->calcular($jogo, $this->lancamentos(TipoItem::Buyin, 101, 1), 5);
@@ -147,7 +192,8 @@ class CalculadoraTest extends TestCase
         $estimado = $this->calculadora->simular($noite, 12);
         $this->assertSame(120000, $estimado->arrecadacao);
         $this->assertSame(108000, $estimado->prizePool);
-        $this->assertSame([54000, 32400, 21600], array_column($estimado->premios, 'valor'));
+        // 540 / 324 / 216 arredondados: 324 → 320 e 216 → 215; o 1º fica com 545.
+        $this->assertSame([54500, 32000, 21500], array_column($estimado->premios, 'valor'));
 
         // Com 6 rebuys e 4 add-ons a simulação chega na noite real (o buy-in duplo do Rafael à parte).
         $this->assertSame(200000, $this->calculadora->simular($noite, 12, 6, 4)->arrecadacao);

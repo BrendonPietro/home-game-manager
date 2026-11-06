@@ -83,6 +83,11 @@ class PokerNight18Test extends TestCase
             ->all();
         $this->assertSame([94500, 56700, 37800], $premios);
         $this->assertSame($prizePool, array_sum($premios));
+
+        // Arredondando para R$ 5 (padrão do clube): do 2º para baixo desce para o múltiplo e o 1º fica com o resto.
+        $arredondados = [0, ...array_map(fn (int $v) => intdiv($v, 500) * 500, array_slice($premios, 1))];
+        $arredondados[0] = $prizePool - array_sum($arredondados);
+        $this->assertSame([95000, 56500, 37500], $arredondados);
     }
 
     public function test_investido_por_jogador(): void

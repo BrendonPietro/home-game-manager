@@ -32,7 +32,7 @@ use Tests\TestCase;
 /**
  * A Poker Night #18 do começo ao fim só pelas Actions, como o site vai fazer: confirmar, sentar,
  * iniciar, buy-ins, rebuys, encerrar rebuys, add-ons, fechar entradas e eliminar até sobrar um.
- * Tem de chegar em R$ 2.100 / 210 / 1.890 → 945 / 567 / 378.
+ * Tem de chegar em R$ 2.100 / 210 / 1.890 → 950 / 565 / 375 (prêmios arredondados para R$ 5).
  */
 class NoiteDeReferenciaTest extends TestCase
 {
@@ -93,7 +93,7 @@ class NoiteDeReferenciaTest extends TestCase
         $this->assertSame([210000, 21000, 189000, 22, 12], [$resumo->arrecadacao, $resumo->totalTaxas, $resumo->prizePool, $resumo->entradas, $resumo->jogadores]);
 
         app(FecharEntradas::class)($jogo, $admin);
-        $this->assertSame([1 => '945.00', 2 => '567.00', 3 => '378.00'], $jogo->premiacoes()->pluck('valor', 'posicao')->all());
+        $this->assertSame([1 => '950.00', 2 => '565.00', 3 => '375.00'], $jogo->premiacoes()->pluck('valor', 'posicao')->all());
 
         // Caem na ordem da lista até sobrar o Marcão.
         $ordem = array_values(array_diff(array_keys($jogadores), ['Marcos']));
@@ -105,13 +105,13 @@ class NoiteDeReferenciaTest extends TestCase
         foreach ($ordem as $indice => $nome) {
             $this->assertSame(12 - $indice, $final[$nome]->posicao_final, $nome);
         }
-        $this->assertSame([1, '945.00'], [$final['Marcos']->posicao_final, $final['Marcos']->premio]);
-        $this->assertSame(['567.00', '378.00', null], [$final['Felipe']->premio, $final['Diego']->premio, $final['Thiago']->premio]);
+        $this->assertSame([1, '950.00'], [$final['Marcos']->posicao_final, $final['Marcos']->premio]);
+        $this->assertSame(['565.00', '375.00', null], [$final['Felipe']->premio, $final['Diego']->premio, $final['Thiago']->premio]);
 
         // Sem pagamentos, a soma dos saldos é o que fica com a casa: a taxa de R$ 210.
         $saldos = app(Saldos::class)->doJogo($jogo);
         $this->assertSame(21000, $saldos->sum('saldo'));
-        $this->assertSame(25000 - 94500, $saldos[$final['Marcos']->id]->saldo);
+        $this->assertSame(25000 - 95000, $saldos[$final['Marcos']->id]->saldo);
 
         // Finalizar: os acertos fecham o saldo de cada um e levam a taxa para a casa; os pontos saem da posição.
         $ranking = Ranking::query()->create([
