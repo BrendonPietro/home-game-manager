@@ -18,6 +18,9 @@ Prêmios redondos e contas de teste.
 - "Arredondar prêmios para R$ 5" nas Configurações (ligado por padrão): do 2º lugar para baixo o prêmio desce para o múltiplo de R$ 5 e a diferença vai para o 1º. Vale para a regra do clube e a premiação manual, ao fechar as entradas. A Poker Night #18 passa a pagar 950 / 565 / 375 (antes 945 / 567 / 378).
 - Tela 12 (premiação) avisa quando os prêmios gravados foram arredondados.
 
+### Fix
+- TV: depois da primeira atualização, o relógio grande mostrava o tempo do "Intervalo em" (1:28:20 no nível 1). O `relogio.js` não declarava `restante`, `rodando` e `fim`, e dentro do componente da TV o Alpine grava a propriedade não declarada no componente de fora, que os dois relógios dividiam. Agora todo o estado fica declarado.
+
 ### Chore
 - `ContasDeTesteSeeder` (só local): `operador@rodrigues.test` no grupo Operador do site e `geral` no grupo Geral do painel, com a senha da conta `dev` de cada lado.
 

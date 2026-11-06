@@ -18,9 +18,18 @@ export function formatar(segundos) {
     return (horas > 0 ? `${horas}:` : '') + `${minutos}:${resto}`;
 }
 
+// Todo o estado fica declarado aqui: dentro de outro componente (a TV), o Alpine grava a propriedade
+// que o objeto não declara no componente de fora, e os dois relógios da TV (o tempo e o "Intervalo em")
+// passavam a dividir o mesmo restante.
 export default () => ({
     texto: '',
     acabando: false,
+    restante: 0,
+    rodando: false,
+    fim: 0,
+    pediu: false,
+    tiques: null,
+    observador: null,
 
     init() {
         this.ler();
