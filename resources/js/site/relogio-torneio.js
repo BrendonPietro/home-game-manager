@@ -9,9 +9,15 @@
 // brigar com a contagem. Quando o nível muda para a frente, avisa com o evento relogio-trocou (a TV
 // toca o som; a tela ao vivo pede ao servidor o resto da tela), uma vez só por nível.
 
+//
+// Fora do Livewire (link do relógio, /relogio/{codigo}), o contêiner traz data-url e data-chave: o
+// motor busca o estado sozinho a cada 2 s, sem sessão. Quando a chave muda (o jogo começou, acabou, o
+// nível digitado mudou) ou o link deixou de valer (404), a página recarrega; sem internet, segue contando.
+
 const ACABANDO = 60; // último minuto do nível
 const SEM_CONEXAO = 15000; // ms sem atualização: mostra "sem conexão" (o poll é de 5 s)
 const VOLTOU_DE_VERDADE = 3; // s: o servidor voltar um nível com mais que isso é ANTERIOR, não atraso da rede
+const BUSCA = 2000; // ms entre uma busca e outra, no link do relógio
 
 export function formatar(segundos) {
     const s = Math.max(0, segundos);
@@ -41,17 +47,62 @@ export default () => ({
     semConexao: false,
     tiques: null,
     observador: null,
+    url: '',
+    chave: '',
+    proximaBusca: null,
 
     init() {
+        this.atualizadoEm = performance.now();
         this.lerAtributo(true);
         this.observador = new MutationObserver(() => this.lerAtributo(false));
         this.observador.observe(this.$el, { attributes: true, attributeFilter: ['data-relogio'] });
         this.tiques = setInterval(() => this.tique(), 250);
+
+        this.url = this.$el.dataset.url ?? '';
+        this.chave = this.$el.dataset.chave ?? '';
+
+        if (this.url) {
+            this.proximaBusca = setTimeout(() => this.buscar(), BUSCA);
+        }
     },
 
     destroy() {
         this.observador?.disconnect();
         clearInterval(this.tiques);
+        clearTimeout(this.proximaBusca);
+    },
+
+    // Link do relógio: pede o estado ao servidor. Falhou (sem internet)? Segue contando e tenta de novo.
+    async buscar() {
+        try {
+            const resposta = await fetch(this.url, { headers: { Accept: 'application/json' }, cache: 'no-store' });
+
+            if (resposta.status === 404) {
+                window.location.reload(); // link trocado ou jogo fora do site
+
+                return;
+            }
+
+            if (resposta.ok) {
+                const dados = await resposta.json();
+
+                if (dados.chave !== this.chave) {
+                    window.location.reload();
+
+                    return;
+                }
+
+                if (dados.relogio) {
+                    this.aplicar(dados.relogio);
+                } else {
+                    this.atualizadoEm = performance.now();
+                }
+            }
+        } catch {
+            // Sem internet: o relógio segue sozinho.
+        }
+
+        this.proximaBusca = setTimeout(() => this.buscar(), BUSCA);
     },
 
     lerAtributo(primeira) {

@@ -123,6 +123,21 @@
 					</div>
 				</section>
 			@endif
+
+			@if ($torneio)
+				{{-- v3: o link do relógio, para deixar a TV e os tablets prontos antes de começar. --}}
+				<section class="rh-panel" x-data="{ copiado: false }">
+					<div class="rh-panel__hd"><h3 class="rh-heading">Relógio nas outras telas</h3></div>
+					<div class="rh-panel__bd rh-col" style="gap:10px">
+						<span class="rh-small rh-muted">Abra na TV, no tablet ou em outro celular, sem login: mostra só o relógio e começa a contar quando o torneio for iniciado.</span>
+						<div class="rh-link-relogio">{{ $jogo->linkDoRelogio() }}</div>
+						<div class="rh-row" style="gap:8px;flex-wrap:wrap">
+							<button type="button" class="rh-btn rh-btn--primary" x-on:click="$copiar(@js($jogo->linkDoRelogio())).then(() => { copiado = true; setTimeout(() => copiado = false, 2500) })">@svg('rh-copy') <span x-text="copiado ? 'COPIADO' : 'COPIAR LINK'">COPIAR LINK</span></button>
+							<a class="rh-btn" href="{{ $jogo->linkDoRelogio() }}" target="_blank" rel="noopener">@svg('rh-tv') ABRIR</a>
+						</div>
+					</div>
+				</section>
+			@endif
 		</div>
 
 		<div class="rh-col" style="gap:16px">

@@ -8,7 +8,7 @@ Os testes automáticos (`php artisan test`) já conferem as regras e as contas. 
 
 - [ ] Site em `http://rodrigues-home-game.test` e painel em `http://rodrigues-home-game.test/painel`.
 - [ ] Contas: no painel, `dev` ou `teste` (Admin) e `geral` (grupo Geral); no site, `dev@rodrigues.test` ou `teste@rodrigues.test` (Admin) e `operador@rodrigues.test` (Operador, para o celular). `geral` e `operador@` usam a mesma senha da conta `dev` do lado deles (`PAINEL_SENHA_INICIAL` e `SITE_SENHA_INICIAL` do `.env`) e voltam com `php artisan db:seed --class=ContasDeTesteSeeder`.
-- [ ] Separe três janelas ou aparelhos: o **notebook do Admin**, o **celular do Operador** e a **TV** (pode ser outra janela do navegador).
+- [ ] Separe três janelas ou aparelhos: o **notebook do Admin**, o **celular do Operador** e a **TV** (o link do relógio, sem login; pode ser outra janela do navegador, até anônima).
 - [ ] Para abrir no celular de verdade: o `.test` só existe no PC. Uma saída é `php artisan serve --host=0.0.0.0 --port=8000` e abrir `http://<IP do PC>:8000` no celular, na mesma rede (talvez precise liberar a porta no firewall do Windows). Sem isso, use o modo celular do navegador (F12).
 - [ ] Quer começar do zero? `php artisan migrate:fresh --seed` recria o banco com a Poker Night #18, mas **apaga tudo do banco local**, inclusive as contas `teste` (as `geral` e `operador@` o seed cria de novo).
 
@@ -62,7 +62,8 @@ Referência da Poker Night #18: 12 jogadores, 22 entradas, R$ 2.100 arrecadados,
 - [ ] Cadastro rápido com o nome de alguém que já existe → avisa e não cria. Com um nome novo → cria e já confirma.
 - [ ] **Mesas**: SORTEAR → as mesas ficam equilibradas. Clique num jogador e num lugar vazio (move) e depois num ocupado (troca). Mude os lugares e o dealer de uma mesa.
 - [ ] No celular, como **Operador**: Jogadores confirma; Mesas só mostra, sem sortear nem mexer.
-- [ ] Abra a **TV** (`/jogos/<id>/tv`) → data, horário, nome e "N confirmados · o relógio começa quando o jogo for iniciado".
+- [ ] Na **Conferência**, "Relógio nas outras telas": COPIAR LINK e abra o link na TV (numa janela anônima, sem login) → data, horário, nome e "O relógio começa quando o torneio for iniciado · nível 1: …". Nada de dinheiro.
+- [ ] Quando iniciar o torneio, a TV troca sozinha para o relógio (sem recarregar à mão).
 - [ ] **Iniciar jogo** com menos de 2 sentados → recusa. Com todos sentados → vai para Ao vivo.
 
 ## 3. Durante a noite (torneio)
@@ -72,7 +73,9 @@ Referência da Poker Night #18: 12 jogadores, 22 entradas, R$ 2.100 arrecadados,
 - [ ] Na TV, ligue o som → toca a campainha uma vez para conferir. Ponha em tela cheia → os botões e o cursor somem depois de 3 s sem mexer.
 - [ ] Recarregue a TV → pede "Toque na tela para ligar o som"; um toque e volta a tocar.
 - [ ] Deixe o nível 1 acabar → a faixa, o celular e a TV passam juntos para o nível 2, e a TV toca.
-- [ ] Clique no tempo da faixa → modal do Relógio. Teste PAUSAR (âmbar em todas as telas), +1 min, −1 min, PRÓXIMO e ANTERIOR → a TV acompanha em até 5 s e toca quando o nível muda.
+- [ ] Clique no tempo da faixa → modal do Relógio. Teste PAUSAR (âmbar em todas as telas), +1 min, −1 min, PRÓXIMO e ANTERIOR → a TV acompanha em uns 2 s e toca quando o nível muda.
+- [ ] Botão **TV** da tela ao vivo → "Relógio nas outras telas": COPIAR LINK (cole no WhatsApp ou num bloco de notas) e ABRIR. Abra o link num celular em pé, deitado e num tablet → o relógio cabe sem rolar; só o relógio, nada de dinheiro nem jogadores.
+- [ ] GERAR OUTRO LINK (Admin) → a TV que estava com o link antigo mostra "Este link não vale mais"; o novo abre. Como Operador, o botão de gerar não aparece.
 - [ ] No celular, como Operador → vê o relógio, sem o ▶ e sem o modal.
 - [ ] **Sem internet** (estrutura Teste rápido, relógio correndo): na TV, desligue o Wi-Fi do aparelho → depois de uns 15 s aparece "Sem conexão · o relógio segue contando"; o tempo continua, o nível troca na hora certa (com o som) e o intervalo aparece com "Na volta · nível N". Ligue o Wi-Fi → o aviso some e o relógio acerta com o servidor (se alguém pausou nesse meio tempo, pausa agora).
 
@@ -91,7 +94,7 @@ Referência da Poker Night #18: 12 jogadores, 22 entradas, R$ 2.100 arrecadados,
 - [ ] Deixe o relógio chegar ao intervalo → aviso "Intervalo: hora de encerrar os rebuys e abrir o add-on", e a TV mostra os blinds da volta.
 - [ ] **ENCERRAR REBUYS** → o modal diz o que fecha, o add-on que abre e quem fica eliminado de vez. Depois disso: REBUY recusa; ADD-ON abre (1 por jogador).
 - [ ] Buy-in atrasado no intervalo: cadastro rápido, sentar e BUY-IN → entra e muda o número de jogadores.
-- [ ] **FECHAR ENTRADAS** → o modal mostra a conta (arrecadação, cada taxa, prize pool, prêmio de cada posição) e avisa quem está jogando sem buy-in. Depois disso: a lateral e a TV mostram a Premiação gravada.
+- [ ] **FECHAR ENTRADAS** → o modal mostra a conta (arrecadação, cada taxa, prize pool, prêmio de cada posição) e avisa quem está jogando sem buy-in. Depois disso: a lateral mostra a Premiação gravada (a TV só mostra o relógio).
 - [ ] Elimine jogadores → cada um ganha a posição na hora. Desfaça uma eliminação → as posições se refazem.
 
 ## 4. Final da noite
@@ -102,7 +105,7 @@ Referência da Poker Night #18: 12 jogadores, 22 entradas, R$ 2.100 arrecadados,
 - [ ] "Copiar acertos" e cole num bloco de notas → texto pronto para o grupo.
 - [ ] **FINALIZAR** → os acertos ficam gravados com o botão FEITO. Marque um como feito → os saldos dos dois fecham.
 - [ ] Registre um pagamento de pendência depois de finalizar → aceita (é a única coisa que ainda se lança).
-- [ ] A TV mostra "Fim de jogo" com os premiados.
+- [ ] A TV (link do relógio) mostra "Fim de jogo", sem prêmios.
 
 **No painel, depois da noite**
 - [ ] O jogo abre só para ver.

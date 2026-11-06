@@ -24,7 +24,7 @@
 		</div>
 		<span class="rh-spacer"></span>
 		@if ($acertos->isNotEmpty())
-			<button type="button" class="rh-btn" x-data="{ copiado: false }" x-on:click="navigator.clipboard.writeText(@js($texto)).then(() => { copiado = true; setTimeout(() => copiado = false, 2000) })">
+			<button type="button" class="rh-btn" x-data="{ copiado: false }" x-on:click="$copiar(@js($texto)).then(() => { copiado = true; setTimeout(() => copiado = false, 2000) })">
 				@svg('rh-copy') <span x-text="copiado ? 'Copiado!' : 'Copiar acertos'">Copiar acertos</span>
 			</button>
 		@endif

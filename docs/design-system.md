@@ -101,17 +101,16 @@ Layouts que não cabem nessas grades (ex.: `1.6fr 1fr 1fr 1fr`) ficam no parcial
 - Mudar de lugar na tela ao vivo: faixa vermelha acima da mesa ("João: clique num lugar vazio…") com Tirar do lugar e Cancelar.
 - A mesa cabe na altura da tela: a largura máxima é a altura que sobra (100svh − 252px) × a proporção (`--ar`), até 960px deitada e 520px em pé. No protótipo a mesa em pé passava da tela num notebook.
 
-### TV (v2)
+### Link do relógio (v3; era a TV da v2)
 
-`pages/_tv.scss`, Livewire `Jogo\Tv`. O protótipo não tem esta tela; segue os tokens e componentes do site:
+`pages/_tv.scss` (classe `rh-tv rh-tv--relogio`), página `site/pages/relogio.blade.php`. O protótipo não tem esta tela; segue os tokens e componentes do site:
 
-- Ocupa a altura toda sem rolar (16:9, de notebook a TV de 4K): topo com a marca, o nome do jogo e a fase; palco com o relógio no feltro (gradiente `felt-700` → `felt-900`, como o cartão do próximo torneio no dashboard) e a lateral com prize pool e premiação; embaixo, os números (Jogando, Entradas, Stack médio, Intervalo em).
-- Tamanhos pela altura da tela (`vh`) e pela largura do cartão do relógio (`cqi`, `container-type: inline-size`): o tempo usa `min(34cqi, 34vh)` e encolhe quando passa de 1 hora ("1:05:00").
-- No intervalo, o cartão ganha borda âmbar e o título em âmbar. Pausado, o tempo fica âmbar com "Pausado" embaixo; no último minuto, vermelho (o mesmo `<x-site.poker.relogio>` da tela ao vivo; o "Intervalo em" é outro relógio com `:segundos`).
+- Ocupa a altura toda sem rolar, do celular em pé à TV de 4K: topo com a marca, o nome e a data do jogo; o palco é só o relógio no feltro (gradiente `felt-700` → `felt-900`), sem a coluna de prize pool; embaixo, "Intervalo em N níveis" com o tempo.
+- Tamanhos pela altura da tela (`vh`) e pela largura do cartão do relógio (`cqi`, `container-type: inline-size`). No celular em pé o tempo usa `min(36cqi, 22vh)`; no celular deitado (altura até 520px) o cartão vira duas colunas: título e tempo à esquerda, blinds e o que vem depois à direita.
+- No intervalo, o cartão ganha borda âmbar e o título em âmbar. Pausado, o tempo fica âmbar com "Pausado" embaixo; no último minuto, vermelho. "Sem conexão · o relógio segue contando" no canto do cartão, em âmbar.
 - Sem relógio (nível digitado), os blinds tomam o lugar do tempo.
-- Botões SOM LIGADO/DESLIGADO, TELA CHEIA e VOLTAR no canto, com `wire:ignore` (são do Alpine); somem com o cursor depois de 3 s sem mexer (`.rh-sem-cursor` no `body`).
-- No tablet e no celular em pé o palco empilha e a página rola.
-- Na tela ao vivo, o botão **TV** fica ao lado de GIRAR MESA e abre numa aba nova (no celular não aparece).
+- Botões SOM LIGADO/DESLIGADO e TELA CHEIA no canto (no celular, só os ícones); somem com o cursor depois de 3 s sem mexer.
+- Na tela ao vivo, o botão **TV** fica ao lado de GIRAR MESA e abre o modal "Relógio nas outras telas" (o link em `.rh-link-relogio`, COPIAR LINK, ABRIR, GERAR OUTRO LINK). A Conferência tem o mesmo bloco.
 
 ### Vitrine
 

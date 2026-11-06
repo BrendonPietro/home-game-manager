@@ -6,6 +6,7 @@ use App\Actions\Jogo\AtualizarNivel;
 use App\Actions\Jogo\ControlarRelogio;
 use App\Actions\Jogo\EncerrarRebuys;
 use App\Actions\Jogo\FecharEntradas;
+use App\Actions\Jogo\TrocarLinkDoRelogio;
 use App\Actions\Jogo\TrocarLugar;
 use App\Enums\ComandoRelogio;
 use App\Enums\FaseTorneio;
@@ -56,7 +57,7 @@ class AoVivo extends Component
     /** Jogador mudando de lugar: o próximo lugar clicado é o novo. */
     public ?int $movendo = null;
 
-    /** Modal da tela: nivel, relogio, encerrar (rebuys) ou fechar (entradas). */
+    /** Modal da tela: nivel, relogio, link (do relógio), encerrar (rebuys) ou fechar (entradas). */
     public ?string $modal = null;
 
     public string $nivel = '';
@@ -176,6 +177,22 @@ class AoVivo extends Component
     {
         if ($comando = ComandoRelogio::tryFrom($comando)) {
             $this->executar(fn () => app(ControlarRelogio::class)($this->jogo, $comando, $this->quem(), $minutos));
+        }
+    }
+
+    // ── Link do relógio (v3): o botão TV abre o link para copiar, abrir ou trocar ──
+
+    public function abrirLink(): void
+    {
+        $this->modal = 'link';
+        $this->erro = null;
+    }
+
+    /** Gera outro código: o link antigo para de abrir nas telas que estavam com ele. */
+    public function trocarLink(): void
+    {
+        if ($this->executar(fn () => app(TrocarLinkDoRelogio::class)($this->jogo, $this->quem()))) {
+            $this->aviso = 'Link do relógio trocado: mande o novo para as outras telas.';
         }
     }
 

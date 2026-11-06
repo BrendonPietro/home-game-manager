@@ -10,6 +10,26 @@ Registro das atualizações do sistema do Rodrigues Home Game, organizadas por:
 - Docs: documentação;
 - Chore: manutenção.
 
+## 0.9.0
+
+v3, etapa 3: o link do relógio do torneio, no lugar da tela da TV.
+
+### Feat
+- **Link do relógio** `/relogio/{codigo}` (`RelogioPublicoController`): abre **sem login** e só para ver, na TV, no tablet, no celular ou no notebook. Mostra só o relógio: nível, tempo, blinds e ante (no intervalo, os da volta), o que vem depois e o intervalo em tempo e em níveis. Nada de dinheiro, jogadores, entradas ou stack médio. Antes de começar mostra quando começa e o nível 1; depois, "Fim de jogo".
+- Cada jogo nasce com um código de 8 letras e números (`jogos.relogio_codigo`, sem os que confundem); cópia e modelo ganham um novo. **GERAR OUTRO LINK** (`Actions\Jogo\TrocarLinkDoRelogio`, `relogio.controlar`) troca o código e o link antigo passa a mostrar "Este link não vale mais".
+- O link atualiza sozinho: o motor do relógio busca `/relogio/{codigo}/estado` a cada 2 s, uma rota sem sessão, cookie nem CSRF (a tela pode ficar horas aberta, até sem internet, sem "página expirou"); quando o jogo começa ou acaba, a página recarrega sozinha.
+- Botão **TV** da tela ao vivo abre "Relógio nas outras telas" (o link, COPIAR LINK, ABRIR, GERAR OUTRO LINK); a Conferência tem o mesmo bloco, para deixar a TV pronta antes de começar. `/jogos/{jogo}/tv` leva para o link.
+- `$copiar` (`resources/js/site/copiar.js`): copia também no http da rede local (o `.test`), onde `navigator.clipboard` não existe; o "Copiar acertos" do fechamento passou a usar.
+
+### Style
+- Link do relógio em celular em pé (tempo maior, botões só com ícone), celular deitado (relógio à esquerda, blinds e o que vem depois à direita), tablet, notebook e TV, sem rolar.
+
+### Chore
+- Saiu a tela da TV da v2 (Livewire `Jogo\Tv`, com prize pool e premiação) e o CSS do prize pool e da premiação dela.
+
+### Test
+- `Site\RelogioPublicoTest` (no lugar do `TvTest`): sem login e sem dinheiro, estado sem cookie, chave igual à da página, link trocado, modal da tela ao vivo (Admin troca, Operador só copia), TV antiga, nível digitado, antes, depois e fora do site.
+
 ## 0.8.1
 
 v3, etapa 2: o relógio anda sozinho no navegador, também sem internet.

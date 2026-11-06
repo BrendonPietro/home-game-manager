@@ -122,8 +122,8 @@
 					<button type="button" class="rh-btn" x-on:click="$dispatch('girar-mesa', {{ $mesaAtual->id }})">@svg('rh-rotate') GIRAR MESA</button>
 				@endif
 
-				{{-- v2: tela cheia para a TV, numa aba nova (no celular não aparece). --}}
-				<a class="rh-btn rh-aovivo__tv" href="{{ route('jogos.tv', $jogo) }}" target="_blank" rel="noopener" title="Abrir a tela da TV numa aba nova">@svg('rh-tv') TV</a>
+				{{-- v3: o link do relógio para a TV e outras telas (copiar, abrir, trocar). --}}
+				<button type="button" class="rh-btn rh-aovivo__tv" wire:click="abrirLink" title="Link do relógio para a TV e outras telas">@svg('rh-tv') TV</button>
 
 				{{-- Tablet e celular: a lateral some, o botão da fase vem para cá (ou fica na sugestão do intervalo). --}}
 				@if ($botaoFase && ! $sugereEncerrar)
@@ -346,6 +346,34 @@
 								@endforeach
 							</div>
 						</div>
+					</div>
+					<div class="rh-modal__ft">
+						<button type="button" class="rh-btn rh-btn--lg" wire:click="fecharModal">FECHAR</button>
+					</div>
+				</div>
+			@elseif ($modal === 'link')
+				@php $link = $jogo->linkDoRelogio(); @endphp
+				<div class="rh-modal" style="max-width:520px" role="dialog" aria-modal="true" aria-labelledby="link-titulo" x-data="{ copiado: false }">
+					<div class="rh-modal__hd">
+						<h2 class="rh-heading" id="link-titulo">Relógio nas outras telas</h2>
+						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharModal" aria-label="Fechar">@svg('rh-x')</button>
+					</div>
+					<div class="rh-modal__bd rh-col" style="gap:14px">
+						@if ($erro)
+							<div class="rh-warn" role="alert">@svg('rh-alert')<div>{{ $erro }}</div></div>
+						@endif
+						<p class="rh-small rh-muted" style="margin:0">Abra na TV, no tablet ou em outro celular: mostra só o relógio (nível, tempo, blinds e intervalo), sem login e sem mexer em nada. Se a internet cair, continua contando.</p>
+						<div class="rh-link-relogio">{{ $link }}</div>
+						<div class="rh-row" style="gap:8px;flex-wrap:wrap">
+							<button type="button" class="rh-btn rh-btn--primary rh-btn--lg" x-on:click="$copiar(@js($link)).then(() => { copiado = true; setTimeout(() => copiado = false, 2500) })">@svg('rh-copy') <span x-text="copiado ? 'COPIADO' : 'COPIAR LINK'">COPIAR LINK</span></button>
+							<a class="rh-btn rh-btn--lg" href="{{ $link }}" target="_blank" rel="noopener">@svg('rh-tv') ABRIR</a>
+						</div>
+						@can('relogio.controlar')
+							<div class="rh-row" style="gap:12px;align-items:center;flex-wrap:wrap">
+								<span class="rh-small rh-muted" style="flex:1;min-width:200px">Mandou para quem não devia? Gere outro: o link de agora para de abrir.</span>
+								<button type="button" class="rh-btn rh-btn--sm" wire:click="trocarLink" wire:confirm="Gerar outro link? O de agora para de abrir nas telas que estão com ele.">@svg('rh-rotate') GERAR OUTRO LINK</button>
+							</div>
+						@endcan
 					</div>
 					<div class="rh-modal__ft">
 						<button type="button" class="rh-btn rh-btn--lg" wire:click="fecharModal">FECHAR</button>

@@ -99,7 +99,8 @@ Tudo atrás de `auth` (guard `web`, tabela `usuarios`) e das permissões do site
 | 06 Mesas | `GET /jogos/{jogo}/mesas` | `jogos.mesas` | Livewire `Jogo\Mesas` (sem lugar, clicar para mover/trocar, sortear, lugares e dealer por mesa, adicionar/remover mesa, girar, Iniciar jogo). O floor do jogo é escolhido no painel |
 | 07–09, 11 Ao vivo | `GET /jogos/{jogo}/ao-vivo` | `jogos.ao-vivo` | Livewire `Jogo\AoVivo` + `Jogo\AcoesJogador` (entrada, pagamento, eliminação/cash-out, trocar lugar, desfazer) + botões de fase |
 | 10 Resumo | `GET /jogos/{jogo}/resumo` | `jogos.resumo` | Livewire `Jogo\Resumo` (saldos e pendências) |
-| TV (v2) | `GET /jogos/{jogo}/tv` | `jogos.tv` | Livewire `Jogo\Tv`: tela cheia para a TV (relógio, blinds, próximo nível, prize pool, premiação, jogando, entradas, stack médio e som na troca de nível). Sem `jogo.etapa`: abre agendado, em andamento e finalizado |
+| TV | `GET /jogos/{jogo}/tv` | `jogos.tv` | v3: leva para o link do relógio do jogo (a tela da TV da v2, Livewire `Jogo\Tv` com prize pool e premiação, saiu) |
+| Link do relógio (v3) | `GET /relogio/{codigo}` e `GET /relogio/{codigo}/estado` | `relogio.publico`, `relogio.estado` | `RelogioPublicoController`, **sem login**: só o relógio (nível, tempo, blinds, ante, o que vem depois, intervalo em tempo e níveis), som na troca de nível e tela cheia; o estado em JSON a cada 2 s, sem sessão, cookie nem CSRF |
 | 12 Premiação | `GET /jogos/{jogo}/premiacao` | `jogos.premiacao` | `JogoController@premiacao` (só torneio) |
 | 13 Resultado | `GET /jogos/{jogo}/resultado` | `jogos.resultado` | Livewire `Jogo\Resultado` (posições / cash-outs) |
 | 14 Fechamento | `GET /jogos/{jogo}/fechamento` | `jogos.fechamento` | Livewire `Jogo\Fechamento` (conferência, por jogador, acertos, Finalizar e acertos feitos) |

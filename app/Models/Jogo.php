@@ -84,11 +84,38 @@ class Jogo extends Model
     /** Cash game não tem estrutura de blinds (nem relógio): os blinds são digitados. */
     protected static function booted(): void
     {
+        // v3: todo jogo nasce com o código do link do relógio (cópia e modelo ganham um novo).
+        static::creating(function (Jogo $jogo): void {
+            $jogo->relogio_codigo ??= self::novoCodigoDoRelogio();
+        });
+
         static::saving(function (Jogo $jogo): void {
             if ($jogo->eCashGame()) {
                 $jogo->estrutura_blinds_id = null;
             }
         });
+    }
+
+    /** Letras e números sem os que confundem (0/o, 1/l/i): fácil de digitar no controle da TV. */
+    private const ALFABETO_DO_CODIGO = 'abcdefghjkmnpqrstuvwxyz23456789';
+
+    /** Código novo e livre para o link do relógio ("k7m2q9xp"). */
+    public static function novoCodigoDoRelogio(): string
+    {
+        do {
+            $codigo = '';
+            for ($i = 0; $i < 8; $i++) {
+                $codigo .= self::ALFABETO_DO_CODIGO[random_int(0, strlen(self::ALFABETO_DO_CODIGO) - 1)];
+            }
+        } while (static::query()->where('relogio_codigo', $codigo)->exists());
+
+        return $codigo;
+    }
+
+    /** Link do relógio só para ver, sem login (v3): o que vai para a TV, o tablet e o grupo. */
+    public function linkDoRelogio(): string
+    {
+        return route('relogio.publico', $this->relogio_codigo);
     }
 
     // ── Relações ─────────────────────────────────────────────

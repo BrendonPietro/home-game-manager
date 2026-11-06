@@ -84,14 +84,14 @@ class JogoController extends Controller
         return view('site.pages.resumo', ['jogo' => $jogo]);
     }
 
-    /** v2: tela cheia para a TV (Livewire Jogo\Tv). Fica de pé em qualquer status do site. */
-    public function tv(Jogo $jogo): View|RedirectResponse
+    /** v3: a TV é o link do relógio do torneio (sem login, só o relógio); o endereço antigo leva para ele. */
+    public function tv(Jogo $jogo): RedirectResponse
     {
         if ($jogo->e_modelo || ! in_array($jogo->status, EtapaDoJogo::STATUS_NO_SITE, true)) {
             return redirect()->route('jogos.index')->with('aviso', "{$jogo->nome} não está disponível no site.");
         }
 
-        return view('site.pages.tv', ['jogo' => $jogo]);
+        return redirect()->away($jogo->linkDoRelogio());
     }
 
     /** Tela 14: fechamento financeiro e Finalizar (Livewire Jogo\Fechamento). */

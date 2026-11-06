@@ -192,89 +192,6 @@
 		color: var(--ink-200);
 	}
 
-	&__lado {
-		display: flex;
-		flex-direction: column;
-		gap: 2vh;
-		min-height: 0;
-		overflow: hidden;
-	}
-
-	&__prize {
-		display: flex;
-		flex-direction: column;
-		gap: 0.6vh;
-		padding: 2.4vh 1.6vw;
-		border: 1px solid var(--line-200);
-		border-radius: var(--radius-lg);
-		background: var(--bg-100);
-
-		.v {
-			font-family: var(--font-display);
-			font-weight: 700;
-			font-size: clamp(36px, 9vh, 140px);
-			line-height: 1;
-			font-variant-numeric: tabular-nums;
-			white-space: nowrap;
-		}
-	}
-
-	&__premios {
-		display: flex;
-		flex-direction: column;
-		gap: 0.4vh;
-		min-height: 0;
-		padding: 2vh 1.6vw;
-		border: 1px solid var(--line-200);
-		border-radius: var(--radius-lg);
-		background: var(--bg-100);
-		overflow: hidden;
-
-		> .rh-label {
-			margin-bottom: 0.6vh;
-		}
-
-		&--final {
-			width: min(720px, 90vw);
-		}
-	}
-
-	&__premio {
-		display: flex;
-		align-items: baseline;
-		gap: 1vw;
-		padding: 0.5vh 0;
-		font-size: clamp(16px, 3.2vh, 44px);
-		line-height: 1.3; // o nome tem overflow: hidden; com a linha justa, a perna do "p" sumia
-		border-bottom: 1px solid var(--line-100);
-
-		&:last-child {
-			border-bottom: 0;
-		}
-
-		.v {
-			margin-left: auto;
-			font-family: var(--font-display);
-			font-weight: 700;
-			font-variant-numeric: tabular-nums;
-			white-space: nowrap;
-		}
-	}
-
-	&__pos {
-		font-family: var(--font-display);
-		font-weight: 700;
-		min-width: 2.2em;
-		color: var(--ink-300);
-	}
-
-	&__quem {
-		min-width: 0;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-
 	&__numeros {
 		display: grid;
 		grid-auto-flow: column;
@@ -323,6 +240,23 @@
 		line-height: 1;
 	}
 
+	// "Sem intervalo pela frente" / "Agora": texto, não número
+	&__sem-intervalo.v {
+		font-size: clamp(18px, 3.6vh, 48px);
+		white-space: normal;
+	}
+
+	// v3, link do relógio: só o relógio (sem prize pool ao lado), o palco ocupa a largura toda
+	&--relogio &__numeros {
+		grid-auto-flow: row;
+		grid-template-columns: 1fr;
+		text-align: center;
+
+		> div {
+			align-items: center;
+		}
+	}
+
 	// Tablet e celular em pé: empilha e deixa rolar
 	@include ate(tablet) {
 		&__palco {
@@ -344,6 +278,94 @@
 
 		&__tempo {
 			font-size: 30cqi;
+		}
+	}
+
+	// Celular: os botões ficam só com o ícone; em pé, o relógio ocupa a tela sem rolar
+	@include ate(celular) {
+		gap: 1.6vh;
+		padding: 1.6vh 4vw;
+
+		&__botao-texto {
+			display: none;
+		}
+
+		&__toque {
+			font-size: 12px;
+		}
+
+		&__tempo {
+			font-size: min(36cqi, 22vh);
+		}
+
+		&__tempo.is-longo {
+			font-size: min(26cqi, 18vh);
+		}
+	}
+
+	// Celular deitado (pouca altura): o relógio grande ao lado do resto, nada de rolar
+	@media (orientation: landscape) and (max-height: 520px) {
+		gap: 1.2vh;
+		padding: 1.2vh 2.5vw;
+
+		&__topo {
+			gap: 1.2vw;
+		}
+
+		&__botao-texto {
+			display: none;
+		}
+
+		&__relogio {
+			display: grid;
+			grid-template-columns: auto auto;
+			grid-template-areas:
+				'titulo  blinds'
+				'tempo   blinds'
+				'tempo   proximo'
+				'situacao proximo';
+			align-items: center;
+			justify-items: center;
+			column-gap: 4vw;
+			padding: 2vh 3vw;
+		}
+
+		&__titulo {
+			grid-area: titulo;
+		}
+
+		&__tempo {
+			grid-area: tempo;
+			font-size: min(26cqi, 46vh);
+		}
+
+		&__tempo.is-longo {
+			font-size: min(18cqi, 40vh);
+		}
+
+		&__situacao {
+			grid-area: situacao;
+		}
+
+		&__blinds {
+			grid-area: blinds;
+
+			.v {
+				font-size: min(10cqi, 18vh);
+			}
+		}
+
+		&__proximo {
+			grid-area: proximo;
+			font-size: clamp(13px, 4vh, 24px);
+		}
+
+		&__numeros > div {
+			padding: 0.8vh 1.6vw;
+		}
+
+		&__numeros .v {
+			font-size: clamp(18px, 8vh, 40px);
 		}
 	}
 }
