@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Estrutura de blinds reutilizável ("Turbo 15 min", "Deepstack 20 min"), com os níveis em ordem.
@@ -40,6 +41,31 @@ class EstruturaBlinds extends Model
     public function scopeAtivas(Builder $query): Builder
     {
         return $query->where('ativo', true);
+    }
+
+    /**
+     * Cópia com os mesmos níveis, para montar uma variação ("Turbo 12 min"): nome "X (cópia)", ou
+     * "X (cópia 2)" e assim por diante quando já existe (o nome é único).
+     */
+    public function duplicar(): static
+    {
+        return DB::transaction(function (): static {
+            $nome = $this->nome.' (cópia)';
+
+            for ($n = 2; static::query()->where('nome', $nome)->exists(); $n++) {
+                $nome = "{$this->nome} (cópia {$n})";
+            }
+
+            $copia = static::query()->create(['nome' => $nome, 'descricao' => $this->descricao, 'ativo' => $this->ativo]);
+
+            foreach ($this->niveis as $nivel) {
+                $copia->niveis()->create($nivel->only([
+                    'ordem', 'small_blind', 'big_blind', 'ante', 'duracao_minutos', 'e_intervalo', 'nome_intervalo',
+                ]));
+            }
+
+            return $copia;
+        });
     }
 
     /** "16 níveis de 15 min · 1 intervalo · 4h15" */

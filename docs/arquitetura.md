@@ -119,7 +119,7 @@ O site só mostra jogos reais agendados, em andamento e finalizados (`Jogo::noSi
 | 19 Lista de jogos | `/painel/jogos` | `JogoResource` |
 | 20 Criar/editar jogo | `/painel/jogos/{id}/edit` | `JogoResource` (modalidade, entradas, opcionais, taxas, premiação, rankings, mesas, floor) |
 | Modelos | `/painel/modelos` | `ModeloResource` + ação Criar a partir do modelo |
-| Estruturas de blinds | `/painel/estruturas` | `EstruturaBlindsResource` (v2: níveis, intervalos e a prévia) |
+| Blinds | `/painel/estruturas` | `EstruturaBlindsResource` (v2: níveis, intervalos e a prévia; v3: gerar próximos níveis, duplicar no editar, cartões no celular) |
 | Rankings | `/painel/rankings` | `RankingResource` (regras de pontos e classificação) |
 | 21 Usuários | `/painel/usuarios` | `UsuarioResource` |
 | 22 Mesas | `/painel/mesas` | `MesaResource` |
@@ -146,4 +146,5 @@ O site só mostra jogos reais agendados, em andamento e finalizados (`Jogo::noSi
 | 4 Final da noite | Telas 12–14, premiação, saldos, acertos, `FinalizarJogo` | Noite #18 inteira pelo site bate R$ 2.100 / 210 / 1.890 (cumprido em 26/10/2026) |
 | 5 Painel completo | Dashboard, calendário, aluguéis, relatórios, rankings, modelos, segurança e permissões, configurações | Testes verdes |
 | v2 | Estruturas de blinds e relógio | Etapas 1 (estruturas no painel, no jogo e na conferência), 2 (a regra do relógio), 3 (relógio na tela ao vivo, com os controles e a sugestão de encerrar rebuys) e 4 (tela cheia para a TV) feitas em 28/10/2026 |
+| v3 | Relógio no estilo Poker Depot (decisões de 05/11/2026) | Etapas 1 (Blinds: gerar próximos níveis, duplicar no editar, editor no celular), 2 (relógio que anda sem internet), 3 (link do torneio só com o relógio, no lugar da TV) e 4 (tela do relógio do gerenciador com o AVISO) |
 | 6 No ar | Domínio e hospedagem novos, deploy e piloto numa noite real | |

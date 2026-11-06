@@ -4,6 +4,7 @@ namespace Tests\Feature\Painel;
 
 use App\Filament\Resources\EstruturasBlinds\EstruturaBlindsResource;
 use App\Filament\Resources\EstruturasBlinds\Pages\CreateEstruturaBlinds;
+use App\Filament\Resources\EstruturasBlinds\Pages\EditEstruturaBlinds;
 use App\Filament\Resources\EstruturasBlinds\Pages\ListEstruturasBlinds;
 use App\Models\EstruturaBlinds;
 use App\Models\Jogo;
@@ -90,7 +91,7 @@ class EstruturasBlindsTest extends TestCase
 
         Livewire::test(ListEstruturasBlinds::class)
             ->assertSee('16 níveis de 15 min · 1 intervalo · 4h15')
-            ->callAction(TestAction::make('replicate')->table($turbo));
+            ->callAction(TestAction::make('duplicar')->table($turbo));
 
         $copia = EstruturaBlinds::query()->where('nome', 'Turbo 15 min (cópia)')->sole();
         $this->assertSame(17, $copia->niveis()->count());
@@ -99,6 +100,63 @@ class EstruturasBlindsTest extends TestCase
             $copia->niveis->map->only(['ordem', 'small_blind', 'big_blind', 'e_intervalo'])->all(),
         );
         $this->assertSame(17, $turbo->niveis()->count());
+
+        // Da tela de edição também; o nome não repete e abre a cópia.
+        Livewire::test(EditEstruturaBlinds::class, ['record' => $turbo->getRouteKey()])
+            ->callAction('duplicar')
+            ->assertRedirect(EstruturaBlindsResource::getUrl('edit', ['record' => EstruturaBlinds::query()->where('nome', 'Turbo 15 min (cópia 2)')->sole()]));
+    }
+
+    public function test_menu_chama_blinds(): void
+    {
+        $this->get(EstruturaBlindsResource::getUrl())->assertOk()->assertSee(['Blinds', 'Criar estrutura de blinds']);
+    }
+
+    public function test_gerar_proximos_niveis_no_padrao(): void
+    {
+        Livewire::test(CreateEstruturaBlinds::class)
+            ->fillForm([
+                'nome' => 'Sábado 20 min',
+                'niveis' => [$this->nivel(25, 50), $this->nivel(50, 100), $this->nivel(100, 200)],
+            ])
+            // Sugere o padrão dos últimos níveis: dobrando, 20 min.
+            ->mountAction(TestAction::make('gerarNiveis')->schemaComponent('secao-niveis'))
+            ->assertSchemaStateSet(['quantos' => 5, 'tipo' => 'dobrar', 'minutos' => 20, 'intervalo_a_cada' => 0], 'mountedActionSchema0')
+            ->fillForm(['quantos' => 4, 'intervalo_a_cada' => 2, 'minutos_intervalo' => 10], 'mountedActionSchema0')
+            ->callMountedAction()
+            ->assertHasNoFormErrors()
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $niveis = EstruturaBlinds::query()->sole()->niveis;
+        $this->assertSame(
+            [[25, 50, 20], [50, 100, 20], [100, 200, 20], [200, 400, 20], [400, 800, 20], ['Intervalo', 10], [800, 1600, 20], [1600, 3200, 20]],
+            $niveis->map(fn ($n) => $n->e_intervalo ? [$n->nome_intervalo, $n->duracao_minutos] : [$n->small_blind, $n->big_blind, $n->duracao_minutos])->all(),
+        );
+        $this->assertSame(range(1, 8), $niveis->pluck('ordem')->all());
+    }
+
+    public function test_gerar_com_padrao_escolhido(): void
+    {
+        Livewire::test(CreateEstruturaBlinds::class)
+            ->fillForm(['nome' => 'Lento', 'niveis' => [$this->nivel(100, 200, 200, 30)]])
+            ->callAction(TestAction::make('gerarNiveis')->schemaComponent('secao-niveis'), data: [
+                'quantos' => 2, 'tipo' => 'multiplicar', 'valor' => '1.5', 'minutos' => 25, 'intervalo_a_cada' => 0,
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $this->assertSame(
+            ['100 / 200 · ante 200', '150 / 300 · ante 300', '225 / 450 · ante 450'],
+            EstruturaBlinds::query()->sole()->niveis->map->blindsComAnte()->all(),
+        );
+    }
+
+    public function test_gerar_sem_nivel_de_blinds_fica_desligado(): void
+    {
+        Livewire::test(CreateEstruturaBlinds::class)
+            ->fillForm(['nome' => 'Vazia', 'niveis' => [['e_intervalo' => true, 'duracao_minutos' => 10]]])
+            ->assertActionDisabled(TestAction::make('gerarNiveis')->schemaComponent('secao-niveis'));
     }
 
     public function test_estrutura_em_uso_nao_se_exclui(): void

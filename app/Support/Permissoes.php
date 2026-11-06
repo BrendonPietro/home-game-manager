@@ -14,7 +14,7 @@ use Illuminate\Support\Collection;
 class Permissoes
 {
     private const RECURSOS = [
-        'jogos' => 'Jogos', 'modelos' => 'Modelos', 'estruturas' => 'Estruturas de blinds', 'rankings' => 'Rankings', 'usuarios' => 'Usuários',
+        'jogos' => 'Jogos', 'modelos' => 'Modelos', 'estruturas' => 'Blinds', 'rankings' => 'Rankings', 'usuarios' => 'Usuários',
         'seguranca' => 'Contas do painel', 'grupos' => 'Grupos', 'mesas' => 'Mesas', 'eventos' => 'Agenda',
         'alugueis' => 'Aluguéis', 'temporadas' => 'Temporadas', 'relatorios' => 'Relatórios',
         'financeiro' => 'Financeiro', 'configuracoes' => 'Configurações',

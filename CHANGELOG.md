@@ -10,6 +10,22 @@ Registro das atualizações do sistema do Rodrigues Home Game, organizadas por:
 - Docs: documentação;
 - Chore: manutenção.
 
+## 0.8.0
+
+v3, etapa 1: Blinds no painel. A v3 é o relógio no estilo do Poker Depot (link do torneio só com o relógio, relógio que anda sem internet, AVISO); esta etapa deixa o cadastro dos relógios mais rápido e bom no celular.
+
+### Feat
+- **Gerar próximos níveis** nas Blinds: continua a estrutura no padrão dos últimos níveis (dobrando, multiplicando ou somando, sugerido e editável), com os minutos do último nível, um intervalo a cada N níveis e a prévia antes de gerar. Valores de ficha arredondados e o small na metade do big (`App\Support\GeradorDeNiveis`).
+- **Duplicar** também na tela de edição; cópias seguidas viram "X (cópia)", "X (cópia 2)"… (`EstruturaBlinds::duplicar()`).
+- Menu **Blinds** no lugar de "Estruturas de blinds" (e nas permissões dos grupos).
+
+### Style
+- Editor de níveis no celular em pé: cada nível é um cartão de duas linhas ("Nível N", intervalo, arrastar e excluir; small, big, ante e minutos lado a lado). Antes, cada nível ocupava quase uma tela e a página passava de 11 mil pixels.
+- Celular deitado e PC: a coluna de minutos não esmaga mais o número; intervalo mostra só nome e minutos; o número do nível aparece ao lado do arrastar.
+
+### Test
+- `GeradorDeNiveisTest` (padrões, intervalo, arredondamento, recusas) e `Painel\EstruturasBlindsTest` (gerar pelo modal, padrão escolhido, botão desligado sem blinds, duplicar no editar, menu).
+
 ## 0.7.4
 
 Prêmios redondos e contas de teste.

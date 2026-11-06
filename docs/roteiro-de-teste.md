@@ -29,10 +29,12 @@ Referência da Poker Night #18: 12 jogadores, 22 entradas, R$ 2.100 arrecadados,
 **Mesas**
 - [ ] Confira as mesas ativas, a capacidade e o valor do aluguel.
 
-**Estruturas de blinds**
+**Blinds** (menu do painel)
 - [ ] Abra a Turbo 15 min → a prévia "Como fica" numera os níveis (o intervalo não conta) e mostra quando cada um começa.
 - [ ] Crie uma estrutura **Teste rápido**: nível 1 de 2 min, nível 2 de 2 min, intervalo de 1 min, nível 3 de 2 min → serve para ver o relógio trocar de nível sem esperar 15 minutos.
 - [ ] Tente excluir uma estrutura usada num jogo → não deixa.
+- [ ] **Duplicar** a Turbo (na lista ou no editar) → abre "Turbo 15 min (cópia)" com os mesmos níveis. **Gerar próximos níveis** com 4 e intervalo a cada 2 → a prévia mostra o que vem, os níveis entram no fim da lista (no padrão sugerido) e só ficam depois de salvar.
+- [ ] No celular em pé, cada nível é um cartão ("Nível N", small, big, ante e minutos lado a lado); deitado, a tabela com os minutos visíveis. Arraste um nível para trocar de lugar.
 
 **Rankings**
 - [ ] Crie um ranking com pontos por posição (decisão em aberto: os valores do clube) e, se quiser, bônus de mesa final e de participação.

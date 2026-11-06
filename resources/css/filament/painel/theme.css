@@ -961,4 +961,95 @@
         display: flex;
         gap: 0.75rem;
     }
+
+    /*
+     * Blinds (EstruturaBlindsForm, repeater .rh-niveis). Com espaço, a tabela do Filament. Estreito
+     * (celular em pé), o Filament põe um campo por linha e cada nível ocupava uma tela; aqui cada nível
+     * vira um cartão de duas linhas: "Nível N", intervalo, arrastar e excluir em cima; small, big, ante
+     * e minutos lado a lado embaixo (no intervalo, nome e minutos). As células são achadas pelo campo.
+     */
+    .rh-niveis.fi-fo-table-repeater > table > tbody {
+        counter-reset: rh-nivel;
+    }
+
+    .rh-niveis.fi-fo-table-repeater > table > tbody > tr:not(:has([id$='.e_intervalo'][aria-checked='true'])) {
+        counter-increment: rh-nivel;
+    }
+
+    /* Na tabela, o número do nível ao lado do arrastar (intervalo não tem número). */
+    @container (width >= 36rem) {
+        .rh-niveis.fi-fo-table-repeater > table > tbody > tr > td:first-child .fi-fo-table-repeater-actions::before {
+            content: counter(rh-nivel);
+            min-width: 1.25rem;
+            text-align: end;
+            font-weight: 700;
+            font-size: 0.875rem;
+            font-variant-numeric: tabular-nums;
+            color: var(--rh-ink-2);
+        }
+
+        .rh-niveis.fi-fo-table-repeater > table > tbody > tr:has([id$='.e_intervalo'][aria-checked='true']) > td:first-child .fi-fo-table-repeater-actions::before {
+            content: '';
+        }
+    }
+
+    @container (width < 36rem) {
+        .rh-niveis.fi-fo-table-repeater > table > tbody > tr {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            align-items: end;
+            gap: 0.5rem 0.625rem;
+            padding: 0.75rem 1rem 1rem;
+        }
+
+        .rh-niveis.fi-fo-table-repeater > table > tbody > tr > td {
+            grid-row: 2;
+            min-width: 0;
+        }
+
+        .rh-niveis.fi-fo-table-repeater > table > tbody > tr > td:has(.fi-fo-table-repeater-actions) {
+            grid-row: 1;
+            align-self: center;
+        }
+
+        .rh-niveis.fi-fo-table-repeater > table > tbody > tr > td:has(.fi-fo-table-repeater-actions):first-child {
+            grid-column: 4;
+            justify-self: end;
+            margin-inline-end: 2rem;
+        }
+
+        .rh-niveis.fi-fo-table-repeater > table > tbody > tr > td:has(.fi-fo-table-repeater-actions):last-child {
+            grid-column: 4;
+            justify-self: end;
+        }
+
+        .rh-niveis.fi-fo-table-repeater > table > tbody > tr > td:has([id$='.e_intervalo']) {
+            grid-row: 1;
+            grid-column: 1 / span 3;
+            align-self: center;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .rh-niveis.fi-fo-table-repeater > table > tbody > tr > td:has([id$='.e_intervalo'])::before {
+            content: 'Nível ' counter(rh-nivel);
+            min-width: 4.5rem;
+            font-weight: 700;
+            font-size: 0.875rem;
+            color: var(--rh-ink);
+        }
+
+        .rh-niveis.fi-fo-table-repeater > table > tbody > tr:has([id$='.e_intervalo'][aria-checked='true']) > td:has([id$='.e_intervalo'])::before {
+            content: 'Intervalo';
+            color: var(--color-warning-500);
+        }
+
+        .rh-niveis.fi-fo-table-repeater > table > tbody > tr > td:has([id$='.nome_intervalo']) {
+            grid-column: 1 / span 3;
+        }
+
+        .rh-niveis.fi-fo-table-repeater > table > tbody > tr > td:has([id$='.duracao_minutos']) {
+            grid-column: 4;
+        }
+    }
 }

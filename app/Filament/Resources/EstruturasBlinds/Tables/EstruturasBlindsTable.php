@@ -2,10 +2,10 @@
 
 namespace App\Filament\Resources\EstruturasBlinds\Tables;
 
+use App\Filament\Resources\EstruturasBlinds\EstruturaBlindsResource;
 use App\Models\EstruturaBlinds;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\ReplicateAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -32,20 +32,7 @@ class EstruturasBlindsTable
                 IconColumn::make('ativo')->boolean(),
             ])
             ->recordActions([
-                // Cópia com os mesmos níveis, para montar uma variação ("Turbo 12 min").
-                ReplicateAction::make()
-                    ->label('Duplicar')
-                    ->icon('rh-copy')
-                    ->excludeAttributes(['jogos_count'])
-                    ->beforeReplicaSaved(fn (EstruturaBlinds $replica) => $replica->nome = $replica->nome.' (cópia)')
-                    ->after(function (EstruturaBlinds $replica, EstruturaBlinds $record): void {
-                        foreach ($record->niveis as $nivel) {
-                            $replica->niveis()->create($nivel->only([
-                                'ordem', 'small_blind', 'big_blind', 'ante', 'duracao_minutos', 'e_intervalo', 'nome_intervalo',
-                            ]));
-                        }
-                    })
-                    ->successRedirectUrl(fn (EstruturaBlinds $replica): string => route('filament.painel.resources.estruturas.edit', $replica)),
+                EstruturaBlindsResource::duplicar(),
                 EditAction::make(),
                 DeleteAction::make(),
             ]);
