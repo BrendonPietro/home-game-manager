@@ -174,3 +174,4 @@ Por enquanto só local. O lançamento vai para domínio e hospedagem novos; o pr
 - [docs/painel.md](docs/painel.md) — painel Filament: provider, tema, resources, páginas
 - [docs/design-system.md](docs/design-system.md) — onde está o design system e como ele vira código
 - [docs/deploy.md](docs/deploy.md) — ambiente local e deploy no lançamento
+- [docs/roteiro-de-teste.md](docs/roteiro-de-teste.md) — teste à mão do sistema inteiro, na ordem da noite, e o que se sabe que ainda falta
