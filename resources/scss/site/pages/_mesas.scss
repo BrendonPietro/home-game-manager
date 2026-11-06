@@ -26,10 +26,10 @@
 	&__espera {
 		display: flex;
 		flex-direction: column;
-		gap: 6px;
+		gap: 8px;
 
 		.rh-pcard {
-			padding: 7px 10px;
+			padding: 8px 12px;
 		}
 	}
 
@@ -53,7 +53,7 @@
 	&__ajuste {
 		display: inline-flex;
 		align-items: center;
-		gap: 6px;
+		gap: 8px;
 
 		.rh-select {
 			height: 32px;
@@ -63,10 +63,10 @@
 	}
 
 	&__feltro {
-		padding: 4px 18px 14px;
+		padding: 4px 20px 16px;
 
 		@include ate(celular) {
-			padding: 4px 6px 12px;
+			padding: 4px 8px 12px;
 		}
 	}
 }

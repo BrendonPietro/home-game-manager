@@ -13,9 +13,9 @@
 	}
 
 	&__pool {
-		margin-top: 18px;
-		padding: 18px;
-		border-radius: var(--radius-md);
+		margin-top: 20px;
+		padding: 20px;
+		border-radius: var(--radius-lg);
 		background: var(--felt-900);
 		border: 1px solid var(--felt-700);
 
@@ -26,7 +26,7 @@
 
 	&__pool-v {
 		font-family: var(--font-display);
-		font-weight: 700;
+		font-weight: 500;
 		font-size: 56px;
 		line-height: 58px;
 		font-variant-numeric: tabular-nums;
@@ -41,12 +41,12 @@
 		display: flex;
 		align-items: center;
 		gap: 16px;
-		padding: 18px 20px;
+		padding: 20px;
 		border-bottom: 1px solid var(--line-100);
 
 		@include ate(celular) {
 			gap: 12px;
-			padding: 14px 16px;
+			padding: 16px;
 		}
 	}
 
@@ -54,7 +54,7 @@
 		width: 64px;
 		flex: none;
 		font-family: var(--font-display);
-		font-weight: 700;
+		font-weight: 500;
 		font-size: 40px;
 		color: var(--ink-200);
 		font-variant-numeric: tabular-nums;
@@ -74,7 +74,7 @@
 		min-width: 0;
 		display: flex;
 		flex-direction: column;
-		gap: 6px;
+		gap: 8px;
 	}
 
 	&__barra {
@@ -95,7 +95,7 @@
 		min-width: 150px;
 		text-align: right;
 		font-family: var(--font-display);
-		font-weight: 700;
+		font-weight: 500;
 		font-size: 36px;
 		font-variant-numeric: tabular-nums;
 		white-space: nowrap;
@@ -113,10 +113,10 @@
 	&__soma {
 		display: flex;
 		align-items: baseline;
-		padding: 14px 20px;
+		padding: 16px 20px;
 
 		.rh-num {
-			font-weight: 700;
+			font-weight: 500;
 			font-size: 22px;
 		}
 	}

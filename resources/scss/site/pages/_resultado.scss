@@ -44,13 +44,13 @@
 	}
 
 	&__select {
-		height: 34px;
+		height: 32px;
 		width: 96px;
 	}
 
 	&__posicao {
 		font-family: var(--font-display);
-		font-weight: 700;
+		font-weight: 500;
 		font-size: 18px;
 	}
 
@@ -58,8 +58,8 @@
 		display: flex;
 		align-items: center;
 		flex-wrap: wrap;
-		gap: 10px;
-		padding: 14px 16px;
+		gap: 12px;
+		padding: 16px;
 		border-top: 1px solid var(--line-200);
 	}
 }

@@ -69,12 +69,22 @@ $espacos: (
 	"space-12": 48px,
 );
 
-// Raios: badge / botão e painel / assento / ficha e mesa
+// Raios: badge e checkbox / botão, campo, assento e caixas internas / card, painel e modal / ficha e mesa
+// Raio aninhado: o de dentro = o de fora − o espaço entre eles (nunca menos de 4).
 $raios: (
-	"radius-sm": 3px,
-	"radius-md": 5px,
-	"radius-lg": 8px,
+	"radius-sm": 4px,
+	"radius-md": 8px,
+	"radius-lg": 12px,
 	"radius-pill": 999px,
+);
+
+// Movimento: uma curva só; curto para resposta (hover, toque), médio para menus, longo para o que entra ou muda de lugar.
+// Anima só cor, fundo, borda, opacidade e transform.
+$movimento: (
+	"ease": cubic-bezier(0.22, 1, 0.36, 1),
+	"dur-1": 150ms,
+	"dur-2": 200ms,
+	"dur-3": 300ms,
 );
 
 // Sombras: só modais/drawers flutuam; o feltro tem profundidade interna
@@ -86,7 +96,7 @@ $sombras: (
 :root {
 	color-scheme: dark;
 
-	@each $mapa in ($cores, $fontes, $espacos, $raios, $sombras) {
+	@each $mapa in ($cores, $fontes, $espacos, $raios, $sombras, $movimento) {
 		@each $nome, $valor in $mapa {
 			// meta.inspect mantém as aspas dos nomes de fonte
 			--#{$nome}: #{meta.inspect($valor)};

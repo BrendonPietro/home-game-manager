@@ -11,19 +11,39 @@ Visual vem dos protótipos; regras vêm de `docs/regras.md` (onde divergirem, va
 
 Escuro por padrão, grafite + feltro verde discreto + vermelho carta como acento. Fichas como única referência de cassino recorrente. Números de dinheiro com mais destaque que qualquer outro texto.
 
+Em 11/2026 o site e o painel passaram por um pente-fino com a skill **unslop** (de Damir Sokolovsky, [@heydamir](https://x.com/heydamir), CC BY 4.0), para tirar a cara de "gerado por IA" sem mudar telas, paleta nem fontes:
+
+- **Produto:** o caixa e o relógio de um home game de poker presencial. Quem organiza usa na mesa (celular, tablet, notebook) e os jogadores olham na TV.
+- **Caráter:** conferido, legível de longe, entre amigos.
+- **Mundo:** a mesa de poker na sala de casa à noite: feltro verde, borda de couro, fichas, o vermelho do naipe, luz baixa.
+- **Momentos:** a mesa (feltro, assentos, fichas) e o relógio da TV. O resto fica quieto, e o feltro só aparece onde há mesa: mesa ao vivo e de montar, fundo do login e relógio da TV.
+- **Assinatura:** as fichas B / R / A (buy-in, rebuy, add-on).
+
+### Regras do visual (valem para tela nova)
+
+- **Caixa alta** só nos botões de ação do torneio (`.rh-btn--lg`: INICIAR JOGO, ENCERRAR REBUYS, AVISO…), nos cartões BUY-IN / REBUY / ADD-ON (`.rh-action`, que são botões) e na marca. Rótulos, badges, abas, cabeçalhos de tabela, títulos e textos da TV com só a primeira letra maiúscula ("Ao vivo", "Prize pool", "Nível 6"), sem `letter-spacing`.
+- **Fontes:** Barlow no texto, rótulos, badges, abas e cabeçalhos. Barlow Condensed nos números (dinheiro, relógio, estatísticas), nos títulos e nos botões de ação.
+- **Pesos:** 400 no texto; 500 em nomes, títulos e números; 600 só para destaque raro (botões de ação, letras das fichas, número do assento, linha de total, `<b>`). Nada de 700.
+- **Espaçamento** na grade de 4px. Passo de 2px só dentro de controle pequeno, e valor ímpar só para centralizar (ex.: a lupa a 11px no campo de 40px). Alturas: botão, campo e seletor 40px; botão pequeno e select em tabela 32px; badge 24px; botão de ação 52px.
+- **Cor:** a cor de estado fica no ponto ou no ícone, não na borda. Badges com superfície neutra e ponto colorido (só **Ao vivo** é cheio). Avisos com borda neutra e o ícone em âmbar ou verde. Botões e cartões com borda `line-200`; campos, checkbox e switch mantêm `line-control` para parecerem clicáveis. Nada de brilho colorido nem gradiente fora do feltro. Gráfico com um acento só: o resto no cinza da rampa.
+- **Raios:** 4 (badge, checkbox), 8 (botão, campo, assento, caixa dentro de modal ou gaveta), 12 (card, painel, modal). O de dentro é menor que o de fora: o raio de fora menos o espaço entre eles, nunca menos de 4.
+- **Movimento:** uma curva (`--ease`) e três durações (`--dur-1` 150ms em hover e toque, `--dur-2` 200ms, `--dur-3` 300ms para o que muda de lugar). Anima só cor, fundo, borda, opacidade e `transform`; botões e cartões de ação encolhem 2% no toque.
+- **Texto:** sem ponto de exclamação e sem ponto final em rótulo, subtítulo, legenda e mensagem de "nada aqui"; frase de duas orações ou mais mantém o ponto.
+
 ## Tokens principais
 
 | Token | Valor | Uso |
 |---|---|---|
 | `bg-000` / `bg-100` / `bg-200` / `bg-300` / `bg-400` | `#0b0c0d` / `#121415` / `#181b1d` / `#202427` / `#2a2f33` | Página → cromo → painéis → hover → selecionado |
 | `ink-100` / `ink-200` / `ink-300` | `#eeeae3` / `#b4aea5` / `#938d85` | Texto principal / secundário / rótulos |
-| `red-500` | `#c62f3a` | Acento: um primário por área, AO VIVO, torneio no calendário |
+| `red-500` | `#c62f3a` | Acento: um primário por área, Ao vivo, seleção, torneio no calendário, a barra que importa no gráfico |
 | `red-300` | `#f07a7f` | Valores negativos (sempre com −) |
 | `green-300` | `#5fcf8f` | Valores positivos (sempre com +), pago |
-| `felt-500` / `felt-700` / `felt-900` | `#1b5940` / `#13402f` / `#0d261c` | Mesa, próximo torneio, prize pool |
+| `felt-500` / `felt-700` / `felt-900` | `#1b5940` / `#13402f` / `#0d261c` | Mesa, fundo do login, relógio da TV (o card do próximo jogo não usa mais) |
 | `chip-buyin` / `chip-rebuy` / `chip-addon` | `#e8e4dc` / `#5b9be8` / `#e8ad44` | Fichas B / R / A |
-| Fontes | Barlow Condensed (display, números), Barlow (texto) | Arquivos `.woff2` locais |
-| Raios | 3 / 5 / 8 / 999 px | Badge / botão e painel / assento / ficha e mesa |
+| Fontes | Barlow Condensed (números, títulos, botões de ação), Barlow (texto, rótulos) | Arquivos `.woff2` locais |
+| Raios | 4 / 8 / 12 / 999 px | Badge e checkbox / botão, campo e assento / card, painel e modal / ficha e mesa |
+| Movimento | `--ease` `cubic-bezier(0.22, 1, 0.36, 1)`, `--dur-1` 150ms, `--dur-2` 200ms, `--dur-3` 300ms | Uma curva para tudo; só cor, fundo, borda, opacidade e `transform` |
 
 ## Do protótipo para o Laravel
 
@@ -47,6 +67,7 @@ Escuro por padrão, grafite + feltro verde discreto + vermelho carta como acento
 - Diferenças em relação ao `bundle.css`:
   - `.rh-scrim` e `.rh-drawer` são `fixed` na janela, não `absolute` dentro da tela.
   - Acréscimos: `.rh-field__error`, `.rh-input[aria-invalid]`, foto no `.rh-avatar` e `.rh-strip > .is-prize` (destaque do prize pool, que no protótipo é um estilo inline).
+  - Pente-fino unslop (11/2026, regras em [Direção](#direção)): rótulos, badges, abas e cabeçalhos sem caixa alta e na Barlow; pesos 700 → 500/600; espaçamento na grade de 4 (botão de 38 → 40px, igual ao campo); badges e avisos sem borda colorida; card do próximo jogo (`.rh-feature`) sem a mancha de feltro; botões e cartões com borda `line-200`; raios 4/8/12; hover com a mesma curva. Painéis com tabela usam `overflow: clip` (o `th` sticky continua funcionando) para a tabela não vazar nos cantos de 12px; com a mesa, não, para não cortar os assentos.
 - Ficam **fora** do site, porque só aparecem no painel: shell do admin (`rh-app`, `rh-side`, `rh-nav`, `rh-pagehd`, `rh-content`, `rh-mtop`), calendário (`rh-cal`, `rh-ev`, `rh-legend`, `rh-dot`) e gráficos (`rh-bars`, `rh-tip`). Os do calendário (tela 17) e do dashboard (tela 16: `rh-stat`, `rh-datebox`, `rh-bars`, `rh-tip`, `rh-li`) estão no tema do Filament (`resources/css/filament/painel/theme.css`), com as cores em variáveis `--rh-*` no claro e no escuro.
 - Conferência: o CSS gerado tem as mesmas declarações do `bundle.css` para todos os seletores portados.
 
@@ -69,7 +90,7 @@ Layouts que não cabem nessas grades (ex.: `1.6fr 1fr 1fr 1fr`) ficam no parcial
 `<x-site.poker.mesa>` segue o `RHG.pokerTable`: assento 0 é o dealer, embaixo; os lugares vêm em sentido horário, espaçados pelo comprimento de arco da oval (em proporção real). Diferenças:
 
 - A posição de cada assento é uma variável CSS no contêiner (`left:var(--x3);top:var(--y3)`). O servidor escreve a posição de partida (`App\Support\PosicoesDaMesa`) e o `mesa.js` reescreve ao girar e ao mudar o tamanho da tela. Assim o Livewire pode redesenhar os assentos sem que eles pulem.
-- Em pé (90°/270°) a mesa ganha `.is-retrato` e no máximo 520px de largura. Antes do primeiro desenho do JS os assentos não animam (`.is-pronta`).
+- Em pé (90°/270°) a mesa ganha `.is-retrato` e no máximo 520px de largura. Só o girar anima: o `mesa.js` mede assentos e trilho, desenha no lugar novo e anima de volta só com `translate`/`scale` (FLIP, 300ms na curva `--ease`), sem transição de `left`/`top`. Ao abrir e ao redimensionar, os assentos já aparecem no lugar.
 - A busca do ponto na oval começa na amostra 0 (no protótipo começava na 1, deixando o dealer 0,37% fora do centro).
 - Tela 06 usa a mesa compacta com `ar` 2,6 deitada e 0,72 em pé, raios 44/36, como o protótipo.
 - Tela ao vivo usa a mesa padrão (até 960px). Cada assento mostra o total investido e as fichas (prop `rodapes`): buy-in B (ou 2, 3 na variação que vale 2×, 3× o padrão), rebuy R (ou a quantidade, a partir de 2) e add-on A. Eliminado e quem fez cash-out ficam apagados (`rh-seat--out`).
@@ -77,7 +98,7 @@ Layouts que não cabem nessas grades (ex.: `1.6fr 1fr 1fr 1fr`) ficam no parcial
 ### Conferência (tela 04)
 
 - "Estrutura de blinds" no painel Evento, como no protótipo (o nome da estrutura, ou "Digitada na noite" quando o torneio não tem).
-- v2: painel **Blinds · nome da estrutura** no fim da coluna da esquerda, com o resumo no cabeçalho e a tabela dos níveis (`.rh-table`: nível, blinds, ante, duração, começa). O intervalo ocupa as três primeiras colunas, em âmbar e caixa alta; no celular a tabela rola de lado dentro do painel (`.rh-conferencia__niveis`). O protótipo não tem essa tabela. No painel, a mesma tabela (`filament/painel/estrutura-niveis`) aparece na prévia da estrutura e na aba Blinds do jogo.
+- v2: painel **Blinds · nome da estrutura** no fim da coluna da esquerda, com o resumo no cabeçalho e a tabela dos níveis (`.rh-table`: nível, blinds, ante, duração, começa). O intervalo ocupa as três primeiras colunas, em âmbar; no celular a tabela rola de lado dentro do painel (`.rh-conferencia__niveis`). O protótipo não tem essa tabela. No painel, a mesma tabela (`filament/painel/estrutura-niveis`) aparece na prévia da estrutura e na aba Blinds do jogo.
 
 ### Tela ao vivo
 
@@ -106,9 +127,9 @@ Layouts que não cabem nessas grades (ex.: `1.6fr 1fr 1fr 1fr`) ficam no parcial
 `pages/_controle-relogio.scss`, Livewire `Jogo\ControleDoRelogio`. O protótipo não tem esta tela:
 
 - Topo com voltar (AO VIVO), o nome do jogo e LINK DA TV (no celular, só os ícones). O relógio é o `<x-site.poker.painel-relogio>` do link, com a linha "Intervalo em N níveis · tempo" embaixo.
-- Botões grandes para o dedo: ANTERIOR / PAUSAR (vermelho, mais largo) / PRÓXIMO com 64px de altura, os quatro ajustes de minutos e o **AVISO** (`rh-btn--danger`, largura toda). Celular deitado: botões de 46px e o relógio menor, para caber sem rolar.
+- Botões grandes para o dedo: ANTERIOR / PAUSAR (vermelho, mais largo) / PRÓXIMO com 64px de altura, os quatro ajustes de minutos e o **AVISO** (`rh-btn--danger`, largura toda). Celular deitado: botões de 48px e o relógio menor, para caber sem rolar.
 - Em pé, relógio em cima e botões embaixo; deitado (`orientation: landscape`), relógio à esquerda e botões à direita. As regras do celular deitado do link valem só no link (`.rh-tv--relogio`).
-- AVISO no link e aqui: o cartão pisca em vermelho (`@keyframes rh-tv-aviso`) com a etiqueta vermelha "AVISO" no topo, por 6 s.
+- AVISO no link e aqui: o cartão pisca com o contorno vermelho (`@keyframes rh-tv-aviso`, sem brilho) e a etiqueta vermelha "Aviso" no topo, por 6 s.
 
 ### Link do relógio (v3; era a TV da v2)
 

@@ -7,15 +7,16 @@
 .rh-pick {
 	display: flex;
 	align-items: center;
-	gap: 14px;
+	gap: 12px;
 	width: 100%;
-	padding: 14px 16px;
+	padding: 16px;
 	border-radius: var(--radius-lg);
-	border: 1px solid var(--line-control);
+	border: 1px solid var(--line-200);
 	background: var(--bg-300);
 	color: var(--ink-100);
 	cursor: pointer;
 	text-align: left;
+	transition: background-color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
 
 	&:hover {
 		background: var(--bg-400);
@@ -28,17 +29,15 @@
 
 	&__t {
 		font-family: var(--font-display);
-		font-weight: 700;
+		font-weight: 500;
 		font-size: 18px;
-		letter-spacing: 0.05em;
-		text-transform: uppercase;
 	}
 
 	&__v {
 		margin-left: auto;
 		text-align: right;
 		font-family: var(--font-display);
-		font-weight: 700;
+		font-weight: 500;
 		font-size: 22px;
 		font-variant-numeric: tabular-nums;
 

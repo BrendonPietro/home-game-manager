@@ -74,7 +74,7 @@
 				{{-- Torneio sem estrutura de blinds: nível e blinds digitados na tela ao vivo. --}}
 				<main class="rh-tv__palco sem-lado">
 					<section class="rh-tv__relogio sem-relogio" x-bind:class="{ 'is-aviso': avisando }">
-						<span class="rh-tv__aviso" x-show="avisando" x-cloak>AVISO</span>
+						<span class="rh-tv__aviso" x-show="avisando" x-cloak>Aviso</span>
 						<div class="rh-tv__titulo">{{ $pacote['manual']['titulo'] }}</div>
 						@if ($pacote['manual']['blinds'])
 							<div class="rh-tv__blinds"><span class="v">{{ $pacote['manual']['blinds'] }}</span></div>

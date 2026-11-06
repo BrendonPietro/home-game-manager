@@ -10,7 +10,7 @@
 
 			<div>
 				<h1 class="rh-heading">Entrar na operação</h1>
-				<p class="rh-small rh-muted" style="margin:4px 0 0">Acesso para quem toca a noite: mesas, entradas e fechamento.</p>
+				<p class="rh-small rh-muted" style="margin:4px 0 0">Acesso para quem toca a noite: mesas, entradas e fechamento</p>
 			</div>
 
 			<x-site.props.field label="E-mail" name="email" type="email" autocomplete="username" inputmode="email" required autofocus />

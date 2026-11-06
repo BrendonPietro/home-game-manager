@@ -17,7 +17,7 @@
 			<div class="rh-row" style="gap:16px">
 				<div>
 					<h1 class="rh-title">Escolha o jogo</h1>
-					<div class="rh-muted">Selecione qual evento você vai operar agora.</div>
+					<div class="rh-muted">Selecione qual evento você vai operar agora</div>
 				</div>
 				<span class="rh-spacer"></span>
 				<form method="GET" action="{{ route('jogos.index') }}" class="rh-search rh-jogos__busca" role="search">
@@ -71,7 +71,7 @@
 				<section class="rh-panel" style="border-top-left-radius:0;border-top-right-radius:0;border-top:0">
 					@if ($jogos->isEmpty())
 						<div class="rh-panel__bd rh-muted">
-							{{ $busca !== '' ? 'Nenhum jogo com "'.$busca.'".' : 'Nenhum jogo aqui.' }}
+							{{ $busca !== '' ? 'Nenhum jogo com "'.$busca.'".' : 'Nenhum jogo aqui' }}
 						</div>
 					@else
 						<table class="rh-table">

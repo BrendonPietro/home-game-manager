@@ -5,12 +5,12 @@
 .rh-field {
 	display: flex;
 	flex-direction: column;
-	gap: 6px;
+	gap: 8px;
 	min-width: 0;
 
 	&__label {
 		font-size: 13px;
-		font-weight: 600;
+		font-weight: 500;
 		color: var(--ink-200);
 	}
 
@@ -45,7 +45,7 @@
 
 	&--money {
 		font-family: var(--font-display);
-		font-weight: 600;
+		font-weight: 500;
 		font-size: 18px;
 		font-variant-numeric: tabular-nums;
 	}
@@ -58,7 +58,7 @@
 textarea.rh-input {
 	height: auto;
 	min-height: 84px;
-	padding: 10px 12px;
+	padding: 8px 12px;
 	resize: vertical;
 }
 
@@ -84,7 +84,7 @@ textarea.rh-input {
 		left: 12px;
 		color: var(--ink-300);
 		font-family: var(--font-display);
-		font-weight: 600;
+		font-weight: 500;
 		font-size: 16px;
 		pointer-events: none;
 
@@ -115,14 +115,14 @@ textarea.rh-input {
 	}
 
 	.rh-input {
-		padding-left: 38px;
+		padding-left: 40px;
 	}
 }
 
 .rh-check {
 	display: inline-flex;
 	align-items: center;
-	gap: 10px;
+	gap: 8px;
 	cursor: pointer;
 	font-size: 14px;
 
@@ -156,8 +156,8 @@ textarea.rh-input {
 
 .rh-switch {
 	appearance: none;
-	width: 38px;
-	height: 22px;
+	width: 40px;
+	height: 24px;
 	border-radius: 999px;
 	background: var(--bg-400);
 	border: 1px solid var(--line-control);
@@ -171,11 +171,11 @@ textarea.rh-input {
 		position: absolute;
 		top: 2px;
 		left: 2px;
-		width: 16px;
-		height: 16px;
+		width: 18px;
+		height: 18px;
 		border-radius: 999px;
 		background: var(--ink-200);
-		transition: left 0.15s;
+		transition: transform var(--dur-1) var(--ease), background-color var(--dur-1) var(--ease);
 	}
 
 	&:checked {
@@ -183,7 +183,7 @@ textarea.rh-input {
 		border-color: var(--red-500);
 
 		&::after {
-			left: 18px;
+			transform: translateX(16px);
 			background: var(--on-red);
 		}
 	}

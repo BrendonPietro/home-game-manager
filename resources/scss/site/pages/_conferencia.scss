@@ -17,9 +17,9 @@
 .rh-item {
 	display: grid;
 	grid-template-columns: auto 1fr auto auto;
-	gap: 14px;
+	gap: 12px;
 	align-items: center;
-	padding: 14px 16px;
+	padding: 16px;
 	border-bottom: 1px solid var(--line-100);
 
 	&:last-child {
@@ -32,15 +32,13 @@
 
 	&__t {
 		font-family: var(--font-display);
-		font-weight: 700;
+		font-weight: 500;
 		font-size: 18px;
-		letter-spacing: 0.05em;
-		text-transform: uppercase;
 	}
 
 	&__fichas {
 		font-family: var(--font-display);
-		font-weight: 600;
+		font-weight: 500;
 		font-size: 16px;
 		color: var(--ink-200);
 		font-variant-numeric: tabular-nums;
@@ -50,7 +48,7 @@
 
 	&__v {
 		font-family: var(--font-display);
-		font-weight: 700;
+		font-weight: 500;
 		font-size: 24px;
 		font-variant-numeric: tabular-nums;
 		text-align: right;
@@ -60,8 +58,8 @@
 	&__sem-ficha {
 		display: inline-grid;
 		place-items: center;
-		width: 30px;
-		height: 30px;
+		width: 32px;
+		height: 32px;
 		border-radius: 999px;
 		border: 1px dashed var(--line-control);
 		color: var(--ink-300);
@@ -69,7 +67,7 @@
 
 	@include ate(celular) {
 		grid-template-columns: auto 1fr auto;
-		gap: 10px;
+		gap: 8px;
 
 		&__fichas {
 			display: none;
@@ -89,9 +87,7 @@
 	.rh-table tr.is-intervalo td {
 		background: var(--bg-100);
 		font-family: var(--font-display);
-		font-weight: 600;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
+		font-weight: 500;
 		color: var(--amber-300);
 	}
 }

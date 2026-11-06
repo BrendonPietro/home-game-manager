@@ -14,21 +14,20 @@
 		top: 0;
 		background: var(--bg-300);
 		text-align: left;
-		font-family: var(--font-display);
-		font-weight: 600;
+		font-family: var(--font-sans);
+		font-weight: 500;
 		font-size: 12px;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
 		color: var(--ink-200);
-		padding: 9px 12px;
+		padding: 8px 12px;
 		border-bottom: 1px solid var(--line-200);
 		white-space: nowrap;
 	}
 
 	td {
-		padding: 10px 12px;
+		padding: 12px;
 		border-bottom: 1px solid var(--line-100);
 		white-space: nowrap;
+		transition: background-color var(--dur-1) var(--ease);
 	}
 
 	tbody tr:hover td {
@@ -42,13 +41,14 @@
 	.n {
 		text-align: right;
 		font-family: var(--font-display);
-		font-weight: 600;
+		font-weight: 500;
 		font-size: 16px;
 		font-variant-numeric: tabular-nums;
 	}
 
 	th.n {
 		text-align: right;
+		font-family: var(--font-sans);
 		font-size: 12px;
 	}
 
@@ -68,6 +68,6 @@
 .rh-who {
 	display: flex;
 	align-items: center;
-	gap: 10px;
-	font-weight: 600;
+	gap: 8px;
+	font-weight: 500;
 }

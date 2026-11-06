@@ -29,10 +29,10 @@
 								<x-site.props.status-jogo :jogo="$proximo" />
 							</div>
 
-							<div class="rh-row" style="gap:16px;margin-top:14px;flex-wrap:nowrap">
+							<div class="rh-row" style="gap:16px;margin-top:16px;flex-wrap:nowrap">
 								<x-site.props.datebox :data="$proximo->data" />
 								<div style="min-width:0">
-									<h2 class="rh-title" style="font-size:40px;line-height:42px">{{ $proximo->nome }}</h2>
+									<h2 class="rh-title" style="font-size:40px;line-height:44px">{{ $proximo->nome }}</h2>
 									<div class="rh-muted" style="margin-top:4px">
 										{{ Datas::porExtenso($proximo->data) }}@if ($proximo->horario) · {{ Datas::hora($proximo->horario) }}@endif
 										@if ($proximo->temporada) · Temporada {{ $proximo->temporada->nome }}@endif
@@ -70,9 +70,9 @@
 					</section>
 				@else
 					<section class="rh-panel">
-						<div class="rh-panel__bd rh-col" style="gap:6px;padding:24px">
+						<div class="rh-panel__bd rh-col" style="gap:8px;padding:24px">
 							<h2 class="rh-heading">Nenhum jogo agendado</h2>
-							<p class="rh-muted" style="margin:0">Quando um jogo for agendado no painel, ele aparece aqui.</p>
+							<p class="rh-muted" style="margin:0">Quando um jogo for agendado no painel, ele aparece aqui</p>
 						</div>
 					</section>
 				@endif
@@ -108,7 +108,7 @@
 					</div>
 
 					@if ($ultimos->isEmpty())
-						<div class="rh-panel__bd rh-muted">Nenhuma noite finalizada ainda.</div>
+						<div class="rh-panel__bd rh-muted">Nenhuma noite finalizada ainda</div>
 					@else
 						<table class="rh-table">
 							<thead>
@@ -143,7 +143,7 @@
 					<div class="rh-panel__hd"><h3 class="rh-heading">Agenda</h3></div>
 
 					@if ($agenda->isEmpty())
-						<div class="rh-panel__bd rh-muted">Nada na agenda.</div>
+						<div class="rh-panel__bd rh-muted">Nada na agenda</div>
 					@else
 						<div class="rh-list">
 							@foreach ($agenda as $evento)

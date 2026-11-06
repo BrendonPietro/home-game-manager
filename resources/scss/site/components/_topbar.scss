@@ -16,14 +16,14 @@
 	&__ctx {
 		display: flex;
 		align-items: center;
-		gap: 10px;
+		gap: 12px;
 		padding-left: 16px;
 		border-left: 1px solid var(--line-200);
 		min-width: 0;
 
 		b {
 			font-family: var(--font-display);
-			font-weight: 600;
+			font-weight: 500;
 			font-size: 20px;
 			white-space: nowrap;
 		}
@@ -31,7 +31,7 @@
 
 	@include ate(celular) {
 		padding: 0 12px;
-		gap: 10px;
+		gap: 12px;
 
 		.rh-brand__name,
 		.rh-brand__sub,
@@ -49,7 +49,7 @@
 		}
 
 		&__ctx {
-			padding-left: 10px;
+			padding-left: 12px;
 			flex: 1 1 auto;
 			overflow: hidden;
 

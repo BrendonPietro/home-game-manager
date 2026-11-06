@@ -132,6 +132,12 @@ V2 (feita em 28/10/2026). Estruturas de blinds (`EstruturaBlinds` com os `Estrut
 ## Front-end
 
 - Design system do clube (tokens, componentes, 25 telas): ver [docs/design-system.md](docs/design-system.md).
+- Regras do visual (pente-fino unslop, 11/2026; detalhes em [docs/design-system.md](docs/design-system.md#regras-do-visual-valem-para-tela-nova)):
+  - CAIXA ALTA só nos botões de ação (`.rh-btn--lg`), nos cartões BUY-IN / REBUY / ADD-ON e na marca. Rótulos, badges, abas e cabeçalhos ficam com só a primeira letra maiúscula, na Barlow e sem `letter-spacing`.
+  - Pesos 400 e 500, com 600 raro e nunca 700. Espaçamento na grade de 4px. Raios 4 / 8 / 12.
+  - Cor de estado no ponto ou no ícone, não na borda. Feltro só onde há mesa.
+  - Transições com `--ease` / `--dur-*`, só de cor, fundo, borda, opacidade e `transform`.
+  - Sem `!` e sem ponto final em texto curto.
 - **Referência visual:** `docs/prototipo/rodrigues-prototipo.html` (desktop) e `docs/prototipo/rodrigues-mobile.html` (tablet/celular). Antes de montar uma tela, abra a tela correspondente no protótipo. Tokens, `bundle.css` e fontes em `docs/design-system/`. Onde o protótipo divergir de `docs/regras.md`, vale o `regras.md`.
 - SCSS em `resources/scss/site/` (`vars`, `core`, `components`, `pages`), classes com prefixo `rh-`. Tokens como variáveis CSS em `vars/_tokens.scss` (mesmos nomes do `bundle.css`: `--bg-000`, `--radius-md`…); breakpoints com `@include ate(largo|tablet|celular)`. Grades responsivas `rh-grid--2…6` e `rh-grid--side` no lugar de `grid-template-columns` inline. Sem Tailwind e sem WPF3 no site.
 - Ícones: SVGs em `resources/svg/site/icons/` (set `rh` do blade-icons, registrado no `AppServiceProvider`): `@svg('rh-home')`.

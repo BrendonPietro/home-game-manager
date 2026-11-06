@@ -106,7 +106,7 @@ class AoVivoTest extends TestCase
             ->assertDontSee('Fase')
             ->assertSeeInOrder(['Buy-ins', 'Recompras', 'Cash-outs'])
             ->assertSee('Nenhuma mesa neste jogo')
-            ->assertSee('Nenhuma entrada ainda.');
+            ->assertSee('Nenhuma entrada ainda');
     }
 
     public function test_jogo_agendado_vai_para_a_conferencia(): void

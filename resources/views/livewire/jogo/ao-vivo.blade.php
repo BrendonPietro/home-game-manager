@@ -156,7 +156,7 @@
 			@if ($sugereEncerrar)
 				<div class="rh-warn rh-aovivo__sugestao" role="status">
 					@svg('rh-clock')
-					<div><b>{{ $relogio->titulo() }}:</b> hora de encerrar os rebuys e abrir o add-on.</div>
+					<div><b>{{ $relogio->titulo() }}:</b> hora de encerrar os rebuys e abrir o add-on</div>
 					<button type="button" class="rh-btn rh-btn--danger rh-btn--sm" wire:click="abrirFase">@svg('rh-lock') ENCERRAR REBUYS</button>
 				</div>
 			@endif
@@ -173,7 +173,7 @@
 						:subtitulo="$subtitulo"
 					/>
 				@else
-					<p class="rh-muted">Nenhuma mesa neste jogo: adicione uma no painel.</p>
+					<p class="rh-muted">Nenhuma mesa neste jogo: adicione uma no painel</p>
 				@endif
 			</div>
 
@@ -213,7 +213,7 @@
 			{{-- Entradas fechadas: o prêmio de cada posição e quem já está nela. --}}
 			@if ($premiacao->isNotEmpty())
 				<div class="rh-aovivo__sec">
-					<div class="rh-label" style="margin-bottom:6px">Premiação</div>
+					<div class="rh-label" style="margin-bottom:8px">Premiação</div>
 					@foreach ($premiacao as $premio)
 						<div class="rh-aovivo__premio" wire:key="premio-{{ $premio['posicao'] }}">
 							<span class="rh-aovivo__pos">{{ $premio['posicao'] }}º</span>
@@ -246,7 +246,7 @@
 						<span class="rh-small rh-faint">{{ $entrada->created_at->format('H:i') }}</span>
 					</div>
 				@empty
-					<div class="rh-li rh-muted">Nenhuma entrada ainda.</div>
+					<div class="rh-li rh-muted">Nenhuma entrada ainda</div>
 				@endforelse
 			</div>
 
@@ -301,7 +301,7 @@
 						<label class="rh-field">
 							<span class="rh-field__label">Blinds</span>
 							<input class="rh-input" wire:model="blinds" maxlength="40" autocomplete="off" placeholder="100 / 200" x-init="$nextTick(() => $el.focus())">
-							<span class="rh-field__help">Como o grupo escreve: small / big (e ante, se tiver).</span>
+							<span class="rh-field__help">Como o grupo escreve: small / big (e ante, se tiver)</span>
 						</label>
 					</div>
 					<div class="rh-modal__ft">
@@ -314,7 +314,7 @@
 					$proximo = $relogio->proximo();
 					$intervaloEm = $proximo?->e_intervalo ? null : $relogio->intervaloEm();
 					$depois = match (true) {
-						! $proximo => 'Último nível da estrutura.',
+						! $proximo => 'Último nível da estrutura',
 						$proximo->e_intervalo => 'Depois: '.$proximo->blinds().' · '.$proximo->duracao_minutos.' min',
 						default => 'Depois: nível '.(($relogio->ultimoNumero ?? 0) + 1).' · '.$proximo->blindsComAnte().' · '.$proximo->duracao_minutos.' min',
 					};
@@ -361,7 +361,7 @@
 						<h2 class="rh-heading" id="link-titulo">Relógio nas outras telas</h2>
 						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharModal" aria-label="Fechar">@svg('rh-x')</button>
 					</div>
-					<div class="rh-modal__bd rh-col" style="gap:14px">
+					<div class="rh-modal__bd rh-col" style="gap:16px">
 						@if ($erro)
 							<div class="rh-warn" role="alert">@svg('rh-alert')<div>{{ $erro }}</div></div>
 						@endif

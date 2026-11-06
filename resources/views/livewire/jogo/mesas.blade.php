@@ -19,7 +19,7 @@
 			<div class="rh-panel__hd" style="min-height:44px">
 				<span class="rh-label">Sem lugar</span>
 				<span class="rh-spacer"></span>
-				<span class="rh-num" style="font-weight:700">{{ $semLugar->count() }}</span>
+				<span class="rh-num" style="font-weight:500">{{ $semLugar->count() }}</span>
 			</div>
 			<div class="rh-panel__bd rh-mesas__espera">
 				@forelse ($semLugar as $participante)
@@ -34,7 +34,7 @@
 						@svg('rh-move', 'rh-faint')
 					</button>
 				@empty
-					<span class="rh-small rh-muted">Todos os confirmados têm lugar.</span>
+					<span class="rh-small rh-muted">Todos os confirmados têm lugar</span>
 				@endforelse
 
 				@if ($podeOrganizar && $selecionadoSentado)

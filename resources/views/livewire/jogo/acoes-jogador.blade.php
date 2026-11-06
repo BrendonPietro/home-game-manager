@@ -143,7 +143,7 @@
 
 			{{-- Histórico: só o último registro se desfaz. --}}
 			<div>
-				<div class="rh-label" style="margin-bottom:6px">Histórico</div>
+				<div class="rh-label" style="margin-bottom:8px">Histórico</div>
 				<div class="rh-list rh-jogador__historico">
 					@forelse ($historico as $acao)
 						<div class="rh-li" wire:key="historico-{{ class_basename($acao) }}-{{ $acao->id }}">
@@ -175,11 +175,11 @@
 							@endif
 						</div>
 					@empty
-						<div class="rh-li rh-muted">Nada lançado ainda.</div>
+						<div class="rh-li rh-muted">Nada lançado ainda</div>
 					@endforelse
 				</div>
 				@if ($emAndamento && $quem->can('acoes.desfazer'))
-					<div class="rh-field__help" style="margin-top:6px">Só o último registro pode ser desfeito, com o motivo.</div>
+					<div class="rh-field__help" style="margin-top:8px">Só o último registro pode ser desfeito, com o motivo</div>
 				@endif
 			</div>
 
@@ -226,7 +226,7 @@
 						</div>
 						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharModal" aria-label="Fechar">@svg('rh-x')</button>
 					</div>
-					<div class="rh-modal__bd rh-col" style="gap:10px">
+					<div class="rh-modal__bd rh-col" style="gap:12px">
 						@if ($erro)
 							<div class="rh-warn" role="alert">@svg('rh-alert')<div>{{ $erro }}</div></div>
 						@endif
@@ -252,7 +252,7 @@
 						@endforeach
 
 						@if ($junto->isNotEmpty())
-							<div class="rh-label" style="margin-top:6px">Junto</div>
+							<div class="rh-label" style="margin-top:8px">Junto</div>
 							@foreach ($junto as $opcional)
 								<label class="rh-check rh-jogador__opcional" wire:key="junto-{{ $opcional->id }}">
 									@if ($opcional->obrigatorio)
@@ -267,7 +267,7 @@
 							@endforeach
 						@endif
 
-						<div class="rh-small rh-muted" style="margin-top:6px">Total do jogador passa de {{ Dinheiro::brlCentavos($saldo->investido) }} para <b class="rh-jogador__destaque">{{ Dinheiro::brlCentavos($novo) }}</b>.</div>
+						<div class="rh-small rh-muted" style="margin-top:8px">Total do jogador passa de {{ Dinheiro::brlCentavos($saldo->investido) }} para <b class="rh-jogador__destaque">{{ Dinheiro::brlCentavos($novo) }}</b>.</div>
 					</div>
 					<div class="rh-modal__ft">
 						<button type="button" class="rh-btn rh-btn--lg" wire:click="fecharModal">VOLTAR</button>
@@ -283,7 +283,7 @@
 						</div>
 						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharModal" aria-label="Fechar">@svg('rh-x')</button>
 					</div>
-					<div class="rh-modal__bd rh-col" style="gap:14px">
+					<div class="rh-modal__bd rh-col" style="gap:16px">
 						@if ($erro)
 							<div class="rh-warn" role="alert">@svg('rh-alert')<div>{{ $erro }}</div></div>
 						@endif
@@ -326,7 +326,7 @@
 					$explicacao = match (true) {
 						$jogo->fase === FaseTorneio::Rebuys => "Provisória: {$nome} pode voltar com rebuy até encerrar os rebuys.",
 						$previsaoPosicao !== null => "Definitiva: {$nome} fica em {$previsaoPosicao}º".($premioDaPosicao ? ' e leva '.Dinheiro::brl($premioDaPosicao) : '').'.',
-						default => 'Definitiva: a posição sai ao fechar as entradas.',
+						default => 'Definitiva: a posição sai ao fechar as entradas',
 					};
 				@endphp
 				<form class="rh-modal" style="max-width:400px" wire:submit="confirmarEliminacao" role="dialog" aria-modal="true" aria-labelledby="eliminacao-titulo">

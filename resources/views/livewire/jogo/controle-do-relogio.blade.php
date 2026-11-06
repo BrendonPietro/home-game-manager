@@ -51,10 +51,10 @@
 			@else
 				{{-- Sem estrutura de blinds: o nível é digitado na tela ao vivo; aqui fica só o AVISO. --}}
 				<section class="rh-tv__relogio sem-relogio" x-bind:class="{ 'is-aviso': avisando }">
-					<span class="rh-tv__aviso" x-show="avisando" x-cloak>AVISO</span>
+					<span class="rh-tv__aviso" x-show="avisando" x-cloak>Aviso</span>
 					<div class="rh-tv__titulo">{{ $jogo->nivel_atual ? 'Nível '.$jogo->nivel_atual : 'Blinds' }}</div>
 					<div class="rh-tv__blinds"><span class="v">{{ $jogo->blinds_atual ?? '—' }}</span></div>
-					<div class="rh-tv__proximo">Sem estrutura de blinds: o nível é digitado na tela ao vivo.</div>
+					<div class="rh-tv__proximo">Sem estrutura de blinds: o nível é digitado na tela ao vivo</div>
 				</section>
 			@endif
 		</div>
@@ -82,7 +82,7 @@
 				</button>
 			</div>
 		@else
-			<p class="rh-controle__so-ver rh-small rh-muted">Só quem controla o relógio pausa, troca de nível e dispara o aviso.</p>
+			<p class="rh-controle__so-ver rh-small rh-muted">Só quem controla o relógio pausa, troca de nível e dispara o aviso</p>
 		@endif
 	</div>
 </div>

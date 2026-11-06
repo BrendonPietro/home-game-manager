@@ -39,8 +39,8 @@ class DashboardTest extends TestCase
         $this->get('/')
             ->assertOk()
             ->assertSee('Nenhum jogo agendado')
-            ->assertSee('Nada na agenda.')
-            ->assertSee('Nenhuma noite finalizada ainda.')
+            ->assertSee('Nada na agenda')
+            ->assertSee('Nenhuma noite finalizada ainda')
             ->assertSee('Jogos'); // link na topbar
     }
 

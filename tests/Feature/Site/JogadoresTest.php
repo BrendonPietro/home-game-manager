@@ -66,7 +66,7 @@ class JogadoresTest extends TestCase
 
         $this->assertSame([$joao->id], $this->jogo->participantes()->pluck('usuario_id')->all());
 
-        $tela->call('alternar', $joao->id)->assertSee('Ninguém confirmado ainda.');
+        $tela->call('alternar', $joao->id)->assertSee('Ninguém confirmado ainda');
         $this->assertSame(0, $this->jogo->participantes()->count());
 
         $tela->call('alternar', $joao->id)->call('remover', $joao->id);

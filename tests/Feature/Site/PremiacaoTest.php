@@ -51,7 +51,7 @@ class PremiacaoTest extends TestCase
             ->assertSeeInOrder(['3 posições premiadas', 'Regra: 50 / 30 / 20'])
             ->assertSeeInOrder(['1º lugar · 50%', 'em jogo', 'R$ 950', '2º lugar · 30%', 'R$ 565', '3º lugar · 20%', 'R$ 375'])
             ->assertSee('R$ 1.890 · 100%')
-            ->assertSee('Prêmios arredondados para R$ 5: a diferença foi para o 1º.')
+            ->assertSee('Prêmios arredondados para R$ 5: a diferença foi para o 1º')
             ->assertSeeInOrder(['Regra de distribuição', 'até 10', '65% · 35%', '11 a 18', 'hoje: 12', '50% · 30% · 20%', '19 ou mais', '45% · 27% · 17% · 11%']);
     }
 

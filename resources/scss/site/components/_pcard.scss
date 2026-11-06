@@ -6,7 +6,7 @@
 	display: flex;
 	align-items: center;
 	gap: 12px;
-	padding: 10px 12px;
+	padding: 12px;
 	border-radius: var(--radius-md);
 	border: 1px solid var(--line-200);
 	background: var(--bg-200);
@@ -16,6 +16,7 @@
 	width: 100%;
 	font: inherit;
 	min-width: 0;
+	transition: background-color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
 
 	&:hover {
 		background: var(--bg-300);
@@ -26,7 +27,7 @@
 	}
 
 	&__n {
-		font-weight: 600;
+		font-weight: 500;
 		flex: 1;
 		min-width: 0;
 		white-space: nowrap;
@@ -41,8 +42,8 @@
 }
 
 .rh-tick {
-	width: 22px;
-	height: 22px;
+	width: 24px;
+	height: 24px;
 	border-radius: 999px;
 	border: 1px solid var(--line-control);
 	display: grid;

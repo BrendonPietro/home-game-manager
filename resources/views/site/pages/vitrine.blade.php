@@ -98,13 +98,13 @@
 					<h2 class="rh-title">Poker Night #18</h2>
 					<h3 class="rh-heading">Mesa 01 · 7 jogadores</h3>
 					<span class="rh-label">Rótulo de seção</span>
-					<p style="margin:0">Texto em Barlow. <span class="rh-muted">Secundário.</span> <span class="rh-faint">Terciário.</span></p>
+					<p style="margin:0">Texto em Barlow. <span class="rh-muted">Secundário</span> <span class="rh-faint">Terciário</span></p>
 					<span class="rh-small rh-muted">Texto pequeno: 13 px</span>
 					<span>Link: <a class="rh-link" href="#">Esqueci minha senha</a></span>
 				</div>
 				<div class="rh-col">
 					<span class="rh-stat__v rh-stat__v--xl">R$ 1.890</span>
-					<span class="rh-num" style="font-size:22px;font-weight:600"><span class="rh-pos">+R$ 795</span> · <span class="rh-neg">−R$ 200</span></span>
+					<span class="rh-num" style="font-size:22px;font-weight:500"><span class="rh-pos">+R$ 795</span> · <span class="rh-neg">−R$ 200</span></span>
 					<span>Naipes: <span class="rh-suit">♠ ♥ ♣ ♦</span></span>
 				</div>
 			</div>
@@ -156,7 +156,7 @@
 				<span class="rh-badge rh-badge--off">Cancelado</span>
 				<span class="rh-badge rh-badge--plain">@svg('rh-lock') Restrito</span>
 			</div>
-			<div class="rh-row" style="gap:14px">
+			<div class="rh-row" style="gap:12px">
 				<span class="rh-chip">B</span>
 				<span class="rh-chip rh-chip--r">R</span>
 				<span class="rh-chip rh-chip--a">A</span>
@@ -176,7 +176,7 @@
 				<label class="rh-field">
 					<span class="rh-field__label">Nome</span>
 					<input class="rh-input" value="Marcão">
-					<span class="rh-field__help">Apelido e telefone são opcionais.</span>
+					<span class="rh-field__help">Apelido e telefone são opcionais</span>
 				</label>
 				<label class="rh-field">
 					<span class="rh-field__label">Mesa</span>
@@ -278,7 +278,7 @@
 			<div class="rh-feature">
 				<div>
 					<span class="rh-badge rh-badge--next">Próximo</span>
-					<h2 class="rh-title" style="font-size:40px;line-height:42px;margin-top:10px">Poker Night #19</h2>
+					<h2 class="rh-title" style="font-size:40px;line-height:44px;margin-top:12px">Poker Night #19</h2>
 					<div class="rh-feature__facts">
 						<div><span class="rh-label">Buy-in</span><div class="v">R$ 100</div></div>
 						<div><span class="rh-label">Confirmados</span><div class="v">14</div></div>
@@ -295,14 +295,14 @@
 		<section class="rh-vitrine__sec">
 			<span class="rh-label">Escolha, aviso e modal</span>
 			<div class="rh-grid rh-grid--2">
-				<div class="rh-col" style="gap:10px">
+				<div class="rh-col" style="gap:12px">
 					<button class="rh-pick" aria-pressed="true"><span class="rh-chip rh-chip--lg">B</span><span class="rh-pick__t">Buy-in simples</span><span class="rh-pick__v">R$ 100<small>10.000 fichas</small></span></button>
 					<button class="rh-pick" aria-pressed="false"><span class="rh-chip rh-chip--lg">2</span><span class="rh-pick__t">Buy-in duplo</span><span class="rh-pick__v">R$ 200<small>20.000 fichas</small></span></button>
 					<div class="rh-warn">@svg('rh-alert')<div><b>Antes de fechar as entradas</b><ul><li>2 jogadores com pagamento pendente</li><li>Mesa 02 sem dealer</li></ul></div></div>
 				</div>
 				<div class="rh-modal">
 					<div class="rh-modal__hd"><h3 class="rh-heading">Fechar entradas?</h3><button class="rh-btn rh-btn--ghost rh-btn--icon rh-x" aria-label="Fechar">@svg('rh-x')</button></div>
-					<div class="rh-modal__bd"><p class="rh-muted" style="margin:0">Os prêmios são gravados e as próximas eliminações já dão a posição.</p></div>
+					<div class="rh-modal__bd"><p class="rh-muted" style="margin:0">Os prêmios são gravados e as próximas eliminações já dão a posição</p></div>
 					<div class="rh-modal__ft"><button class="rh-btn">Voltar</button><button class="rh-btn rh-btn--primary">Fechar entradas</button></div>
 				</div>
 			</div>

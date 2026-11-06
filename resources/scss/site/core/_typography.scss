@@ -29,18 +29,16 @@
 }
 
 .rh-label {
-	font-family: var(--font-display);
-	font-weight: 600;
+	font-family: var(--font-sans);
+	font-weight: 500;
 	font-size: 12px;
 	line-height: 16px;
-	letter-spacing: 0.08em;
-	text-transform: uppercase;
 	color: var(--ink-200);
 }
 
 .rh-title {
 	font-family: var(--font-display);
-	font-weight: 600;
+	font-weight: 500;
 	font-size: 28px;
 	line-height: 32px;
 	margin: 0;
@@ -53,7 +51,7 @@
 
 .rh-heading {
 	font-family: var(--font-display);
-	font-weight: 600;
+	font-weight: 500;
 	font-size: 20px;
 	line-height: 24px;
 	margin: 0;
@@ -66,7 +64,7 @@
 
 .rh-suit {
 	font-family: var(--font-sans);
-	font-weight: 700;
+	font-weight: 600;
 }
 
 // Ícones do design system (resources/svg/site/icons, @svg('rh-…'))
@@ -76,7 +74,7 @@
 	flex: none;
 	stroke: currentColor;
 	fill: none;
-	stroke-width: 1.75;
+	stroke-width: 1.5;
 	stroke-linecap: round;
 	stroke-linejoin: round;
 }
@@ -87,6 +85,7 @@
 	text-decoration-color: var(--line-control);
 	text-underline-offset: 3px;
 	font-size: 14px;
+	transition: text-decoration-color var(--dur-1) var(--ease);
 
 	&:hover {
 		text-decoration-color: var(--ink-100);

@@ -71,10 +71,16 @@
 @theme {
     --font-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
 
-    /* radius-sm / radius-md do design system: badge 3px; botão, campo, painel e modal 5px */
-    --radius-md: 3px;
-    --radius-lg: 5px;
-    --radius-xl: 5px;
+    /* Raios do design system: badge 4px; botão e campo 8px; card, seção e modal 12px */
+    --radius-md: 4px;
+    --radius-lg: 8px;
+    --radius-xl: 12px;
+}
+
+/* Movimento do design system: uma curva só, durações curtas (só cor, fundo, borda, opacidade, transform) */
+:root {
+    --rh-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --rh-dur-1: 150ms;
 }
 
 @layer components {
@@ -95,23 +101,19 @@
         box-shadow: inset 3px 0 0 var(--color-primary-600);
     }
 
-    /* Títulos e números em Barlow Condensed */
+    /* Títulos e números em Barlow Condensed, peso 500: a hierarquia vem do tamanho, não do negrito */
     .fi-header-heading,
     .fi-simple-header-heading,
     .fi-section-header-heading,
     .fi-modal-heading,
     .fi-wi-stats-overview-stat-value {
         font-family: var(--font-display);
+        font-weight: 500;
         letter-spacing: 0;
     }
 
     .fi-wi-stats-overview-stat-value {
         font-variant-numeric: tabular-nums;
-    }
-
-    /* Login (tela 15): filete vermelho no topo do cartão */
-    .fi-simple-main {
-        border-top: 3px solid var(--color-primary-600);
     }
 
     /* Marca provisória (resources/views/filament/painel/marca.blade.php) */
@@ -140,7 +142,7 @@
     .rh-ic {
         fill: none;
         stroke: currentColor;
-        stroke-width: 1.75;
+        stroke-width: 1.5;
         stroke-linecap: round;
         stroke-linejoin: round;
     }
@@ -197,10 +199,10 @@
 
     .rh-cal-hd__mes {
         min-width: 10ch;
-        margin: 0 0.5rem 0 0.375rem;
+        margin: 0 0.5rem;
         font-family: var(--font-display);
         font-size: 1.5rem;
-        font-weight: 700;
+        font-weight: 500;
         color: var(--rh-ink);
     }
 
@@ -215,34 +217,37 @@
     .rh-legend span {
         display: inline-flex;
         align-items: center;
-        gap: 0.375rem;
+        gap: 0.5rem;
     }
 
+    /* Legenda: o mesmo ponto que marca o tipo no evento (bloqueio continua listrado) */
     .rh-dot {
         display: inline-block;
         flex: none;
-        width: 11px;
-        height: 11px;
-        border: 1.5px solid var(--color-gray-600);
-        border-radius: 2px;
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: var(--color-gray-500);
     }
 
     .rh-dot--tour {
         background: var(--color-primary-600);
-        border-color: var(--color-primary-600);
     }
 
     .rh-dot--rent {
-        border-color: var(--color-warning-400);
+        background: var(--color-warning-400);
     }
 
     .rh-dot--res {
-        border-color: var(--color-info-400);
+        background: var(--color-info-400);
     }
 
     .rh-dot--block {
+        width: 12px;
+        height: 12px;
+        border: 1px solid var(--color-gray-500);
+        border-radius: 2px;
         background: repeating-linear-gradient(135deg, var(--color-gray-500) 0 2px, transparent 2px 4px);
-        border-color: var(--color-gray-500);
     }
 
     .rh-cal-scroll {
@@ -257,8 +262,8 @@
         overflow: hidden;
         background: var(--rh-linha);
         border: 1px solid var(--rh-borda);
-        border-radius: var(--radius-lg);
-        transition: opacity 0.15s;
+        border-radius: var(--radius-xl);
+        transition: opacity var(--rh-dur-1) var(--rh-ease);
     }
 
     .rh-cal.is-carregando {
@@ -266,13 +271,10 @@
     }
 
     .rh-cal__dow {
-        padding: 0.5rem 0.625rem;
+        padding: 0.5rem 0.75rem;
         background: var(--rh-elevado);
-        font-family: var(--font-display);
         font-size: 0.75rem;
-        font-weight: 600;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
+        font-weight: 500;
         color: var(--rh-ink-2);
     }
 
@@ -282,7 +284,8 @@
         gap: 4px;
         min-width: 0;
         min-height: 128px;
-        padding: 6px 6px 8px;
+        padding: 8px;
+        transition: background-color var(--rh-dur-1) var(--rh-ease);
         background: var(--rh-painel);
         color: var(--rh-ink);
     }
@@ -310,7 +313,7 @@
         border-radius: 999px;
         font-family: var(--font-display);
         font-size: 0.875rem;
-        font-weight: 600;
+        font-weight: 500;
     }
 
     .rh-cal__day.is-today .rh-cal__n {
@@ -323,16 +326,17 @@
         flex-direction: column;
         align-items: stretch;
         width: 100%;
-        padding: 4px 7px;
+        padding: 4px 8px;
         overflow: hidden;
         background: var(--rh-elevado);
         border: 1px solid var(--rh-borda);
         border-radius: var(--radius-md);
         font-size: 0.75rem;
-        line-height: 15px;
+        line-height: 16px;
         text-align: left;
         color: var(--rh-ink);
         cursor: pointer;
+        transition: filter var(--rh-dur-1) var(--rh-ease);
     }
 
     .rh-ev:hover {
@@ -376,20 +380,24 @@
         color: var(--rh-ink-2);
     }
 
-    .rh-ev--rent {
-        border-color: var(--color-warning-400);
+    /* Aluguel e reserva: evento neutro, a cor do tipo fica só no ponto (como os badges do site) */
+    .rh-ev--rent b::before,
+    .rh-ev--res b::before {
+        content: '';
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        margin-inline-end: 6px;
+        border-radius: 999px;
+        vertical-align: middle;
     }
 
-    .rh-ev--rent b {
-        color: var(--color-warning-400);
+    .rh-ev--rent b::before {
+        background: var(--color-warning-400);
     }
 
-    .rh-ev--res {
-        border-color: var(--color-info-400);
-    }
-
-    .rh-ev--res b {
-        color: var(--color-info-400);
+    .rh-ev--res b::before {
+        background: var(--color-info-400);
     }
 
     .rh-ev--block {
@@ -400,7 +408,7 @@
     .rh-resumo {
         display: flex;
         flex-direction: column;
-        gap: 0.875rem;
+        gap: 1rem;
         color: var(--rh-ink);
     }
 
@@ -421,7 +429,7 @@
     .rh-kv {
         display: grid;
         grid-template-columns: auto 1fr;
-        gap: 0.375rem 1rem;
+        gap: 0.5rem 1rem;
         margin: 0;
         font-size: 0.875rem;
     }
@@ -432,7 +440,7 @@
 
     .rh-kv dd {
         margin: 0;
-        font-weight: 600;
+        font-weight: 500;
         text-align: right;
         font-variant-numeric: tabular-nums;
     }
@@ -477,12 +485,9 @@
     }
 
     .rh-label {
-        font-family: var(--font-display);
         font-size: 0.75rem;
-        font-weight: 600;
+        font-weight: 500;
         line-height: 1rem;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
         color: var(--rh-ink-2);
     }
 
@@ -491,17 +496,17 @@
         flex-direction: column;
         gap: 4px;
         min-width: 0;
-        padding: 14px 16px;
+        padding: 16px;
         background: var(--rh-painel);
         border: 1px solid var(--rh-borda);
-        border-radius: var(--radius-lg);
+        border-radius: var(--radius-xl);
         color: var(--rh-ink);
     }
 
     .rh-stat__v {
         font-family: var(--font-display);
         font-size: 1.875rem;
-        font-weight: 700;
+        font-weight: 500;
         line-height: 2.125rem;
         font-variant-numeric: tabular-nums;
         white-space: nowrap;
@@ -512,33 +517,21 @@
         color: var(--rh-ink-2);
     }
 
-    /* Valores pendentes: contorno âmbar quando tem algo em aberto */
-    .rh-stat--pendente {
-        border-color: var(--color-warning-400);
+    /* Valores pendentes: o rótulo em âmbar quando tem algo em aberto (a borda fica neutra) */
+    .rh-stat--pendente .rh-label {
+        color: var(--color-warning-500);
     }
 
-    .rh-stat--pendente .rh-label {
+    .dark .rh-stat--pendente .rh-label {
         color: var(--color-warning-400);
     }
 
-    /* Próximo jogo: cartão de feltro (felt-700 → felt-900) */
+    /* Próximo jogo: cartão comum, mais largo (o feltro fica só na mesa do site) */
     .rh-stat--proximo {
         flex-direction: row;
         flex-wrap: wrap;
         align-items: center;
         gap: 16px;
-        background: radial-gradient(130% 160% at 100% 0%, #13402f, #0d261c 60%, #181b1d);
-        border-color: #13402f;
-        color: #eeeae3;
-    }
-
-    .rh-stat--proximo .rh-label,
-    .rh-stat--proximo .rh-stat__s {
-        color: #eeeae3;
-    }
-
-    .rh-stat--proximo .rh-stat__s {
-        opacity: 0.75;
     }
 
     .rh-proximo {
@@ -551,7 +544,7 @@
     .rh-proximo__nome {
         font-family: var(--font-display);
         font-size: 1.5rem;
-        font-weight: 700;
+        font-weight: 500;
         line-height: 1.75rem;
     }
 
@@ -568,15 +561,16 @@
         justify-content: center;
         width: 64px;
         height: 68px;
-        background: #121415;
-        border: 1px solid #343a3e;
+        background: var(--rh-cromo);
+        border: 1px solid var(--rh-borda);
         border-radius: var(--radius-lg);
         font-family: var(--font-display);
-        color: #eeeae3;
+        color: var(--rh-ink);
     }
 
     .rh-datebox b {
         font-size: 1.75rem;
+        font-weight: 500;
         line-height: 1.75rem;
     }
 
@@ -584,6 +578,10 @@
         font-size: 0.75rem;
         font-weight: 600;
         letter-spacing: 0.1em;
+        color: var(--color-primary-600);
+    }
+
+    .dark .rh-datebox span {
         color: #f07a7f; /* red-300 */
     }
 
@@ -597,12 +595,22 @@
         line-height: 1.25rem;
     }
 
-    /* Gráficos de barras (rh-bars do design system): felt-300, a última em red-500 */
+    /* Gráficos de barras: um acento por gráfico. Barras no cinza da rampa; só a que importa (a última) em vermelho. */
+    :root {
+        --rh-barra: var(--color-gray-300);
+        --rh-barra-hover: var(--color-gray-400);
+    }
+
+    .dark {
+        --rh-barra: var(--color-gray-700);
+        --rh-barra-hover: var(--color-gray-600);
+    }
+
     .rh-bars {
         position: relative;
         display: flex;
         align-items: flex-end;
-        gap: 10px;
+        gap: 12px;
         height: 150px;
         padding-top: 8px;
         border-bottom: 1px solid var(--rh-borda);
@@ -622,14 +630,15 @@
 
     .rh-bars__b {
         width: 100%;
-        max-width: 34px;
+        max-width: 32px;
         min-height: 2px;
-        background: #2f7d5c; /* felt-300 */
+        background: var(--rh-barra);
         border-radius: 4px 4px 0 0;
+        transition: background-color var(--rh-dur-1) var(--rh-ease);
     }
 
     .rh-bars__c:hover .rh-bars__b {
-        background: var(--color-success-400);
+        background: var(--rh-barra-hover);
     }
 
     .rh-bars__c.is-hl .rh-bars__b {
@@ -639,20 +648,20 @@
     .rh-bars__v {
         font-family: var(--font-display);
         font-size: 0.75rem;
-        font-weight: 600;
+        font-weight: 500;
         font-variant-numeric: tabular-nums;
         color: var(--rh-ink-2);
     }
 
     .rh-bars__x {
         display: flex;
-        gap: 10px;
+        gap: 12px;
     }
 
     .rh-bars__x span {
         flex: 1;
         min-width: 0;
-        padding-top: 6px;
+        padding-top: 8px;
         overflow: hidden;
         font-size: 0.75rem;
         text-align: center;
@@ -663,7 +672,7 @@
 
     .rh-tip {
         position: absolute;
-        bottom: calc(100% + 6px);
+        bottom: calc(100% + 8px);
         left: 50%;
         z-index: 2;
         display: none;
@@ -716,6 +725,10 @@
         border-bottom: 0;
     }
 
+    a.rh-li {
+        transition: background-color var(--rh-dur-1) var(--rh-ease);
+    }
+
     a.rh-li:hover {
         background: var(--rh-painel-hover);
     }
@@ -729,7 +742,7 @@
 
     .rh-li__t {
         overflow: hidden;
-        font-weight: 600;
+        font-weight: 500;
         text-overflow: ellipsis;
         white-space: nowrap;
     }
@@ -749,7 +762,7 @@
     .rh-pendencias section {
         display: flex;
         flex-direction: column;
-        gap: 0.375rem;
+        gap: 0.5rem;
     }
 
     .rh-tabela {
@@ -783,7 +796,7 @@
 
     .rh-dash.is-carregando {
         opacity: 0.6;
-        transition: opacity 0.15s;
+        transition: opacity var(--rh-dur-1) var(--rh-ease);
     }
 
     /* ── Relatórios (tela 24): escolha do relatório, cartões e tabela ── */
@@ -791,7 +804,7 @@
     .rh-relatorio__tipos {
         display: grid;
         grid-template-columns: repeat(6, minmax(0, 1fr));
-        gap: 10px;
+        gap: 12px;
     }
 
     @media (max-width: 1279px) {
@@ -810,15 +823,16 @@
         display: flex;
         flex-direction: column;
         align-items: flex-start;
-        gap: 6px;
+        gap: 8px;
         width: 100%;
-        padding: 14px 16px;
+        padding: 16px;
         background: var(--rh-elevado);
         border: 1px solid var(--rh-borda);
-        border-radius: var(--radius-lg);
+        border-radius: var(--radius-xl);
         text-align: left;
         color: var(--rh-ink);
         cursor: pointer;
+        transition: border-color var(--rh-dur-1) var(--rh-ease);
     }
 
     .rh-pick:hover {
@@ -842,10 +856,8 @@
 
     .rh-pick__t {
         font-family: var(--font-display);
-        font-size: 1rem;
-        font-weight: 700;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
+        font-size: 1.125rem;
+        font-weight: 500;
     }
 
     .rh-pick__s {
@@ -859,15 +871,12 @@
     }
 
     .rh-tabela--relatorio th {
-        padding: 9px 12px;
+        padding: 8px 12px;
         background: var(--rh-elevado);
         border-bottom: 1px solid var(--rh-borda);
-        font-family: var(--font-display);
         font-size: 0.75rem;
-        font-weight: 600;
-        letter-spacing: 0.08em;
+        font-weight: 500;
         text-align: left;
-        text-transform: uppercase;
         white-space: nowrap;
         color: var(--rh-ink-2);
     }
@@ -877,7 +886,7 @@
     }
 
     .rh-tabela--relatorio td {
-        padding: 10px 12px;
+        padding: 12px;
         white-space: nowrap;
     }
 
@@ -889,10 +898,11 @@
 
     .rh-tabela--niveis tr.is-intervalo td {
         background: var(--rh-elevado);
-        font-family: var(--font-display);
-        font-weight: 600;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
+        font-weight: 500;
+        color: var(--color-warning-600);
+    }
+
+    .dark .rh-tabela--niveis tr.is-intervalo td {
         color: var(--color-warning-400);
     }
 
@@ -918,17 +928,17 @@
     }
 
     .rh-simulacao__pool {
-        padding-top: 0.375rem;
+        padding-top: 0.5rem;
         border-top: 1px solid var(--rh-borda);
         font-family: var(--font-display);
         font-size: 1.125rem;
-        font-weight: 700;
+        font-weight: 500;
     }
 
     .rh-simulacao__premios {
         display: flex;
         flex-direction: column;
-        gap: 0.375rem;
+        gap: 0.5rem;
         margin: 0;
         padding: 0;
         list-style: none;
@@ -939,7 +949,7 @@
         display: flex;
         justify-content: space-between;
         gap: 1rem;
-        padding-bottom: 0.375rem;
+        padding-bottom: 0.5rem;
         border-bottom: 1px solid var(--rh-linha);
     }
 
@@ -982,7 +992,7 @@
             content: counter(rh-nivel);
             min-width: 1.25rem;
             text-align: end;
-            font-weight: 700;
+            font-weight: 500;
             font-size: 0.875rem;
             font-variant-numeric: tabular-nums;
             color: var(--rh-ink-2);
@@ -997,7 +1007,7 @@
         .rh-niveis.fi-fo-table-repeater > table > tbody > tr {
             grid-template-columns: repeat(4, minmax(0, 1fr));
             align-items: end;
-            gap: 0.5rem 0.625rem;
+            gap: 0.5rem 0.75rem;
             padding: 0.75rem 1rem 1rem;
         }
 
@@ -1034,7 +1044,7 @@
         .rh-niveis.fi-fo-table-repeater > table > tbody > tr > td:has([id$='.e_intervalo'])::before {
             content: 'Nível ' counter(rh-nivel);
             min-width: 4.5rem;
-            font-weight: 700;
+            font-weight: 500;
             font-size: 0.875rem;
             color: var(--rh-ink);
         }

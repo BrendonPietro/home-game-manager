@@ -112,7 +112,7 @@ class RelogioAoVivoTest extends TestCase
         $this->travel(20)->minutes();
         $tela->call('$refresh')
             ->assertSee(['Intervalo', '05:00', 'A seguir · nível 3', '300 / 600'])
-            ->assertSee('hora de encerrar os rebuys e abrir o add-on.')
+            ->assertSee('hora de encerrar os rebuys e abrir o add-on')
             ->call('abrirFase')
             ->assertSet('modal', 'encerrar');
 

@@ -23,6 +23,22 @@ body {
 	min-height: 100vh;
 }
 
+// Pesos: 400 no texto, 500 em nomes, títulos e números, 600 só para destaque raro
+// (e nos botões de ação). O navegador põe 700 em <b> e nos títulos; aqui não.
+b,
+strong {
+	font-weight: 600;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	font-weight: 500;
+}
+
 :focus-visible {
 	outline: 2px solid var(--focus);
 	outline-offset: 2px;

@@ -33,7 +33,7 @@
 
 		b {
 			font-family: var(--font-display);
-			font-weight: 700;
+			font-weight: 500;
 			font-size: clamp(20px, 3.6vh, 48px);
 			line-height: 1.1;
 		}
@@ -51,7 +51,7 @@
 		flex-wrap: wrap;
 		justify-content: flex-end;
 		gap: 8px;
-		transition: opacity 0.4s;
+		transition: opacity var(--dur-3) var(--ease);
 
 		&.is-escondido {
 			opacity: 0;
@@ -60,7 +60,7 @@
 	}
 
 	&__toque {
-		padding: 6px 12px;
+		padding: 8px 12px;
 		border: 1px solid var(--amber-300);
 		border-radius: var(--radius-md);
 		color: var(--amber-300);
@@ -123,10 +123,9 @@
 		padding: 0.5vh 1.6vw;
 		border-radius: 999px;
 		font-family: var(--font-display);
-		font-weight: 700;
+		font-weight: 600;
 		font-size: clamp(14px, 3vh, 40px);
-		letter-spacing: 0.12em;
-		color: #fff;
+		color: var(--on-red);
 		background: var(--red-500);
 	}
 
@@ -145,17 +144,15 @@
 
 	&__titulo {
 		font-family: var(--font-display);
-		font-weight: 600;
+		font-weight: 500;
 		font-size: clamp(24px, 5.5vh, 80px);
 		line-height: 1;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
 		color: var(--ink-200);
 	}
 
 	&__tempo {
 		font-family: var(--font-display);
-		font-weight: 700;
+		font-weight: 500;
 		font-size: min(34cqi, 34vh);
 		line-height: 0.92;
 
@@ -166,10 +163,8 @@
 
 	&__situacao {
 		font-family: var(--font-display);
-		font-weight: 700;
+		font-weight: 500;
 		font-size: clamp(18px, 3.6vh, 52px);
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
 		color: var(--amber-300);
 	}
 
@@ -181,7 +176,7 @@
 
 		.v {
 			font-family: var(--font-display);
-			font-weight: 700;
+			font-weight: 500;
 			font-size: min(13cqi, 13vh);
 			line-height: 1;
 			font-variant-numeric: tabular-nums;
@@ -195,14 +190,12 @@
 
 	&__rotulo {
 		font-size: clamp(14px, 2.4vh, 32px);
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
 		color: var(--ink-200);
 	}
 
 	&__ante {
 		font-family: var(--font-display);
-		font-weight: 600;
+		font-weight: 500;
 		font-size: min(6cqi, 6vh);
 		line-height: 1.1;
 		color: var(--ink-200);
@@ -236,7 +229,7 @@
 
 		.v {
 			font-family: var(--font-display);
-			font-weight: 700;
+			font-weight: 500;
 			font-size: clamp(24px, 6vh, 88px);
 			line-height: 1;
 			font-variant-numeric: tabular-nums;
@@ -256,7 +249,7 @@
 
 	&__nome {
 		font-family: var(--font-display);
-		font-weight: 700;
+		font-weight: 500;
 		font-size: clamp(40px, 14vh, 200px);
 		line-height: 1;
 	}
@@ -405,6 +398,6 @@
 
 	to {
 		border-color: var(--red-300);
-		box-shadow: 0 0 0 4px var(--red-300), 0 0 48px rgba(220, 60, 60, 0.45);
+		box-shadow: 0 0 0 4px var(--red-300);
 	}
 }

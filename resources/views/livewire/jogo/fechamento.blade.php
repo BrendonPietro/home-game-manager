@@ -25,7 +25,7 @@
 		<span class="rh-spacer"></span>
 		@if ($acertos->isNotEmpty())
 			<button type="button" class="rh-btn" x-data="{ copiado: false }" x-on:click="$copiar(@js($texto)).then(() => { copiado = true; setTimeout(() => copiado = false, 2000) })">
-				@svg('rh-copy') <span x-text="copiado ? 'Copiado!' : 'Copiar acertos'">Copiar acertos</span>
+				@svg('rh-copy') <span x-text="copiado ? 'Copiado' : 'Copiar acertos'">Copiar acertos</span>
 			</button>
 		@endif
 	</div>
@@ -155,7 +155,7 @@
 						@endif
 					</div>
 				@empty
-					<div class="rh-panel__bd rh-muted">Ninguém deve nada a ninguém.</div>
+					<div class="rh-panel__bd rh-muted">Ninguém deve nada a ninguém</div>
 				@endforelse
 			</section>
 
@@ -163,7 +163,7 @@
 				<button type="button" class="rh-btn rh-btn--primary rh-btn--lg rh-btn--block rh-fechamento__finalizar" wire:click="abrirFinalizar">@svg('rh-check') FINALIZAR {{ mb_strtoupper($oQue) }}</button>
 				<div class="rh-small rh-muted" style="text-align:center">Ao finalizar, o {{ $oQue }} fica somente leitura (menos o pagamento de pendências) e entra nos relatórios.</div>
 			@elseif ($finalizado)
-				<div class="rh-small rh-muted">Saldo em aberto é pendência do jogador: clique nele para registrar o pagamento, ou marque o acerto como feito.</div>
+				<div class="rh-small rh-muted">Saldo em aberto é pendência do jogador: clique nele para registrar o pagamento, ou marque o acerto como feito</div>
 			@endif
 		</div>
 	</div>
@@ -175,7 +175,7 @@
 					<h2 class="rh-heading" id="finalizar-titulo" style="font-size:26px">Finalizar {{ $oQue }}</h2>
 					<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharFinalizar" aria-label="Fechar">@svg('rh-x')</button>
 				</div>
-				<div class="rh-modal__bd rh-col" style="gap:14px">
+				<div class="rh-modal__bd rh-col" style="gap:16px">
 					@if ($erro)
 						<div class="rh-warn" role="alert">@svg('rh-alert')<div>{{ $erro }}</div></div>
 					@endif
@@ -187,7 +187,7 @@
 								<li>o {{ $oQue }} fica somente leitura, menos o pagamento de pendências;</li>
 								<li>{{ $acertos->count() }} {{ $acertos->count() === 1 ? 'acerto fica gravado' : 'acertos ficam gravados' }} para marcar como feitos;</li>
 								<li>os pontos dos rankings do {{ $oQue }} são gravados;</li>
-								<li>{{ $abertos === 0 ? 'ninguém fica com pendência.' : $abertos.' '.($abertos === 1 ? 'jogador fica' : 'jogadores ficam').' com saldo em aberto (pendência).' }}</li>
+								<li>{{ $abertos === 0 ? 'ninguém fica com pendência' : $abertos.' '.($abertos === 1 ? 'jogador fica' : 'jogadores ficam').' com saldo em aberto (pendência).' }}</li>
 							</ul>
 						</div>
 					</div>

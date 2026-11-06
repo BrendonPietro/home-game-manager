@@ -125,7 +125,7 @@
 							</td>
 						</tr>
 					@empty
-						<tr><td colspan="11" class="rh-muted">{{ $soPendentes ? 'Ninguém com pendência.' : 'Nenhum jogador nesta mesa.' }}</td></tr>
+						<tr><td colspan="11" class="rh-muted">{{ $soPendentes ? 'Ninguém com pendência' : 'Nenhum jogador nesta mesa' }}</td></tr>
 					@endforelse
 				</tbody>
 				<tfoot>

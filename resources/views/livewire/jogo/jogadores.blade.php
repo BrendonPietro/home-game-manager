@@ -40,11 +40,11 @@
 
 		@if ($this->usuarios->isEmpty())
 			<div class="rh-panel"><div class="rh-panel__bd rh-muted">
-				{{ $busca !== '' ? 'Ninguém com "'.$busca.'".' : 'Ninguém aqui.' }}
+				{{ $busca !== '' ? 'Ninguém com "'.$busca.'".' : 'Ninguém aqui' }}
 				@can('usuarios.cadastro_rapido') Use NOVO JOGADOR para cadastrar. @endcan
 			</div></div>
 		@else
-			<div class="rh-grid rh-grid--4" style="gap:10px">
+			<div class="rh-grid rh-grid--4" style="gap:12px">
 				@foreach ($this->usuarios as $usuario)
 					@php $on = $confirmadosIds->contains($usuario->id); @endphp
 					<button
@@ -69,20 +69,20 @@
 		<div class="rh-panel__hd">
 			<h3 class="rh-heading">Confirmados</h3>
 			<span class="rh-spacer"></span>
-			<span class="rh-num" style="font-size:24px;font-weight:700">{{ $total }}</span>
+			<span class="rh-num" style="font-size:24px;font-weight:500">{{ $total }}</span>
 		</div>
 
 		<div class="rh-list rh-jogadores__lista">
 			@forelse ($this->confirmados as $participante)
 				<div class="rh-li" style="padding:8px 16px" wire:key="c-{{ $participante->id }}">
 					<x-site.props.avatar :nome="$participante->usuario->nome_exibicao" :foto="$participante->usuario->foto" tamanho="sm" />
-					<span style="flex:1;font-weight:600;min-width:0">{{ $participante->usuario->nome_exibicao }}</span>
+					<span style="flex:1;font-weight:500;min-width:0">{{ $participante->usuario->nome_exibicao }}</span>
 					@if ($podeConfirmar)
 						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-btn--sm" wire:click="remover({{ $participante->usuario_id }})" wire:loading.attr="disabled" aria-label="Tirar {{ $participante->usuario->nome_exibicao }} da lista">@svg('rh-x')</button>
 					@endif
 				</div>
 			@empty
-				<div class="rh-li rh-muted">Ninguém confirmado ainda.</div>
+				<div class="rh-li rh-muted">Ninguém confirmado ainda</div>
 			@endforelse
 		</div>
 

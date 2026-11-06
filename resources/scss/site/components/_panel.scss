@@ -7,13 +7,19 @@
 .rh-panel {
 	background: var(--bg-200);
 	border: 1px solid var(--line-200);
-	border-radius: var(--radius-md);
+	border-radius: var(--radius-lg);
 	min-width: 0;
+
+	// Tabela encostada na borda vazaria nos cantos de 12px. Clip (e não hidden) mantém o th sticky;
+	// só com tabela, para não cortar os assentos da mesa, que passam da borda.
+	&:has(> .rh-table, > * > .rh-table) {
+		overflow: clip;
+	}
 
 	&__hd {
 		display: flex;
 		align-items: center;
-		gap: 10px;
+		gap: 12px;
 		padding: 12px 16px;
 		border-bottom: 1px solid var(--line-100);
 		min-height: 52px;
@@ -52,7 +58,7 @@
 		margin: 0;
 		text-align: right;
 		font-family: var(--font-display);
-		font-weight: 600;
+		font-weight: 500;
 		font-size: 18px;
 		font-variant-numeric: tabular-nums;
 	}

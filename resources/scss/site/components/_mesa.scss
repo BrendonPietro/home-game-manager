@@ -1,6 +1,7 @@
 // ============================================================================
 // Mesa de poker e assentos (<x-site.poker.mesa>)
-// A posição dos assentos (left/top) e a rotação vêm de resources/js/site/mesa.js
+// A posição dos assentos (left/top) e a rotação vêm de resources/js/site/mesa.js, que anima o giro
+// só com translate/scale (FLIP), sem transição de left/top.
 // ============================================================================
 
 @use "../vars" as *;
@@ -18,7 +19,6 @@
 		border-radius: 999px;
 		background: var(--rail-700);
 		box-shadow: inset 0 0 0 2px var(--rail-500), 0 0 0 1px #000;
-		transition: inset 0.25s;
 	}
 
 	&__felt {
@@ -57,10 +57,8 @@
 
 	&__name {
 		font-family: var(--font-display);
-		font-weight: 700;
+		font-weight: 500;
 		font-size: 26px;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
 	}
 
 	&__suits {
@@ -70,12 +68,6 @@
 		margin-top: 2px;
 	}
 
-	// Antes do primeiro desenho do mesa.js os assentos não animam (evita o salto ao abrir girada).
-	&:not(.is-pronta) .rh-seat,
-	&:not(.is-pronta) .rh-ptable__rail {
-		transition: none;
-	}
-
 	// Em pé (girada 90°/270°) a mesa fica estreita: limita a largura para não virar uma torre.
 	&.is-retrato {
 		max-width: 520px;
@@ -83,7 +75,7 @@
 
 	&--compact .rh-seat {
 		width: 124px;
-		padding: 7px 8px;
+		padding: 8px;
 	}
 
 	&--compact .rh-seat__total {
@@ -95,15 +87,16 @@
 	position: absolute;
 	transform: translate(-50%, -50%);
 	width: 132px;
-	padding: 8px 10px;
-	border-radius: var(--radius-lg);
+	padding: 8px 12px;
+	border-radius: var(--radius-md);
 	background: var(--bg-200);
 	border: 1px solid var(--rail-500);
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
 	cursor: pointer;
-	transition: left 0.25s, top 0.25s;
+	// Girar a mesa anima só translate/scale pelo mesa.js; aqui, só a cor da borda no hover.
+	transition: border-color var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease);
 	text-align: left;
 	font: inherit;
 	color: var(--ink-100);
@@ -120,13 +113,13 @@
 	&__hd {
 		display: flex;
 		align-items: center;
-		gap: 7px;
+		gap: 8px;
 		min-width: 0;
 	}
 
 	&__no {
 		font-family: var(--font-display);
-		font-weight: 700;
+		font-weight: 600;
 		font-size: 11px;
 		color: var(--ink-300);
 		width: 16px;
@@ -134,7 +127,7 @@
 	}
 
 	&__name {
-		font-weight: 600;
+		font-weight: 500;
 		font-size: 14px;
 		white-space: nowrap;
 		overflow: hidden;
@@ -146,12 +139,12 @@
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
-		gap: 3px 6px;
+		gap: 4px 8px;
 	}
 
 	&__total {
 		font-family: var(--font-display);
-		font-weight: 700;
+		font-weight: 500;
 		font-size: 17px;
 		font-variant-numeric: tabular-nums;
 		white-space: nowrap;
@@ -160,7 +153,7 @@
 
 	&__chips {
 		display: flex;
-		gap: 3px;
+		gap: 4px;
 
 		.rh-chip {
 			width: 16px;
@@ -196,7 +189,7 @@
 	&--dealer {
 		background: var(--bg-100);
 		border-color: var(--chip-dealer);
-		width: 118px;
+		width: 120px;
 		align-items: center;
 
 		.rh-label {
@@ -212,7 +205,7 @@
 
 	@include ate(celular) {
 		width: 96px;
-		padding: 5px 6px;
+		padding: 4px 6px;
 
 		.rh-avatar {
 			display: none;

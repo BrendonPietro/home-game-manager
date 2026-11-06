@@ -61,9 +61,8 @@ export default (opcoes) => ({
         this.chave = `rh-mesa-rotacao-${opcoes.id}`;
         // No celular a mesa abre em pé (docs/design-system.md).
         this.rotacao = lerRotacao(this.chave, window.innerWidth < 600 ? 90 : 0);
+        // Ao abrir e ao redimensionar, os assentos já aparecem no lugar; só o girar anima.
         this.desenhar();
-        // Só anima depois do primeiro desenho: ao abrir, os assentos já aparecem no lugar.
-        requestAnimationFrame(() => requestAnimationFrame(() => this.$el.classList.add('is-pronta')));
 
         let espera;
         this.aoRedimensionar = () => {
@@ -80,7 +79,42 @@ export default (opcoes) => ({
     girar() {
         this.rotacao = (this.rotacao + 90) % 360;
         salvarRotacao(this.chave, this.rotacao);
-        this.desenhar();
+        this.animar(() => this.desenhar());
+    },
+
+    // FLIP: mede onde cada peça está, desenha no lugar novo e anima de lá para cá só com
+    // translate/scale (compostos pela placa de vídeo), em vez de transição de left/top/inset.
+    animar(mudar) {
+        const pecas = [...this.$el.querySelectorAll('.rh-seat, .rh-ptable__rail')];
+        const antes = new Map(pecas.map((peca) => [peca, peca.getBoundingClientRect()]));
+
+        mudar();
+
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            return;
+        }
+
+        const curva = getComputedStyle(this.$el).getPropertyValue('--ease').trim() || 'ease-out';
+
+        pecas.forEach((peca) => {
+            const de = antes.get(peca);
+            const para = peca.getBoundingClientRect();
+
+            if (!de.width || !para.width || !para.height) {
+                return;
+            }
+
+            const dx = de.left + de.width / 2 - (para.left + para.width / 2);
+            const dy = de.top + de.height / 2 - (para.top + para.height / 2);
+            const quadro = { translate: `${dx}px ${dy}px`, scale: '1 1' };
+
+            // O trilho muda de formato (deitada ↔ em pé); os assentos só mudam de lugar.
+            if (peca.classList.contains('rh-ptable__rail')) {
+                quadro.scale = `${de.width / para.width} ${de.height / para.height}`;
+            }
+
+            peca.animate([quadro, { translate: '0px 0px', scale: '1 1' }], { duration: 300, easing: curva });
+        });
     },
 
     desenhar() {

@@ -88,7 +88,7 @@
 						<span class="rh-premiacao__valor">@brl($premio->valor)</span>
 					</div>
 				@empty
-					<div class="rh-panel__bd rh-muted">Nenhum prêmio gravado.</div>
+					<div class="rh-panel__bd rh-muted">Nenhum prêmio gravado</div>
 				@endforelse
 
 				<div class="rh-premiacao__soma">
@@ -97,7 +97,7 @@
 					<span class="rh-num">{{ Dinheiro::brlCentavos($distribuido) }} · {{ $pct(Dinheiro::decimal($somaPercentuais)) }}</span>
 				</div>
 				@if ($arredondado)
-					<div class="rh-premiacao__soma rh-small rh-muted">Prêmios arredondados para R$ 5: a diferença foi para o 1º.</div>
+					<div class="rh-premiacao__soma rh-small rh-muted">Prêmios arredondados para R$ 5: a diferença foi para o 1º</div>
 				@endif
 			</section>
 

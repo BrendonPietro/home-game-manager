@@ -1,14 +1,15 @@
 // ============================================================================
-// Aviso (âmbar): pendências antes de fechar entradas, finalizar etc.
+// Aviso: pendências antes de fechar entradas, finalizar etc.
+// Borda neutra; o âmbar (ou o verde do --ok) fica só no ícone.
 // ============================================================================
 
 .rh-warn {
 	display: flex;
-	gap: 10px;
-	padding: 12px 14px;
+	gap: 8px;
+	padding: 12px 16px;
 	border-radius: var(--radius-md);
 	background: var(--bg-100);
-	border: 1px solid var(--amber-300);
+	border: 1px solid var(--line-200);
 	color: var(--ink-100);
 	font-size: 14px;
 
@@ -18,15 +19,13 @@
 	}
 
 	ul {
-		margin: 6px 0 0;
-		padding-left: 18px;
+		margin: 4px 0 0;
+		padding-left: 20px;
 		color: var(--ink-200);
 	}
 
 	// Deu certo (ex.: "Rebuy registrado para Lucas.")
 	&--ok {
-		border-color: var(--green-300);
-
 		.rh-ic {
 			color: var(--green-300);
 		}

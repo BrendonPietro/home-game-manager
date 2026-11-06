@@ -44,14 +44,14 @@
 
 	&__legenda {
 		display: flex;
-		gap: 14px;
+		gap: 16px;
 		flex-wrap: wrap;
 		font-size: 13px;
 		color: var(--ink-200);
 
 		> span {
 			display: inline-flex;
-			gap: 6px;
+			gap: 8px;
 			align-items: center;
 		}
 
@@ -83,8 +83,8 @@
 		display: flex;
 		align-items: center;
 		flex-wrap: wrap;
-		gap: 8px 10px;
-		padding: 10px 14px;
+		gap: 8px 12px;
+		padding: 12px 16px;
 		border-radius: var(--radius-md);
 		border: 1px solid var(--red-500);
 		background: var(--bg-100);
@@ -103,7 +103,7 @@
 
 		.rh-pcard {
 			width: auto;
-			padding: 6px 10px;
+			padding: 8px 12px;
 		}
 	}
 
@@ -120,13 +120,13 @@
 	}
 
 	&__sec {
-		padding: 16px 18px;
+		padding: 16px 20px;
 		border-bottom: 1px solid var(--line-100);
 	}
 
 	&__prize {
 		font-family: var(--font-display);
-		font-weight: 700;
+		font-weight: 500;
 		font-size: 48px;
 		line-height: 50px;
 		font-variant-numeric: tabular-nums;
@@ -154,7 +154,7 @@
 		overflow: auto;
 
 		.rh-li {
-			padding: 9px 18px;
+			padding: 8px 20px;
 			font-size: 14px;
 		}
 	}
@@ -168,7 +168,7 @@
 	}
 
 	&__valor {
-		font-weight: 600;
+		font-weight: 500;
 		font-size: 16px;
 	}
 
@@ -195,6 +195,7 @@
 		border: 0;
 		border-right: 1px solid var(--line-100);
 		cursor: pointer;
+		transition: background-color var(--dur-1) var(--ease);
 
 		&:hover {
 			background: var(--bg-200);
@@ -203,7 +204,7 @@
 		.rh-label {
 			display: inline-flex;
 			align-items: center;
-			gap: 6px;
+			gap: 8px;
 		}
 
 		.rh-ic {
@@ -245,7 +246,7 @@
 
 		.v {
 			font-family: var(--font-display);
-			font-weight: 700;
+			font-weight: 500;
 			font-size: 72px;
 			line-height: 74px;
 		}
@@ -253,7 +254,7 @@
 
 	&__tempo-nivel {
 		font-family: var(--font-display);
-		font-weight: 600;
+		font-weight: 500;
 		font-size: 22px;
 		line-height: 26px;
 	}
@@ -279,7 +280,7 @@
 		gap: 8px;
 
 		.rh-btn {
-			padding: 0 6px;
+			padding: 0 8px;
 		}
 	}
 
@@ -303,15 +304,15 @@
 	&__premio {
 		display: flex;
 		align-items: baseline;
-		gap: 10px;
-		padding: 5px 0;
+		gap: 12px;
+		padding: 4px 0;
 		font-size: 14px;
 	}
 
 	&__pos {
 		font-family: var(--font-display);
-		font-weight: 700;
-		width: 26px;
+		font-weight: 500;
+		width: 28px;
 		color: var(--ink-300);
 	}
 
@@ -336,7 +337,7 @@
 		.v {
 			margin-left: auto;
 			font-family: var(--font-display);
-			font-weight: 700;
+			font-weight: 500;
 			font-size: 24px;
 			font-variant-numeric: tabular-nums;
 			white-space: nowrap;
@@ -385,7 +386,7 @@
 			border-top: 1px solid var(--line-200);
 
 			> * {
-				padding: 10px 12px;
+				padding: 12px;
 				border-right: 1px solid var(--line-100);
 				display: flex;
 				flex-direction: column;
@@ -399,7 +400,7 @@
 
 			.v {
 				font-family: var(--font-display);
-				font-weight: 700;
+				font-weight: 500;
 				font-size: 22px;
 				line-height: 24px;
 				font-variant-numeric: tabular-nums;
@@ -411,7 +412,7 @@
 				grid-template-columns: repeat(4, minmax(0, 1fr));
 
 				> * {
-					padding: 8px 10px;
+					padding: 8px 12px;
 				}
 
 				.rh-label {
@@ -435,7 +436,7 @@
 .rh-strip > .rh-aovivo__relogio {
 	flex-direction: row;
 	align-items: center;
-	padding: 0 14px 0 0;
+	padding: 0 16px 0 0;
 
 	> .rh-aovivo__nivel {
 		align-self: stretch;
@@ -443,7 +444,7 @@
 		flex-direction: column;
 		justify-content: center;
 		gap: 2px;
-		padding: 10px 12px 10px 20px;
+		padding: 12px 12px 12px 20px;
 		border-right: 0;
 	}
 }

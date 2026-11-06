@@ -14,7 +14,7 @@ Painel em `/painel` para configurar jogos (torneio e cash game), usuários, cont
 | `gray` | a partir do grafite `#181b1d` |
 | `success` / `warning` / `info` | `#5fcf8f` / `#e7b552` / `#7fb2f0` |
 | Fonte | Barlow (local, via tema custom) |
-| Tema custom | `resources/css/filament/painel/theme.css` (`php artisan make:filament-theme`), entrada no Vite |
+| Tema custom | `resources/css/filament/painel/theme.css` (`php artisan make:filament-theme`), entrada no Vite. Segue as regras do visual do [design-system.md](design-system.md#regras-do-visual-valem-para-tela-nova): raios 4/8/12 (`--radius-md/lg/xl`), títulos e números em 500, rótulos sem caixa alta, ícones com traço 1.5, curva `--rh-ease` |
 
 Menu (via `navigationSort`): Dashboard, Calendário, Jogos, Modelos, Blinds (45), Rankings, Usuários, Mesas, Aluguéis, Relatórios, Segurança, Configurações. Itens sem permissão `.ver` não aparecem.
 
@@ -71,15 +71,15 @@ Convenções dos resources:
 Página `App\Filament\Pages\Dashboard` (tela 16; substitui o Dashboard padrão e o `AccountWidget`): subtítulo com o mês, botão **Novo jogo**, grade de 3 colunas (2 no tablet, 1 no celular). Os números vêm do `App\Services\Painel\Indicadores` (centavos, pela `Calculadora` e pelos `Saldos`). Os widgets são Blade com as classes do design system no tema (`rh-stat`, `rh-datebox`, `rh-bars`, `rh-li`), sem Chart.js, e carregam junto com a página (`$isLazy = false`).
 
 - `VisaoGeral` (largura toda):
-  - Próximo jogo num cartão de feltro: o em andamento ou o próximo agendado, com data, confirmados, mesas, Editar (ou Ver) e Abrir no site. Sem jogo: "Nenhum jogo agendado" + Novo jogo.
+  - Próximo jogo num cartão mais largo (comum, no claro e no escuro; o feltro fica só na mesa do site): o em andamento ou o próximo agendado, com data, confirmados, mesas, Editar (ou Ver) e Abrir no site. Sem jogo: "Nenhum jogo agendado" + Novo jogo.
   - Jogadores cadastrados (ativos · inativos), jogos no mês (agendados, em andamento e finalizados; quantos hoje ou finalizados) e mesas disponíveis (ativas / total, quais estão inativas).
   - Com `financeiro.ver`: arrecadação e prize pools do mês (jogos em andamento ou finalizados), aluguéis pagos no mês e **valores pendentes**: o que os jogadores devem nos jogos finalizados + aluguéis reservados ou confirmados cuja data já passou, e quanto o caixa deve. O "ver" abre a lista (jogo, jogador, quanto, link para o fechamento; aluguéis com link para a tela de aluguéis).
-- `ArrecadacaoPorJogo` e `PrizePoolPorJogo` (`financeiro.ver`), `JogadoresPorJogo` e `JogosPorMes` (`jogos.ver`): base `GraficoDeBarras`. Últimos 8 jogos finalizados (rótulo "#18" pelo nome, ou a data) e os últimos 6 meses. Barras `felt-300`, a última em `red-500`, valor em cima ("2,1k") e dica com o nome e o valor.
+- `ArrecadacaoPorJogo` e `PrizePoolPorJogo` (`financeiro.ver`), `JogadoresPorJogo` e `JogosPorMes` (`jogos.ver`): base `GraficoDeBarras`. Últimos 8 jogos finalizados (rótulo "#18" pelo nome, ou a data) e os últimos 6 meses. Barras no cinza da rampa (`--rh-barra`), só a última em `red-500` (um acento por gráfico), valor em cima ("2,1k") e dica com o nome e o valor.
 - `Proximos` (`eventos.ver`): agenda de hoje em diante (7 itens), com data, tipo, horário, mesas e "rascunho"; cada linha abre o mês no calendário. Ocupa duas linhas à direita no desktop.
 
 ## Páginas custom
 
-- **Calendário** (`App\Filament\Pages\Calendario`, `/painel/calendario?mes=2026-10`) — grade mensal `rh-cal` em Blade (domingo a sábado, com os dias vizinhos), navegação por mês e Hoje, legenda por tipo. Sem plugin de calendário. Estilos `rh-cal`, `rh-ev`, `rh-dot`, `rh-legend`, `rh-kv` no tema do painel (claro e escuro).
+- **Calendário** (`App\Filament\Pages\Calendario`, `/painel/calendario?mes=2026-10`) — grade mensal `rh-cal` em Blade (domingo a sábado, com os dias vizinhos), navegação por mês e Hoje, legenda por tipo. Torneio em vermelho cheio; aluguel e reserva neutros com um ponto âmbar ou azul (o mesmo da legenda); bloqueio listrado. Sem plugin de calendário. Estilos `rh-cal`, `rh-ev`, `rh-dot`, `rh-legend`, `rh-kv` no tema do painel (claro e escuro).
   - Clicar num dia abre **Novo evento** com a data; clicar num aluguel, reserva ou bloqueio abre o editar (com Excluir). O jogo, e qualquer evento para quem só vê, abre o resumo (status, confirmados, buy-in; Ver no painel e Abrir no site).
   - **Novo evento** (tela 18): `App\Filament\Schemas\EventoForm`, o mesmo da tela de aluguéis. Tipo (aluguel de mesa, reserva, bloqueio), cliente (aluguel) ou nome, data, horário inicial e final (vazio = dia todo; pode passar da meia-noite), mesas, responsável, valor e status do aluguel (o valor sugere a soma do aluguel das mesas), observações. Grava pelo `Actions\Agenda\SalvarEvento`.
   - Aviso de mesa ocupada (`Services\Agenda\Conflitos`): mostra se a mesa está livre ou com quem ela já está nesse horário. Só avisa, não impede.

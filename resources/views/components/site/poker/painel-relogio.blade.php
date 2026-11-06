@@ -23,7 +23,7 @@
 	x-bind:class="{ 'is-intervalo': noIntervalo, 'is-aviso': avisando }"
 >
 	<span class="rh-tv__conexao" x-show="semConexao" x-cloak>Sem conexão · o relógio segue contando</span>
-	<span class="rh-tv__aviso" x-show="avisando" x-cloak>AVISO</span>
+	<span class="rh-tv__aviso" x-show="avisando" x-cloak>Aviso</span>
 	<div class="rh-tv__titulo" x-text="titulo">{{ $nivel['titulo'] }}</div>
 	<div @class(['rh-tv__tempo', 'is-longo' => $estado->restante >= 3600]) x-bind:class="{ 'is-longo': longo }"><x-site.poker.relogio :estado="$estado" /></div>
 	<div class="rh-tv__situacao" x-show="situacao" x-text="situacao" {!! $esconde($situacao) !!}>{{ $situacao }}</div>

@@ -69,7 +69,7 @@ class ControleDoRelogioTest extends TestCase
         $this->actingAs($this->operador, 'web');
 
         Livewire::test(ControleDoRelogio::class, ['jogo' => $noite])
-            ->assertSee(['Nível 6', '14:32', 'Só quem controla o relógio pausa, troca de nível e dispara o aviso.'])
+            ->assertSee(['Nível 6', '14:32', 'Só quem controla o relógio pausa, troca de nível e dispara o aviso'])
             ->assertDontSee(['ANTERIOR', 'PRÓXIMO'])
             ->assertDontSeeHtml('wire:click="avisar"')
             // Mesmo chamando direto, a Action barra.

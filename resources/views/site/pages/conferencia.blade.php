@@ -50,7 +50,7 @@
 						{{ $item->is($padrao) ? 'Entrada padrão' : 'Conta como 1 entrada' }} · {{ $limite($item) }}
 					</x-site.props.linha-item>
 				@empty
-					<div class="rh-panel__bd rh-neg">Nenhum buy-in ativo: ajuste no painel antes de começar.</div>
+					<div class="rh-panel__bd rh-neg">Nenhum buy-in ativo: ajuste no painel antes de começar</div>
 				@endforelse
 			</section>
 
@@ -59,7 +59,7 @@
 				@foreach ($doTipo(TipoItem::Rebuy) as $item)
 					<x-site.props.linha-item ficha="R" cor="r" :titulo="$item->nome" :fichas="$item->fichas" :valor="$item->valor" :desativado="! $item->ativo">
 						@if ($item->ativo)
-							<span class="rh-pos" style="font-weight:600">Disponível</span> · {{ $limite($item) }}{{ $torneio ? ', até encerrar rebuys' : '' }}
+							<span class="rh-pos" style="font-weight:500">Disponível</span> · {{ $limite($item) }}{{ $torneio ? ', até encerrar rebuys' : '' }}
 						@else
 							Não tem {{ $torneio ? 'rebuy' : 'recompra' }} neste jogo
 						@endif
@@ -69,7 +69,7 @@
 					@foreach ($doTipo(TipoItem::Addon) as $item)
 						<x-site.props.linha-item ficha="A" cor="a" :titulo="$item->nome" :fichas="$item->fichas" :valor="$item->valor" :desativado="! $item->ativo">
 							@if ($item->ativo)
-								<span class="rh-pos" style="font-weight:600">Disponível</span> · {{ $limite($item) }}, no intervalo
+								<span class="rh-pos" style="font-weight:500">Disponível</span> · {{ $limite($item) }}, no intervalo
 							@else
 								Não tem add-on neste torneio
 							@endif
@@ -128,7 +128,7 @@
 				{{-- v3: o link do relógio, para deixar a TV e os tablets prontos antes de começar. --}}
 				<section class="rh-panel" x-data="{ copiado: false }">
 					<div class="rh-panel__hd"><h3 class="rh-heading">Relógio nas outras telas</h3></div>
-					<div class="rh-panel__bd rh-col" style="gap:10px">
+					<div class="rh-panel__bd rh-col" style="gap:12px">
 						<span class="rh-small rh-muted">Abra na TV, no tablet ou em outro celular, sem login: mostra só o relógio e começa a contar quando o torneio for iniciado.</span>
 						<div class="rh-link-relogio">{{ $jogo->linkDoRelogio() }}</div>
 						<div class="rh-row" style="gap:8px;flex-wrap:wrap">
@@ -192,7 +192,7 @@
 					<dl class="rh-kv">
 						<dt>Prize pool estimado</dt><dd>{{ Dinheiro::brlCentavos($estimado->prizePool) }}</dd>
 					</dl>
-					<div class="rh-small rh-faint" style="margin-top:6px">
+					<div class="rh-small rh-faint" style="margin-top:8px">
 						Com {{ $jogo->participantes_count }} {{ $jogo->participantes_count === 1 ? 'confirmado' : 'confirmados' }} e o buy-in padrão, sem rebuys{{ $torneio && $jogo->metodo_premiacao !== MetodoPremiacao::Manual ? '; a divisão segue a regra pelo número de jogadores' : '' }}.
 					</div>
 				</div>
