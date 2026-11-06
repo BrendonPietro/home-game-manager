@@ -20,6 +20,7 @@ Prêmios redondos e contas de teste.
 
 ### Fix
 - TV: depois da primeira atualização, o relógio grande mostrava o tempo do "Intervalo em" (1:28:20 no nível 1). O `relogio.js` não declarava `restante`, `rodando` e `fim`, e dentro do componente da TV o Alpine grava a propriedade não declarada no componente de fora, que os dois relógios dividiam. Agora todo o estado fica declarado.
+- TV, "Fim de jogo": a linha justa com `overflow: hidden` cortava a perna das letras dos nomes ("Felipe").
 
 ### Chore
 - `ContasDeTesteSeeder` (só local): `operador@rodrigues.test` no grupo Operador do site e `geral` no grupo Geral do painel, com a senha da conta `dev` de cada lado.
