@@ -22,6 +22,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use UnitEnum;
 
 /**
  * Telas 19 e 20: jogos de verdade (torneio e cash game). Torneios modelo ficam no ModeloResource.
@@ -33,7 +34,9 @@ class JogoResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = 'rh-trophy';
 
-    protected static ?int $navigationSort = 30;
+    protected static string|UnitEnum|null $navigationGroup = 'Cadastros';
+
+    protected static ?int $navigationSort = 10;
 
     protected static ?string $modelLabel = 'jogo';
 

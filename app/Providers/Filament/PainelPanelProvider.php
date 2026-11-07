@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Auth\Login;
 use App\Filament\Auth\LoginResponse;
+use App\Filament\Auth\Perfil;
 use App\Http\Controllers\Painel\ImprimirRelatorio;
 use Filament\Auth\Http\Responses\Contracts\LoginResponse as LoginResponseContrato;
 use Filament\Enums\ThemeMode;
@@ -57,6 +58,7 @@ class PainelPanelProvider extends PanelProvider
             ->path('painel')
             ->authGuard('painel')
             ->login(Login::class)
+            ->profile(Perfil::class, isSimple: false) // trocar a própria senha (menu do usuário → Perfil)
             ->renderHook(PanelsRenderHook::AUTH_LOGIN_FORM_AFTER, fn () => view('filament.painel.link-site'))
             ->brandName('Rodrigues Home Game')
             ->brandLogo(fn () => view('filament.painel.marca'))
@@ -73,6 +75,8 @@ class PainelPanelProvider extends PanelProvider
             ])
             ->viteTheme('resources/css/filament/painel/theme.css')
             ->sidebarWidth('14.5rem') // 232px, como o AdminShell do design system
+            // Módulos do menu: o Painel de controle fica no topo, sem grupo.
+            ->navigationGroups(['Cadastros', 'Agenda', 'Dashboards e relatórios', 'Sistema'])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages') // Dashboard (tela 16), Calendario
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')

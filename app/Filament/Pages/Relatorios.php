@@ -19,6 +19,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Livewire\Attributes\Url;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use UnitEnum;
 
 /**
  * Tela 24: relatórios de jogos, entradas, prize pools, premiações, aluguéis e arrecadação, com filtro
@@ -31,7 +32,9 @@ class Relatorios extends Page
 
     protected static string|BackedEnum|null $navigationIcon = 'rh-chart';
 
-    protected static ?int $navigationSort = 90;
+    protected static string|UnitEnum|null $navigationGroup = 'Dashboards e relatórios';
+
+    protected static ?int $navigationSort = 20;
 
     protected static ?string $navigationLabel = 'Relatórios';
 

@@ -3,14 +3,11 @@
 namespace Tests\Feature\Painel;
 
 use App\Filament\Resources\Usuarios\Pages\CreateUsuario;
-use App\Filament\Resources\Usuarios\Pages\EditUsuario;
 use App\Filament\Resources\Usuarios\Pages\ListUsuarios;
 use App\Filament\Resources\Usuarios\UsuarioResource;
-use App\Models\Grupo;
 use App\Models\Usuario;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
 use Tests\Concerns\MontaNoite;
 use Tests\Concerns\UsaPainel;
@@ -43,11 +40,6 @@ class UsuariosTest extends TestCase
         Livewire::test(ListUsuarios::class)->assertTableColumnHidden('saldo_em_aberto');
     }
 
-    private function grupoDoSite(string $nome): int
-    {
-        return Grupo::findByName($nome, 'web')->id;
-    }
-
     public function test_lista_e_busca_por_apelido(): void
     {
         $this->entrarNoPainel('Admin');
@@ -78,76 +70,13 @@ class UsuariosTest extends TestCase
         $this->assertFalse($diego->acessa_site);
     }
 
-    public function test_admin_da_acesso_ao_site_e_o_operador_entra(): void
-    {
-        $this->entrarNoPainel('Admin');
-
-        Livewire::test(CreateUsuario::class)
-            ->fillForm([
-                'nome' => 'Paulo',
-                'acessa_site' => true,
-                'email' => ' Paulo@Exemplo.com ',
-                'password' => 'senha-segura',
-                'roles' => [$this->grupoDoSite('Operador')],
-            ])
-            ->call('create')
-            ->assertHasNoFormErrors();
-
-        $paulo = Usuario::query()->sole();
-        $this->assertSame('paulo@exemplo.com', $paulo->email);
-        $this->assertTrue(Hash::check('senha-segura', $paulo->password));
-        $this->assertTrue($paulo->hasRole('Operador'));
-        $this->assertTrue($paulo->can('entradas.registrar'));
-        $this->assertFalse($paulo->can('jogo.finalizar'));
-
-        $this->withoutVite()
-            ->post('/login', ['email' => 'paulo@exemplo.com', 'password' => 'senha-segura'])
-            ->assertRedirect(route('home'));
-        $this->assertAuthenticatedAs($paulo, 'web');
-    }
-
-    public function test_acesso_ao_site_exige_email_senha_e_grupo(): void
-    {
-        $this->entrarNoPainel('Admin');
-        Usuario::factory()->comAcesso()->create(['email' => 'ja@exemplo.com']);
-
-        Livewire::test(CreateUsuario::class)
-            ->fillForm(['nome' => 'Sem dados', 'acessa_site' => true])
-            ->call('create')
-            ->assertHasFormErrors(['email' => 'required', 'password' => 'required', 'roles' => 'required'])
-            ->assertSee('O campo e-mail é obrigatório.')
-            ->assertSee('O campo grupos do site é obrigatório.');
-
-        Livewire::test(CreateUsuario::class)
-            ->fillForm(['nome' => 'Repetido', 'acessa_site' => true, 'email' => 'ja@exemplo.com', 'password' => 'curta'])
-            ->call('create')
-            ->assertHasFormErrors(['email' => 'unique', 'password' => 'min']);
-    }
-
-    public function test_editar_sem_senha_mantem_a_atual(): void
-    {
-        $this->entrarNoPainel('Admin');
-        $operador = Usuario::factory()->comAcesso()->create(['apelido' => null]);
-        $operador->assignRole('Operador');
-
-        Livewire::test(EditUsuario::class, ['record' => $operador->getRouteKey()])
-            ->assertFormFieldIsVisible('password')
-            ->fillForm(['apelido' => 'Paulão', 'password' => ''])
-            ->call('save')
-            ->assertHasNoFormErrors();
-
-        $operador->refresh();
-        $this->assertSame('Paulão', $operador->apelido);
-        $this->assertTrue(Hash::check('password', $operador->password));
-    }
-
     public function test_grupo_geral_cadastra_jogador_mas_nao_da_acesso_nem_edita(): void
     {
         $this->entrarNoPainel('Geral');
         $existente = Usuario::factory()->create();
 
         Livewire::test(CreateUsuario::class)
-            ->assertFormFieldIsHidden('acessa_site')
+            ->assertSee('dê acesso em Sistema → Usuários do site')
             ->fillForm(['nome' => 'Felipe'])
             ->call('create')
             ->assertHasNoFormErrors();

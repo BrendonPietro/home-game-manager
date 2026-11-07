@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Url;
+use UnitEnum;
 
 /**
  * Tela 17: grade do mês com jogos, aluguéis de mesa, reservas e bloqueios. Clicar num dia vazio cria
@@ -34,7 +35,9 @@ class Calendario extends Page
 
     protected static string|BackedEnum|null $navigationIcon = 'rh-cal';
 
-    protected static ?int $navigationSort = 20;
+    protected static string|UnitEnum|null $navigationGroup = 'Agenda';
+
+    protected static ?int $navigationSort = 10;
 
     protected static ?string $navigationLabel = 'Calendário';
 

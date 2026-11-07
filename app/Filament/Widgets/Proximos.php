@@ -10,10 +10,12 @@ use App\Services\Painel\Indicadores;
 use Filament\Facades\Filament;
 use Filament\Widgets\Widget;
 
-/** Próximos eventos da agenda (tela 16), de hoje em diante, com link para o mês no calendário. */
+/** Painel de controle, ao lado dos atalhos: próximos eventos da agenda, de hoje em diante, com link para o mês no calendário. */
 class Proximos extends Widget
 {
     protected string $view = 'filament.painel.widgets.proximos';
+
+    protected int|string|array $columnSpan = ['default' => 'full', 'xl' => 1];
 
     protected static bool $isLazy = false;
 

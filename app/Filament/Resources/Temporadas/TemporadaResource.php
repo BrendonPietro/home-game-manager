@@ -22,9 +22,9 @@ class TemporadaResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = 'rh-clock';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Configurações';
+    protected static string|UnitEnum|null $navigationGroup = 'Cadastros';
 
-    protected static ?int $navigationSort = 110;
+    protected static ?int $navigationSort = 70;
 
     protected static ?string $modelLabel = 'temporada';
 

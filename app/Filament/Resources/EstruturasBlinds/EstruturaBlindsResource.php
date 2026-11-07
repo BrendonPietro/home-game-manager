@@ -15,6 +15,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
+use UnitEnum;
 
 /**
  * Estruturas de blinds (v2, docs/regras.md "Blinds e relógio"): níveis com small, big, ante e duração,
@@ -28,7 +29,9 @@ class EstruturaBlindsResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = 'rh-coins';
 
-    protected static ?int $navigationSort = 45;
+    protected static string|UnitEnum|null $navigationGroup = 'Cadastros';
+
+    protected static ?int $navigationSort = 50;
 
     // "Blinds" no menu e na lista; o que roda no torneio é o relógio.
     protected static ?string $modelLabel = 'estrutura de blinds';

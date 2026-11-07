@@ -16,7 +16,7 @@ class Permissoes
     private const RECURSOS = [
         'jogos' => 'Jogos', 'modelos' => 'Modelos', 'estruturas' => 'Blinds', 'rankings' => 'Rankings', 'usuarios' => 'Usuários',
         'seguranca' => 'Contas do painel', 'grupos' => 'Grupos', 'mesas' => 'Mesas', 'eventos' => 'Agenda',
-        'alugueis' => 'Aluguéis', 'temporadas' => 'Temporadas', 'relatorios' => 'Relatórios',
+        'alugueis' => 'Aluguéis', 'temporadas' => 'Temporadas', 'acessos' => 'Usuários do site', 'relatorios' => 'Relatórios',
         'financeiro' => 'Financeiro', 'configuracoes' => 'Configurações', 'pagamentos' => 'Pagamentos',
     ];
 

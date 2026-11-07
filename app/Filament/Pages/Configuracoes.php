@@ -33,9 +33,9 @@ class Configuracoes extends Page
 
     protected static string|BackedEnum|null $navigationIcon = 'rh-gear';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Configurações';
+    protected static string|UnitEnum|null $navigationGroup = 'Sistema';
 
-    protected static ?int $navigationSort = 100;
+    protected static ?int $navigationSort = 10;
 
     protected static ?string $navigationLabel = 'Padrões e premiação';
 

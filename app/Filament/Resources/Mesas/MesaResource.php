@@ -17,6 +17,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use UnitEnum;
 
 /**
  * Tela 22: mesas físicas do clube. Mesa usada em jogo não se exclui (MesaPolicy): desative.
@@ -27,7 +28,9 @@ class MesaResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = 'rh-table';
 
-    protected static ?int $navigationSort = 70;
+    protected static string|UnitEnum|null $navigationGroup = 'Cadastros';
+
+    protected static ?int $navigationSort = 40;
 
     protected static ?string $modelLabel = 'mesa';
 

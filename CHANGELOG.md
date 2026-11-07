@@ -10,6 +10,71 @@ Registro das atualizações do sistema do Rodrigues Home Game, organizadas por:
 - Docs: documentação;
 - Chore: manutenção.
 
+## 0.19.0
+
+Painel em módulos, etapa C: o Painel de controle vira a porta de entrada, com destaques e atalhos.
+
+### Feat
+- **Próximo jogo em destaque**: o em andamento ou o próximo agendado, com "em 5 dias", data por extenso e **onde a noite está** (agendado → rebuys → intervalo → entradas fechadas → finalizado). Agendado: confirmados, mesas, buy-in, blinds (ou valor da ficha), prize pool estimado e os rankings em que vale ponto. Em andamento: em jogo, entradas, nível do relógio, mesas, arrecadado e prize pool. Dinheiro só com `financeiro.ver`. Editar e Abrir no site; sem jogo agendado, mostra quantos estão em rascunho.
+- **Ranking em destaque**: dos rankings ativos que valem hoje, o que já distribuiu mais pontos, com o líder (troféu, pontos, vitórias e jogos), do 2º ao 5º, link para a classificação e os outros rankings que valem hoje.
+- **Atalhos** dos módulos (Cadastros, Agenda, Dashboards e relatórios, Sistema), só com o que a conta abre e na ordem do menu, cada tela com uma linha de contexto ("1 agendado · 2 em rascunho", "24 ativos", "1 de 2 ativas", "2 em aberto"…). Um cadastro novo do painel entra sozinho.
+- O caixa do mês (arrecadação, prize pools, aluguéis e valores pendentes) continua, só para quem tem `financeiro.ver`, e a agenda fica ao lado dos atalhos.
+
+### Style
+- No celular, os cartões de números do painel (caixa do mês, Métricas) ficam dois a dois, com o valor menor.
+
+### Refactor
+- Os gráficos dos últimos jogos (arrecadação, prize pool, jogadores e jogos por mês) foram para o rodapé das **Métricas**.
+- Os números soltos de jogadores, jogos no mês e mesas viraram a linha de contexto dos atalhos; o `VisaoGeral` virou `CaixaDoMes` (e `ProximoJogo`).
+- A conta da classificação do ranking foi para o model (`Ranking::classificacao`, `ordenarClassificacao`, `valendoHoje`), usada pela tela de classificação e pelo Painel de controle.
+
+### Test
+- `Painel\DashboardTest` refeito: a ordem da tela, o próximo jogo (agendado, em andamento e sem jogo), o caixa do mês, o ranking em destaque (o que mais pontuou, o que acabou e o inativo ficam fora, sem pontos, sem ranking), os atalhos do Admin e do Geral e os gráficos nas Métricas.
+
+## 0.18.0
+
+Painel em módulos, etapa B: as métricas do clube.
+
+### Feat
+- **Métricas** (Dashboards e relatórios, `/painel/metricas`, `relatorios.ver`): as médias dos jogos finalizados no período (mesmo filtro dos relatórios, padrão Tudo). Cartões com jogos, média de jogadores, média de prize pool, gasto por jogador, média de arrecadação, rebuys e add-ons por jogador e meses com jogo; médias em dinheiro arredondadas para o real.
+- Comparações de quanto cada jogador gasta, com "+X% da média" / "−X% da média": **por tipo de evento** (o modelo do torneio), **torneio × cash game** e **pelo valor do buy-in**. Gráficos mês a mês de gasto por jogador e de média de jogadores.
+- **Tipo de evento** do jogo (`jogos.modelo_id`): o jogo lembra de qual modelo saiu ao **Criar de modelo** e no **Duplicar**; jogo antigo ou criado do zero escolhe no select da aba Informações.
+
+### Test
+- `Painel\MetricasTest` (médias e comparações com 4 noites, o modelo lembrado ao criar e duplicar, a tela com filtro vazio e o Geral sem acesso).
+
+## 0.17.0
+
+Painel em módulos, etapa A: o menu e a separação de Jogadores e Usuários do site.
+
+### Feat
+- **Menu em módulos** (`navigationGroups` no provider): **Painel de controle** (o dashboard, no topo) · **Cadastros** (Jogos, Modelos, Jogadores, Mesas, Blinds, Rankings, Temporadas) · **Agenda** (Calendário, Aluguéis) · **Dashboards e relatórios** (Relatórios) · **Sistema** (Padrões e premiação, Usuários do site, Contas do painel, Grupos).
+- **Jogadores** (Cadastros, `/painel/jogadores`): o cadastro de pessoas, sem a parte de acesso ao site.
+- **Usuários do site** (Sistema, `UsuarioDoSiteResource`): só quem entra no site, com e-mail, senha e grupos do site; **Novo usuário do site**, **Dar acesso a um jogador** e **Tirar acesso** (a pessoa continua em Jogadores e sai do site na hora). Permissão nova do painel `acessos.*` (Admin e Desenvolvedor; o Geral não tem).
+
+### Test
+- `Painel\UsuariosDoSiteTest` (novo, dar e tirar acesso, validação, editar sem trocar a senha, Geral sem acesso); os casos de acesso saíram do `Painel\UsuariosTest`.
+
+## 0.16.0
+
+Contas de quem administra o clube e a troca da própria senha.
+
+### Feat
+- **Contas do clube** (`config/clube.php`, `ContasDoClubeSeeder`, em qualquer ambiente): `CONTA_DESENVOLVEDOR` (grupo Desenvolvedor no painel e no site) e `CONTAS_ADMIN` (Admin nos dois), no `.env` como `"Nome <email>, …"`, com senha inicial em `CONTA_DESENVOLVEDOR_SENHA` / `CONTAS_ADMIN_SENHA`. Cada pessoa ganha os dois logins, com o e-mail como login também no painel. Rodar o seed de novo não mexe em quem já existe. E-mails e senhas ficam fora do repositório.
+- Grupo **Desenvolvedor no site**, com todas as permissões do site (como o do painel), mesmo que o Admin perca alguma em Grupos.
+- **Minha conta** no site (`/conta`, pelo avatar da topbar): trocar a própria senha, com a senha atual (pelo menos 8 caracteres, diferente da atual; o "Lembrar acesso" dos outros aparelhos cai).
+- **Perfil** no painel (`App\Filament\Auth\Perfil`, menu da conta): nome e troca da senha, com a senha atual.
+- O login do painel aceita `@` (pode ser o e-mail).
+
+### Chore
+- As contas `dev` (painel) e `dev@rodrigues.test` (site) passam a ser criadas só no ambiente local; em produção entram só as do clube.
+
+### Fix
+- O aviso "Sem conexão" (etapa 1) mostrava o botão Fechar, que é só do aviso de toque perdido. Visto no navegador: poll sem rede, toque perdido e a volta.
+
+### Test
+- `ContasDoClubeTest` (leitura do `.env`, os dois logins e os grupos, seed de novo sem trocar a senha, painel pelo e-mail com o Perfil, Minha conta no site).
+
 ## 0.15.0
 
 Revisão geral, etapa 5: manutenção e otimizações.

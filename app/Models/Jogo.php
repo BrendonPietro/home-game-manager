@@ -31,6 +31,7 @@ class Jogo extends Model
     protected $fillable = [
         'e_modelo',
         'nome_modelo',
+        'modelo_id',
         'modalidade',
         'temporada_id',
         'nome',
@@ -139,6 +140,12 @@ class Jogo extends Model
     public function temporada(): BelongsTo
     {
         return $this->belongsTo(Temporada::class);
+    }
+
+    /** O torneio modelo de onde o jogo saiu (o tipo de evento nas Métricas). */
+    public function modelo(): BelongsTo
+    {
+        return $this->belongsTo(Jogo::class, 'modelo_id');
     }
 
     public function floor(): BelongsTo

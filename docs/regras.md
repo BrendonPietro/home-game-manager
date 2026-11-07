@@ -15,6 +15,8 @@ Painel e site têm logins separados, cada um com seu guard:
 
 - **Painel** → guard `painel`, tabela `seguranca`, model `App\Models\Seguranca`. Filament: `->authGuard('painel')`.
 - **Site** → guard `web`, tabela `usuarios`, model `App\Models\Usuario`. Entra pelo e-mail e senha; só quem tem `acessa_site` e está ativo (excluído também não entra). 5 tentativas erradas por e-mail+IP bloqueiam por 1 minuto. Esqueceu a senha: o organizador troca no painel (sem recuperação por e-mail na v1).
+- **Contas do clube** (`config/clube.php`, `ContasDoClubeSeeder`): quem administra ganha os dois logins (site e painel), com o e-mail como login também no painel (o login do painel aceita `@`). Desenvolvedor fica no grupo Desenvolvedor dos dois lados (no site, com todas as permissões, mesmo se o Admin perder alguma); os admins, no Admin.
+- **Trocar a própria senha**: no site, **Minha conta** (`/conta`, pelo avatar da topbar: senha atual, nova com pelo menos 8 caracteres e diferente da atual; o "Lembrar acesso" dos outros aparelhos cai); no painel, **Perfil** (`App\Filament\Auth\Perfil`: nome e senha, com a senha atual).
 - **Sessão** de 12 h parada (`SESSION_LIFETIME=720`); cada toque e o poll da tela ao vivo renovam a contagem. Sessão vencida no meio de um clique recarrega a página (sem o aviso em inglês do Livewire).
 - **Continuar no site** (middleware `site.acesso`, `App\Http\Middleware\AcessoDoSite`, também em cada clique do Livewire): conta desativada no painel (`ativo` ou `acessa_site` desligado) sai na hora, mesmo com "Lembrar acesso". Sem a permissão `site.fora_da_noite` (o Operador), o site só existe com um jogo em andamento: o começo do site e outro jogo levam para a tela ao vivo; sem jogo em andamento (acabou o torneio), a sessão do site acaba e fica a página "Nenhum torneio em andamento" (`/sem-torneio`). Sair assim não tira o painel do mesmo navegador.
 
@@ -45,7 +47,7 @@ Ninguém dá o que não tem: na tela de contas do painel só aparecem os grupos 
 | Operador | web | Só lança: buy-in, rebuy, add-on, opcionais, pagamentos, eliminações; confirma jogadores e faz cadastro rápido. Não altera o torneio |
 
 **Permissões do painel** (`guard_name = painel`), formato `recurso.acao`:
-`{jogos,modelos,estruturas,rankings,usuarios,seguranca,grupos,mesas,eventos,alugueis,temporadas}.{ver,criar,editar,excluir}`, `relatorios.ver`, `relatorios.exportar`, `financeiro.ver`, `configuracoes.editar`. Cada resource do Filament tem uma policy que consulta essas permissões.
+`{jogos,modelos,estruturas,rankings,usuarios,seguranca,grupos,mesas,eventos,alugueis,temporadas,acessos}.{ver,criar,editar,excluir}` (`usuarios.*` = Cadastros → Jogadores; `acessos.*` = Sistema → Usuários do site: e-mail, senha e grupos do site), `relatorios.ver`, `relatorios.exportar`, `financeiro.ver`, `configuracoes.editar`. Cada resource do Filament tem uma policy que consulta essas permissões.
 
 **Permissões do site** (`guard_name = web`):
 - Operador: `entradas.registrar`, `pagamentos.registrar`, `eliminacoes.registrar`, `jogadores.confirmar`, `usuarios.cadastro_rapido`.
@@ -68,7 +70,7 @@ Checadas nas Actions (Gate) e com `@can` no Blade para esconder botões.
 
 | Tabela | Colunas principais | Observações |
 |---|---|---|
-| `jogos` | e_modelo, nome_modelo, modalidade, temporada_id, nome, data, horario, status, fase, floor_id, metodo_premiacao, lugares_por_mesa, tamanho_mesa_final, estrutura_blinds_id, nivel_atual, blinds_atual, relogio_nivel_id, relogio_segundos, relogio_desde, relogio_iniciado_em, valor_ficha, observacoes, iniciado_em, intervalo_aberto_em, entradas_fechadas_em, finalizado_em | `e_modelo = true` = torneio modelo (só para copiar; fora do site e do calendário). `modalidade`: `torneio` / `cash_game`. `floor_id` → `usuarios` |
+| `jogos` | e_modelo, nome_modelo, modelo_id, modalidade, temporada_id, nome, data, horario, status, fase, floor_id, metodo_premiacao, lugares_por_mesa, tamanho_mesa_final, estrutura_blinds_id, nivel_atual, blinds_atual, relogio_nivel_id, relogio_segundos, relogio_desde, relogio_iniciado_em, valor_ficha, observacoes, iniciado_em, intervalo_aberto_em, entradas_fechadas_em, finalizado_em | `e_modelo = true` = torneio modelo (só para copiar; fora do site e do calendário). `modelo_id` → `jogos`: o modelo de onde o jogo saiu (tipo de evento das Métricas). `modalidade`: `torneio` / `cash_game`. `floor_id` → `usuarios` |
 | `jogo_itens` | jogo_id, tipo, nome, valor, fichas, percentual_premiacao, compravel_com (json), obrigatorio, limite_por_jogador, padrao, ativo, ordem | O que o jogador pode comprar. `tipo`: `buyin` / `rebuy` / `addon` / `opcional`. `padrao = true` no buy-in, rebuy e add-on que já vêm no cadastro (não se apagam, só se desativam); variações como "Rebuy duplo" são linhas extras do mesmo tipo. `percentual_premiacao`: quanto do valor vai para a premiação, de 0 a 100 (entradas 100 por padrão, opcionais 0). Opcional: `compravel_com` = `[buyin, rebuy, addon]` (junto de cada entrada) ou `[jogador]` (1 por jogador) |
 | `jogo_taxas` | jogo_id, nome, calculo, valor, quantidade, ordem | Tiradas da premiação antes de dividir (dealers, casa…). `calculo`: `fixo` / `percentual` / `por_unidade` / `por_jogador` / `por_entrada` |
 | `jogo_premiacoes` | jogo_id, posicao, percentual, valor | Só torneio. `valor` gravado ao fechar entradas |
@@ -223,7 +225,7 @@ Detalhes da `Pontuacao`: vale nos rankings **ativos** ligados ao jogo; entra que
 
 ## Torneios modelo
 
-`jogos.e_modelo = true` guarda um modelo com entradas, opcionais, taxas, premiação, rankings e mesas. Modelos não aparecem no site nem no calendário. `Actions\Jogo\CriarDeModelo` copia tudo e recebe só nome, data e horário. No `JogoResource`, a ação "Salvar como modelo" faz o caminho inverso.
+`jogos.e_modelo = true` guarda um modelo com entradas, opcionais, taxas, premiação, rankings e mesas. Modelos não aparecem no site nem no calendário. `Actions\Jogo\CriarDeModelo` copia tudo e recebe só nome, data e horário; o jogo novo guarda o modelo em `modelo_id` (o Duplicar mantém). No `JogoResource`, a ação "Salvar como modelo" faz o caminho inverso.
 
 ## Cálculos
 

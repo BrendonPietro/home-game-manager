@@ -477,10 +477,23 @@
         }
     }
 
+    /* No celular os números ficam dois a dois (com o valor menor), para a tela não virar uma fila */
     @media (max-width: 639px) {
-        .rh-dash__linha,
         .rh-dash__linha--topo {
             grid-template-columns: minmax(0, 1fr);
+        }
+
+        .rh-dash__linha {
+            gap: 12px;
+        }
+
+        .rh-dash__linha .rh-stat {
+            padding: 12px;
+        }
+
+        .rh-dash__linha .rh-stat__v {
+            font-size: 1.375rem;
+            line-height: 1.75rem;
         }
     }
 
@@ -690,17 +703,374 @@
         display: block;
     }
 
+    /* Métricas: barra de uma cor só na célula (o número fica do lado, em texto) e os dois gráficos do mês */
+    :root {
+        --rh-medida: var(--color-gray-400);
+    }
+
+    .dark {
+        --rh-medida: var(--color-gray-500);
+    }
+
+    .rh-medida {
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+    }
+
+    .rh-medida__trilho {
+        width: 96px;
+        height: 6px;
+        overflow: hidden;
+        background: var(--rh-linha);
+        border-radius: 4px;
+    }
+
+    .rh-medida__barra {
+        display: block;
+        height: 100%;
+        background: var(--rh-medida);
+        border-radius: 4px;
+    }
+
+    .rh-metricas__meses {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    @media (max-width: 1023px) {
+        .rh-metricas__meses {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .rh-medida__trilho {
+            display: none;
+        }
+    }
+
     .rh-grafico-vazio {
         margin: 0;
         font-size: 0.875rem;
         color: var(--rh-ink-2);
     }
 
-    /* Próximos: ocupa duas linhas na grade de 3 colunas */
-    @media (min-width: 1280px) {
-        .rh-wi-proximos {
-            grid-row: span 2;
+    /* ── Painel de controle: próximo jogo em destaque, ranking, atalhos e agenda ── */
+
+    /* Widgets lado a lado ficam da mesma altura (o cartão estica até o vizinho) */
+    .rh-wi-cheio,
+    .rh-wi-cheio > .fi-section {
+        height: 100%;
+    }
+
+    .rh-destaque {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        height: 100%;
+        padding: 20px;
+        background: var(--rh-painel);
+        border: 1px solid var(--rh-borda);
+        border-radius: var(--radius-xl);
+        color: var(--rh-ink);
+    }
+
+    .rh-destaque__topo {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .rh-destaque__titulo {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 12rem;
+    }
+
+    .rh-destaque__nome {
+        font-family: var(--font-display);
+        font-size: 1.875rem;
+        font-weight: 500;
+        line-height: 2.25rem;
+    }
+
+    .rh-destaque__acoes {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .rh-destaque__numeros {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 20px 16px;
+        margin: 0;
+        padding-top: 16px;
+        border-top: 1px solid var(--rh-linha);
+    }
+
+    .rh-destaque__numeros div {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 0;
+    }
+
+    .rh-destaque__numeros dd {
+        margin: 0;
+        overflow: hidden;
+        font-family: var(--font-display);
+        font-size: 1.5rem;
+        font-weight: 500;
+        line-height: 1.75rem;
+        font-variant-numeric: tabular-nums;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    @media (max-width: 639px) {
+        .rh-destaque__numeros {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
         }
+    }
+
+    /* Onde a noite está: passos ligados por um traço; o ponto do atual em vermelho, os feitos cheios */
+    .rh-etapas {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 12px;
+        margin: auto 0;
+        padding: 0;
+        list-style: none;
+        font-size: 0.8125rem;
+        color: var(--rh-ink-3);
+    }
+
+    .rh-etapas li {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .rh-etapas li:not(:last-child)::after {
+        content: '';
+        width: 24px;
+        height: 1px;
+        margin-inline-start: 4px;
+        background: var(--rh-borda);
+    }
+
+    @media (max-width: 639px) {
+        .rh-etapas li:not(:last-child)::after {
+            display: none;
+        }
+    }
+
+    .rh-etapas__ponto {
+        width: 8px;
+        height: 8px;
+        border: 1px solid var(--rh-borda);
+        border-radius: 999px;
+    }
+
+    .rh-etapas .is-feito {
+        color: var(--rh-ink-2);
+    }
+
+    .rh-etapas .is-feito .rh-etapas__ponto {
+        background: var(--rh-ink-3);
+        border-color: var(--rh-ink-3);
+    }
+
+    .rh-etapas .is-atual {
+        font-weight: 500;
+        color: var(--rh-ink);
+    }
+
+    .rh-etapas .is-atual .rh-etapas__ponto {
+        background: var(--color-primary-600);
+        border-color: var(--color-primary-600);
+    }
+
+    .rh-destaque__rodape {
+        margin: 0;
+        font-size: 0.8125rem;
+        color: var(--rh-ink-2);
+    }
+
+    .fi-section .rh-destaque__rodape {
+        margin-top: 12px;
+    }
+
+    .rh-datebox--lg {
+        width: 76px;
+        height: 80px;
+    }
+
+    .rh-datebox--lg b {
+        font-size: 2.25rem;
+        line-height: 2.25rem;
+    }
+
+    /* Ranking: o líder num bloco elevado, com o troféu; os seguintes numa lista simples */
+    .rh-ranking {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .rh-ranking__lider {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        background: var(--rh-elevado);
+        border-radius: var(--radius-lg);
+    }
+
+    .rh-ranking__trofeu {
+        flex: none;
+        width: 28px;
+        height: 28px;
+        color: var(--color-warning-500);
+    }
+
+    .dark .rh-ranking__trofeu {
+        color: var(--color-warning-400);
+    }
+
+    .rh-ranking__quem {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .rh-ranking__nome {
+        overflow: hidden;
+        font-family: var(--font-display);
+        font-size: 1.375rem;
+        font-weight: 500;
+        line-height: 1.75rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .rh-ranking__pontos {
+        font-family: var(--font-display);
+        font-size: 1.125rem;
+        font-weight: 500;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+
+    .rh-ranking__lista {
+        display: flex;
+        flex-direction: column;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .rh-ranking__lista li {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--rh-linha);
+        font-size: 0.875rem;
+    }
+
+    .rh-ranking__lista li:last-child {
+        border-bottom: 0;
+    }
+
+    .rh-ranking__pos {
+        width: 2rem;
+        font-variant-numeric: tabular-nums;
+        color: var(--rh-ink-2);
+    }
+
+    .rh-ranking__nome-lista {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .rh-ranking__pts {
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+        color: var(--rh-ink-2);
+    }
+
+    /* Atalhos: os módulos do menu em duas colunas (uma no celular), cada tela com a linha de contexto */
+    .rh-atalhos {
+        column-count: 2;
+        column-gap: 32px;
+    }
+
+    @media (max-width: 767px) {
+        .rh-atalhos {
+            column-count: 1;
+        }
+    }
+
+    .rh-atalhos__grupo {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding-bottom: 16px;
+        break-inside: avoid;
+    }
+
+    .rh-atalhos__grupo .rh-label {
+        padding-bottom: 4px;
+    }
+
+    .rh-atalho {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px;
+        margin-inline: -8px;
+        border-radius: var(--radius-md);
+        color: var(--rh-ink);
+        transition: background-color var(--rh-dur-1) var(--rh-ease);
+    }
+
+    .rh-atalho:hover {
+        background: var(--rh-painel-hover);
+    }
+
+    .rh-atalho__icone {
+        flex: none;
+        width: 20px;
+        height: 20px;
+        color: var(--rh-ink-2);
+    }
+
+    .rh-atalho__rotulo {
+        flex: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .rh-atalho__ctx {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        font-size: 0.8125rem;
+        text-align: right;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--rh-ink-2);
     }
 
     .rh-wi-proximos .fi-section-content {

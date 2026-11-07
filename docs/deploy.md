@@ -75,6 +75,21 @@ php artisan view:cache
 - Permissão nova do site em uma versão (ex.: `site.fora_da_noite`): `php artisan db:seed --class=PermissoesSeeder --force` (volta os grupos padrão às permissões do seed).
 - PHP 8.5 (Laravel 13 recebe correções de segurança até 17/03/2028). Conferir a versão do PHP antes de contratar a hospedagem.
 
+## Contas do clube
+
+O `php artisan db:seed --force` da primeira subida cria as contas de quem administra (não os jogadores), no site e no painel, com o e-mail como login nos dois (`config/clube.php`):
+
+```env
+CONTA_DESENVOLVEDOR="Nome <email>"          # grupo Desenvolvedor: faz tudo
+CONTA_DESENVOLVEDOR_SENHA=
+CONTAS_ADMIN="Nome <email>, Nome <email>"   # grupo Admin
+CONTAS_ADMIN_SENHA=
+```
+
+- Cada um entra com a senha inicial e troca: no site em **Minha conta** (o avatar na topbar), no painel em **Perfil** (menu da conta). Depois disso, as duas `*_SENHA` podem sair do `.env` de produção.
+- Rodar o seed de novo não mexe em quem já existe (a senha trocada continua); conta nova entra acrescentando o e-mail na lista e rodando `php artisan db:seed --class=ContasDoClubeSeeder --force`, ou pelo painel (Usuários e Segurança).
+- As contas `dev` (painel) e `dev@rodrigues.test` (site) e as de teste só são criadas no ambiente local.
+
 ## Backup
 
 O banco é o caixa do clube (entradas, pagamentos, acertos e o histórico de quem mexeu em quê). Antes do piloto:

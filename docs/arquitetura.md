@@ -46,11 +46,11 @@ app/
 │                               # DirecaoPagamento, FormaPagamento, StatusParticipante, TipoEvento, StatusAluguel, ComandoRelogio,
 │                               # TipoAlteracao (histórico)
 ├── Filament/
-│   ├── Pages/                  # Dashboard (tela 16), Calendario, Relatorios, Configuracoes
+│   ├── Pages/                  # Dashboard (tela 16, Painel de controle), Calendario, Metricas, Relatorios, Configuracoes
 │   ├── Schemas/                # EventoForm (calendário e aluguéis)
 │   ├── Resources/              # Jogo (abas Confirmados e Histórico), Modelo, EstruturaBlinds, Ranking, Usuario, Seguranca,
 │   │                           # Grupo, Mesa, Aluguel, Temporada
-│   └── Widgets/                # VisaoGeral, Proximos, GraficoDeBarras (Arrecadacao/PrizePool/JogadoresPorJogo, JogosPorMes)
+│   └── Widgets/                # ProximoJogo, RankingEmDestaque, CaixaDoMes, Atalhos, Proximos; GraficoDeBarras (Arrecadacao/PrizePool/JogadoresPorJogo, JogosPorMes) nas Métricas
 ├── Http/
 │   ├── Controllers/            # AuthController, HomeController, JogoController, RelogioPublicoController (link do relógio);
 │   │                           # Painel/ImprimirRelatorio (PDF)
@@ -103,6 +103,7 @@ Tudo atrás de `auth` (guard `web`, tabela `usuarios`) e das permissões do site
 | Tela | Rota | Nome | Implementação |
 |---|---|---|---|
 | 01 Login | `GET/POST /login`, `POST /logout` | `login`, `logout` | `AuthController` (e-mail e senha; `guest:web` / `auth:web`) |
+| Minha conta | `GET/PUT /conta` | `conta`, `conta.atualizar` | `ContaController`: trocar a própria senha (pelo avatar da topbar) |
 | Sem torneio | `GET /sem-torneio` | `sem-torneio` | Página sem login para onde vai quem não tem `site.fora_da_noite` quando não há jogo em andamento |
 | 02 Dashboard | `GET /` | `home` | `HomeController@index` (jogo ao vivo ou próximo agendado com prize pool real/estimado, números, últimos finalizados, agenda, última noite) |
 | 03 Seleção do jogo | `GET /jogos` | `jogos.index` | `JogoController@index` (abas Próximos / Em andamento / Finalizados, busca `?busca=`, destaque do jogo ao vivo ou de hoje) |
@@ -127,7 +128,7 @@ O site só mostra jogos reais agendados, em andamento e finalizados (`Jogo::noSi
 | Tela | Onde | Tipo |
 |---|---|---|
 | 15 Login | `/painel/login` | Login do Filament com as contas de `seguranca` |
-| 16 Dashboard | `/painel` | `App\Filament\Pages\Dashboard` + widgets Blade (próximo jogo, números, valores pendentes, gráficos, próximos) |
+| 16 Painel de controle | `/painel` | `App\Filament\Pages\Dashboard` + widgets Blade (próximo jogo e ranking em destaque, caixa do mês com valores pendentes, atalhos dos módulos, próximos) |
 | 17 Calendário | `/painel/calendario` | Página custom (grade `rh-cal` em Blade) |
 | 18 Criar/editar evento | modal no calendário | Ação com o `Filament\Schemas\EventoForm` (o mesmo dos aluguéis) |
 | 19 Lista de jogos | `/painel/jogos` | `JogoResource` |

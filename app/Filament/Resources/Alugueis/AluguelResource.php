@@ -23,6 +23,7 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\Indicator;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use UnitEnum;
 
 /**
  * Tela 23: aluguéis de mesa. Cada aluguel é um evento do calendário (tipo aluguel) com cliente, valor e
@@ -34,7 +35,9 @@ class AluguelResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = 'rh-key';
 
-    protected static ?int $navigationSort = 80;
+    protected static string|UnitEnum|null $navigationGroup = 'Agenda';
+
+    protected static ?int $navigationSort = 20;
 
     protected static ?string $modelLabel = 'aluguel';
 

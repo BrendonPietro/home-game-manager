@@ -43,6 +43,11 @@
 
 	&__fechar {
 		flex: none;
+
+		// O .rh-btn tem display próprio, que venceria o atributo hidden (só o toque perdido tem Fechar).
+		&[hidden] {
+			display: none;
+		}
 	}
 
 	@include ate(celular) {

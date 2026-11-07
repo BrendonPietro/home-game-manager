@@ -14,6 +14,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use UnitEnum;
 
 /**
  * Tela 21: todas as pessoas do clube (jogadores, dealers, floor e quem opera o site).
@@ -25,11 +26,17 @@ class UsuarioResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = 'rh-users';
 
-    protected static ?int $navigationSort = 60;
+    protected static string|UnitEnum|null $navigationGroup = 'Cadastros';
 
-    protected static ?string $modelLabel = 'usuário';
+    protected static ?int $navigationSort = 30;
 
-    protected static ?string $pluralModelLabel = 'usuários';
+    protected static ?string $navigationLabel = 'Jogadores';
+
+    protected static ?string $slug = 'jogadores';
+
+    protected static ?string $modelLabel = 'jogador';
+
+    protected static ?string $pluralModelLabel = 'jogadores';
 
     protected static ?string $recordTitleAttribute = 'nome';
 

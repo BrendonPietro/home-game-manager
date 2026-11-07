@@ -16,13 +16,23 @@ Painel em `/painel` para configurar jogos (torneio e cash game), usuários, cont
 | Fonte | Barlow (local, via tema custom) |
 | Tema custom | `resources/css/filament/painel/theme.css` (`php artisan make:filament-theme`), entrada no Vite. Segue as regras do visual do [design-system.md](design-system.md#regras-do-visual-valem-para-tela-nova): raios 4/8/12 (`--radius-md/lg/xl`), títulos e números em 500, rótulos sem caixa alta, ícones com traço 1.5, curva `--rh-ease` |
 
-Menu (via `navigationSort`): Dashboard, Calendário, Jogos, Modelos, Blinds (45), Rankings, Usuários, Mesas, Aluguéis, Relatórios, Segurança, Configurações. Itens sem permissão `.ver` não aparecem.
+Menu em módulos (`->navigationGroups()` no provider; cada item com `$navigationGroup` e `$navigationSort`). Itens sem permissão `.ver` não aparecem.
+
+| Módulo | Itens |
+|---|---|
+| Painel de controle | O dashboard (`Pages\Dashboard`), no topo, sem grupo: próximo jogo e ranking em destaque, caixa do mês, atalhos dos módulos e agenda |
+| Cadastros | Jogos, Modelos, Jogadores (`UsuarioResource`, `/painel/jogadores`), Mesas, Blinds, Rankings, Temporadas |
+| Agenda | Calendário, Aluguéis |
+| Dashboards e relatórios | Métricas, Relatórios |
+| Sistema | Padrões e premiação (Configurações), Usuários do site (`UsuarioDoSiteResource`), Contas do painel (`SegurancaResource`), Grupos |
+
+**Jogadores × Usuários do site**: a mesma tabela `usuarios`. Em Cadastros → **Jogadores** ficam todas as pessoas (dados, foto, dealer/floor, ativo; `usuarios.*`, o Geral cadastra). Em Sistema → **Usuários do site** ficam só as que entram no site (`acessa_site`), com e-mail, senha e grupos do site, e a permissão própria `acessos.*` (Admin e Desenvolvedor): **Novo usuário do site**, **Dar acesso a um jogador** (escolhe alguém do cadastro) e **Tirar acesso** (a pessoa continua em Jogadores; sai do site na hora).
 
 ## Resources
 
 | Resource | Destaques |
 |---|---|
-| `JogoResource` | Modalidade (torneio / cash game) no topo. Abas: Informações · Blinds (só torneio: estrutura de blinds e os níveis dela) · Dinheiro (Entradas: buy-in, rebuy e add-on padrão com **+** para variações; Opcionais; em cada linha, quanto vai para a premiação (100 / 50 / 0 % ou Outro, digitado); Taxas; simulação do prize pool ao lado) · Premiação (só torneio; valida soma 100%) · Rankings (select múltiplo) · Mesas (dealer por mesa, floor do jogo). Ações: Abrir (site), Duplicar, Salvar como modelo, Ver. Somente leitura quando `finalizado` |
+| `JogoResource` | Modalidade (torneio / cash game) no topo. Abas: Informações (com o **Tipo de evento**: o modelo de onde o jogo saiu, `jogos.modelo_id`, que as Métricas usam para comparar) · Blinds (só torneio: estrutura de blinds e os níveis dela) · Dinheiro (Entradas: buy-in, rebuy e add-on padrão com **+** para variações; Opcionais; em cada linha, quanto vai para a premiação (100 / 50 / 0 % ou Outro, digitado); Taxas; simulação do prize pool ao lado) · Premiação (só torneio; valida soma 100%) · Rankings (select múltiplo) · Mesas (dealer por mesa, floor do jogo). Ações: Abrir (site), Duplicar, Salvar como modelo, Ver. Somente leitura quando `finalizado` |
 
 **Jogos, como está (fase 1):**
 - Lista só com jogos reais (modelos ficam no `ModeloResource`), com data, modalidade, status, jogadores e arrecadação.
@@ -66,16 +76,20 @@ Convenções dos resources:
 - Dinheiro nas colunas com `Dinheiro::brl()`; nos campos, `numeric` com prefixo `R$`.
 - Cadastros pequenos (mesas) são resources simples (`--simple`): uma página, criar e editar em modal.
 
-## Widgets do dashboard
+## Painel de controle
 
-Página `App\Filament\Pages\Dashboard` (tela 16; substitui o Dashboard padrão e o `AccountWidget`): subtítulo com o mês, botão **Novo jogo**, grade de 3 colunas (2 no tablet, 1 no celular). Os números vêm do `App\Services\Painel\Indicadores` (centavos, pela `Calculadora` e pelos `Saldos`). Os widgets são Blade com as classes do design system no tema (`rh-stat`, `rh-datebox`, `rh-bars`, `rh-li`), sem Chart.js, e carregam junto com a página (`$isLazy = false`).
+Página `App\Filament\Pages\Dashboard` (tela 16; substitui o Dashboard padrão e o `AccountWidget`): a porta de entrada do painel, com subtítulo do mês e botão **Novo jogo**. Grade de 3 colunas no desktop (destaque e atalhos em 2, ranking e agenda em 1; o resto uma embaixo da outra). Os widgets são Blade com as classes do design system no tema (`rh-destaque`, `rh-ranking`, `rh-atalhos`, `rh-stat`, `rh-datebox`, `rh-li`) e carregam junto com a página (`$isLazy = false`); os lado a lado ficam da mesma altura (`rh-wi-cheio`). Números do `App\Services\Painel\Indicadores` (centavos, pela `Calculadora` e pelos `Saldos`).
 
-- `VisaoGeral` (largura toda):
-  - Próximo jogo num cartão mais largo (comum, no claro e no escuro; o feltro fica só na mesa do site): o em andamento ou o próximo agendado, com data, confirmados, mesas, Editar (ou Ver) e Abrir no site. Sem jogo: "Nenhum jogo agendado" + Novo jogo.
-  - Jogadores cadastrados (ativos · inativos), jogos no mês (agendados, em andamento e finalizados; quantos hoje ou finalizados) e mesas disponíveis (ativas / total, quais estão inativas).
-  - Com `financeiro.ver`: arrecadação e prize pools do mês (jogos em andamento ou finalizados), aluguéis pagos no mês e **valores pendentes**: o que os jogadores devem nos jogos finalizados + aluguéis reservados ou confirmados cuja data já passou, e quanto o caixa deve. O "ver" abre a lista (jogo, jogador, quanto, link para o fechamento; aluguéis com link para a tela de aluguéis).
-- `ArrecadacaoPorJogo` e `PrizePoolPorJogo` (`financeiro.ver`), `JogadoresPorJogo` e `JogosPorMes` (`jogos.ver`): base `GraficoDeBarras`. Últimos 8 jogos finalizados (rótulo "#18" pelo nome, ou a data) e os últimos 6 meses. Barras no cinza da rampa (`--rh-barra`), só a última em `red-500` (um acento por gráfico), valor em cima ("2,1k") e dica com o nome e o valor.
-- `Proximos` (`eventos.ver`): agenda de hoje em diante (7 itens), com data, tipo, horário, mesas e "rascunho"; cada linha abre o mês no calendário. Ocupa duas linhas à direita no desktop.
+- `ProximoJogo` (`jogos.ver`), em destaque: o jogo em andamento ou o próximo agendado ("Próximo torneio · em 5 dias"), data por extenso e horário, Editar (ou Ver) e Abrir no site ("Abrir a noite" com o jogo em andamento).
+  - **Onde a noite está** (`ProximoJogo::etapas`): agendado → rebuys → intervalo → entradas fechadas → finalizado no torneio (agendado → em andamento → finalizado no cash game), o atual com o ponto vermelho.
+  - Números em 3 colunas. Agendado: confirmados, mesas, buy-in, blinds (ou valor da ficha), prize pool estimado (`Calculadora::simular` com os confirmados; só `financeiro.ver`) e em quais rankings vale ponto. Em andamento: em jogo ("9 de 12"), entradas, nível (pelo relógio, sem gravar; sem estrutura, o digitado na tela ao vivo), mesas e, com `financeiro.ver`, arrecadado e prize pool.
+  - Sem jogo: "Nenhum jogo agendado", quantos estão em rascunho (Ver jogos) e Novo jogo.
+- `RankingEmDestaque` (`rankings.ver`): dos rankings ativos que valem hoje (`Ranking::valendoHoje`), o que já distribuiu mais pontos (`Indicadores::rankingEmDestaque`). O líder num bloco com o troféu (pontos, vitórias e jogos), do 2º ao 5º numa lista, link para a Classificação e os outros que valem hoje. A conta é a mesma da tela de classificação (`Ranking::classificacao` + `ordenarClassificacao`).
+- `CaixaDoMes` (`financeiro.ver`): arrecadação e prize pools do mês (jogos em andamento ou finalizados), aluguéis pagos no mês e **valores pendentes**: o que os jogadores devem nos jogos finalizados + aluguéis reservados ou confirmados cuja data já passou, e quanto o caixa deve. O "ver" abre a lista (jogo, jogador, quanto, link para o fechamento; aluguéis com link para a tela de aluguéis).
+- `Atalhos`: os módulos do menu (`App\Services\Painel\Atalhos`), só com o que a conta pode abrir, na ordem do menu. Lê os resources e as páginas do próprio painel (grupo, rótulo, ícone, `canAccess`), então um cadastro novo entra sozinho; cada tela traz uma linha de contexto ("1 agendado · 2 em rascunho", "24 ativos", "1 de 2 ativas", "2 em aberto"…).
+- `Proximos` (`eventos.ver`): agenda de hoje em diante (7 itens), com data, tipo, horário, mesas e "rascunho"; cada linha abre o mês no calendário.
+
+Os gráficos dos últimos jogos ficam no rodapé das **Métricas** (Dashboards e relatórios): `ArrecadacaoPorJogo` e `PrizePoolPorJogo` (`financeiro.ver`), `JogadoresPorJogo` e `JogosPorMes` (`jogos.ver`), base `GraficoDeBarras`. Últimos 8 jogos finalizados (rótulo "#18" pelo nome, ou a data) e os últimos 6 meses, sem seguir o filtro da página. Barras no cinza da rampa (`--rh-barra`), só a última em `red-500` (um acento por gráfico), valor em cima ("2,1k") e dica com o nome e o valor. Sem Chart.js.
 
 ## Páginas custom
 
@@ -85,6 +99,12 @@ Página `App\Filament\Pages\Dashboard` (tela 16; substitui o Dashboard padrão e
   - Aviso de mesa ocupada (`Services\Agenda\Conflitos`): mostra se a mesa está livre ou com quem ela já está nesse horário. Só avisa, não impede.
   - Jogo não se cria aqui: o botão **Novo jogo** leva ao cadastro, e o evento do jogo vem do `EventoDoJogo`. Jogo em rascunho aparece tracejado; aluguel cancelado sai da grade.
   - Permissões: calendário com `eventos.*` (o Geral só vê), tela de aluguéis com `alugueis.*`.
+- **Métricas** (`App\Filament\Pages\Metricas`, `/painel/metricas`; `relatorios.ver`) — as médias dos jogos **finalizados** no período (o mesmo `Filtro` dos relatórios, padrão Tudo), calculadas no `App\Services\Relatorios\Metricas`:
+  - Cartões: jogos finalizados, média de jogadores, média de prize pool, gasto por jogador (arrecadação ÷ jogadores, então cada noite pesa pelo tamanho dela), média de arrecadação, rebuys e add-ons por jogador e meses com jogo. Médias em dinheiro arredondadas para o real.
+  - Três comparações, do maior gasto por jogador para o menor, cada grupo com "+X% da média" / "−X% da média" do gasto geral: **por tipo de evento** (o modelo de onde o jogo saiu, `jogos.modelo_id`; sem modelo = "Sem modelo"), **torneio × cash game** (no cash game o prize pool é o que está nas fichas) e **pelo valor do buy-in** (o buy-in padrão do jogo).
+  - Mês a mês: gasto por jogador e média de jogadores, um gráfico de barras para cada (nunca dois eixos), o mês mais recente em destaque.
+  - No rodapé, os gráficos dos últimos jogos (ver Painel de controle), que não seguem o filtro.
+  - `jogos.modelo_id` nasce no **Criar de modelo** e passa adiante no **Duplicar**; jogo antigo ou criado do zero escolhe no select **Tipo de evento** do cadastro. O próprio modelo não tem.
 - **Relatórios** (`App\Filament\Pages\Relatorios`, `/painel/relatorios?relatorio=premiacoes`, tela 24; `relatorios.ver`) — as contas ficam no `App\Services\Relatorios\Relatorios`, que devolve um `Relatorio` (colunas, linhas cruas em centavos e cartões de resumo); a tela e os arquivos só formatam.
   - Filtros (`Services\Relatorios\Filtro`): período (temporadas, este mês, mês passado, últimos 30 dias, este ano, tudo ou personalizado; padrão = temporada de hoje, senão o ano), jogo e jogador. O período vale pela data do jogo ou do aluguel.
   - Seis relatórios, escolhidos nos cartões: **Jogos** (todos menos rascunho: status, confirmados, jogadores com buy-in, entradas, mesas, arrecadado), **Entradas** (buy-ins, rebuys, add-ons e opcionais por jogo; com jogador, só as dele), **Prize pools** (arrecadado, taxas, fora da premiação e prize pool), **Premiações** (só finalizados; por jogador, do melhor resultado para o pior, com ITM; com jogador escolhido, uma linha por jogo com a posição), **Aluguéis** (pago, a receber e cancelado) e **Arrecadação** (por mês: arrecadado, prize pools, taxas, fora da premiação, aluguéis pagos e o que ficou fora dos prêmios). Entradas, prize pools e arrecadação contam jogos em andamento e finalizados. Aluguéis e arrecadação não usam os filtros de jogo e jogador (a tela avisa).

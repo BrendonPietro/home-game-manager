@@ -17,6 +17,7 @@ use App\Models\RegraPremiacao;
 use App\Models\Seguranca;
 use App\Models\Usuario;
 use Database\Seeders\DatabaseSeeder;
+use Database\Seeders\SegurancaSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -43,10 +44,13 @@ class ModeloDeDadosTest extends TestCase
             Grupo::where('guard_name', 'painel')->orderBy('name')->pluck('name')->all(),
         );
         $this->assertSame(
-            ['Admin', 'Operador'],
+            ['Admin', 'Desenvolvedor', 'Operador'],
             Grupo::where('guard_name', 'web')->orderBy('name')->pluck('name')->all(),
         );
 
+        // Fora do ambiente local o seed não cria as contas dev; aqui elas vêm do seeder delas.
+        $this->assertFalse(Seguranca::where('login', 'dev')->exists());
+        $this->seed(SegurancaSeeder::class);
         $dev = Seguranca::where('login', 'dev')->firstOrFail();
         $this->assertTrue($dev->hasRole('Desenvolvedor'));
         $this->assertTrue($dev->can('grupos.editar'));

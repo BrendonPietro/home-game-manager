@@ -16,6 +16,7 @@ class PermissoesSeeder extends Seeder
     public const RECURSOS_PAINEL = [
         'jogos', 'modelos', 'estruturas', 'rankings', 'usuarios', 'seguranca',
         'grupos', 'mesas', 'eventos', 'alugueis', 'temporadas',
+        'acessos', // Sistema → Usuários do site: dar e tirar o acesso ao site
     ];
 
     public const ACOES_PAINEL = ['ver', 'criar', 'editar', 'excluir'];
@@ -76,6 +77,8 @@ class PermissoesSeeder extends Seeder
 
         $this->grupo('Operador', 'web', self::SITE_OPERADOR);
         $this->grupo('Admin', 'web', [...self::SITE_OPERADOR, ...self::SITE_ADMIN]);
+        // Como no painel: o Desenvolvedor tem tudo do site, mesmo que o Admin perca alguma permissão em Grupos.
+        $this->grupo('Desenvolvedor', 'web', [...self::SITE_OPERADOR, ...self::SITE_ADMIN]);
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
     }

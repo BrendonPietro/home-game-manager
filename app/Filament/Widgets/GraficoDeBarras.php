@@ -7,7 +7,7 @@ use Filament\Facades\Filament;
 use Filament\Widgets\Widget;
 
 /**
- * Gráfico de barras do dashboard (tela 16) em CSS (`rh-bars`), como o protótipo: barras felt-300, a
+ * Gráfico de barras dos últimos jogos (rodapé das Métricas) em CSS (`rh-bars`), como o protótipo: barras felt-300, a
  * última em vermelho, valor em cima e dica com o nome ao passar o mouse. Sem Chart.js.
  */
 abstract class GraficoDeBarras extends Widget

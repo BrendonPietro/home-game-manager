@@ -1,5 +1,5 @@
 {{--
-	Topbar do site: marca, jogo atual (slot ctx), ações (slot acoes), quem está logado e Sair.
+	Topbar do site: marca, jogo atual (slot ctx), ações (slot acoes), quem está logado (leva a Minha conta) e Sair.
 	<x-site.window.topbar><x-slot:ctx>…</x-slot:ctx></x-site.window.topbar>
 --}}
 @props(['ctx' => null, 'acoes' => null])
@@ -19,7 +19,9 @@
 
 	@if ($usuario)
 		<a class="rh-btn rh-btn--ghost rh-btn--sm rh-top__link" href="{{ route('jogos.index') }}" aria-label="Jogos">@svg('rh-list') <span>Jogos</span></a>
-		<x-site.props.avatar :nome="$usuario->nome_exibicao" :foto="$usuario->foto" tamanho="sm" />
+		<a class="rh-top__conta" href="{{ route('conta') }}" title="Minha conta: trocar a senha" aria-label="Minha conta">
+			<x-site.props.avatar :nome="$usuario->nome_exibicao" :foto="$usuario->foto" tamanho="sm" />
+		</a>
 
 		<form method="POST" action="{{ route('logout') }}">
 			@csrf

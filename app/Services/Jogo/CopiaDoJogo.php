@@ -32,7 +32,10 @@ class CopiaDoJogo
             $origem = Jogo::query()->with(['itens', 'taxas', 'premiacoes', 'mesas', 'rankings'])->findOrFail($origem->id);
 
             $novo = $origem->replicate(self::NAO_COPIA);
+            // O jogo lembra o modelo (Criar a partir do modelo ou Duplicar um jogo que veio dele); modelo não tem modelo.
+            $modeloDeOrigem = $origem->e_modelo ? $origem->id : $origem->modelo_id;
             $novo->fill($atributos + ['data' => null, 'horario' => $origem->horario, 'e_modelo' => false, 'nome_modelo' => null]);
+            $novo->modelo_id = $novo->e_modelo ? null : $modeloDeOrigem;
             $novo->forceFill(['status' => StatusJogo::Rascunho])->save();
 
             foreach ([$origem->itens, $origem->taxas, $origem->mesas] as $linhas) {

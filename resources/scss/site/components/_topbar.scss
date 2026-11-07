@@ -13,6 +13,17 @@
 	background: var(--bg-100);
 	border-bottom: 1px solid var(--line-200);
 
+	// Avatar de quem entrou: leva a Minha conta (trocar a senha).
+	&__conta {
+		display: inline-flex;
+		border-radius: 50%;
+		transition: opacity var(--dur-1) var(--ease);
+
+		&:hover {
+			opacity: 0.8;
+		}
+	}
+
 	&__ctx {
 		display: flex;
 		align-items: center;

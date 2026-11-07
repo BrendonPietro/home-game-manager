@@ -7,8 +7,8 @@ use App\Enums\StatusJogo;
 use App\Models\Aluguel;
 use App\Models\Evento;
 use App\Models\Jogo;
-use App\Models\Mesa;
 use App\Models\Participante;
+use App\Models\Ranking;
 use App\Models\Usuario;
 use App\Services\Jogo\Calculadora;
 use App\Support\Dinheiro;
@@ -19,7 +19,8 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 /**
- * Números do dashboard do painel (tela 16). Dinheiro em centavos, pela Calculadora e pelos Saldos.
+ * Números do Painel de controle (tela 16) e dos gráficos dos últimos jogos (rodapé das Métricas).
+ * Dinheiro em centavos, pela Calculadora e pelos Saldos.
  *
  * "No mês" = jogos (em andamento ou finalizados) e aluguéis com data no mês. Pendências não têm mês:
  * saldo em aberto de jogador em jogo finalizado e aluguel não pago cuja data já chegou.
@@ -44,36 +45,26 @@ class Indicadores
                 ->first();
     }
 
-    /** @return array{total: int, ativos: int} */
-    public function jogadores(): array
+    /**
+     * O ranking em destaque: dos ativos que valem hoje, o que já distribuiu mais pontos (no empate, o
+     * primeiro pelo nome), com os primeiros da classificação e os outros que valem hoje.
+     *
+     * @return array{ranking: Ranking, pontos: int, classificacao: Collection<int, Usuario>, outros: Collection<int, Ranking>}|null
+     */
+    public function rankingEmDestaque(int $quantos = 5): ?array
     {
-        return [
-            'total' => Usuario::query()->count(),
-            'ativos' => Usuario::query()->ativos()->count(),
-        ];
-    }
+        $rankings = Ranking::query()->valendoHoje()->orderBy('nome')->get()
+            ->map(fn (Ranking $ranking): array => ['ranking' => $ranking, 'pontos' => $ranking->totalDePontos()]);
 
-    /** @return array{total: int, finalizados: int, hoje: int} */
-    public function jogosNoMes(CarbonInterface $mes): array
-    {
-        $jogos = $this->doMes($mes)->get(['status', 'data']);
+        if ($rankings->isEmpty()) {
+            return null;
+        }
 
-        return [
-            'total' => $jogos->count(),
-            'finalizados' => $jogos->where('status', StatusJogo::Finalizado)->count(),
-            'hoje' => $jogos->filter(fn (Jogo $jogo): bool => $jogo->data->isToday())->count(),
-        ];
-    }
+        $destaque = $rankings->sortByDesc('pontos')->first();
 
-    /** @return array{ativas: int, total: int, inativas: list<string>} */
-    public function mesas(): array
-    {
-        $mesas = Mesa::query()->orderBy('nome')->get(['nome', 'ativa']);
-
-        return [
-            'ativas' => $mesas->where('ativa', true)->count(),
-            'total' => $mesas->count(),
-            'inativas' => $mesas->where('ativa', false)->pluck('nome')->values()->all(),
+        return $destaque + [
+            'classificacao' => Ranking::ordenarClassificacao($destaque['ranking']->classificacao())->limit($quantos)->get(),
+            'outros' => $rankings->pluck('ranking')->reject(fn (Ranking $r): bool => $r->is($destaque['ranking']))->values(),
         ];
     }
 

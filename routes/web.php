@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ContaController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\JogoController;
 use App\Http\Controllers\RelogioPublicoController;
@@ -23,6 +24,10 @@ Route::view('/sem-torneio', 'site.pages.sem-torneio')->name('sem-torneio');
 // site.acesso: conta desativada sai na hora; o Operador só fica no site com um jogo em andamento.
 Route::middleware(['auth:web', 'site.acesso'])->group(function () {
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
+
+    // Minha conta: trocar a própria senha (o avatar da topbar leva para cá).
+    Route::get('/conta', [ContaController::class, 'editar'])->name('conta');
+    Route::put('/conta', [ContaController::class, 'atualizar'])->middleware('throttle:6,1')->name('conta.atualizar');
 
     // Tela 02: dashboard
     Route::get('/', [HomeController::class, 'index'])->name('home');

@@ -77,27 +77,9 @@ class ClassificacaoRanking extends Page implements HasTable
 
     public function table(Table $table): Table
     {
-        $ranking = $this->record;
-
-        // Pontos deste ranking, só de jogos dentro do período.
-        $noPeriodo = fn (Builder $pontos): Builder => $pontos
-            ->where('ranking_id', $ranking->id)
-            ->whereHas('jogo', fn (Builder $jogo) => $jogo
-                ->when($ranking->inicio, fn (Builder $q) => $q->whereDate('data', '>=', $ranking->inicio))
-                ->when($ranking->fim, fn (Builder $q) => $q->whereDate('data', '<=', $ranking->fim)));
-
         return $table
-            ->query(Usuario::query()->withTrashed()
-                ->whereHas('pontosRanking', $noPeriodo)
-                ->withSum(['pontosRanking as pontos' => $noPeriodo], 'pontos')
-                ->withCount([
-                    'pontosRanking as jogos' => $noPeriodo,
-                    'pontosRanking as vitorias' => fn (Builder $q) => $noPeriodo($q)->where('posicao', 1),
-                ])
-                ->withMin(['pontosRanking as melhor' => $noPeriodo], 'posicao'))
-            // Empate: mais vitórias, melhor posição, mais jogos.
-            ->defaultSort(fn (Builder $query) => $query->orderByDesc('pontos')->orderByDesc('vitorias')
-                ->orderByRaw('melhor is null')->orderBy('melhor')->orderByDesc('jogos')->orderBy('nome'))
+            ->query($this->record->classificacao())
+            ->defaultSort(fn (Builder $query) => Ranking::ordenarClassificacao($query))
             ->paginated([25, 50, 'all'])
             ->columns([
                 TextColumn::make('lugar')->label('#')->rowIndex(),

@@ -34,9 +34,9 @@ class GrupoResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = 'rh-check';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Configurações';
+    protected static string|UnitEnum|null $navigationGroup = 'Sistema';
 
-    protected static ?int $navigationSort = 105;
+    protected static ?int $navigationSort = 40;
 
     protected static ?string $modelLabel = 'grupo';
 

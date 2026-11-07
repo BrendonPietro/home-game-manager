@@ -1,11 +1,11 @@
-{{-- Próximos eventos (App\Filament\Widgets\Proximos). Ocupa duas linhas da grade do dashboard. --}}
+{{-- Próximos eventos (App\Filament\Widgets\Proximos), ao lado dos atalhos no Painel de controle. --}}
 @php
     use App\Support\Datas;
 
     $pontos = ['jogo' => 'rh-dot--tour', 'aluguel' => 'rh-dot--rent', 'reserva' => 'rh-dot--res', 'bloqueio' => 'rh-dot--block'];
 @endphp
 
-<x-filament-widgets::widget class="rh-wi-proximos">
+<x-filament-widgets::widget class="rh-wi-proximos rh-wi-cheio">
     <x-filament::section heading="Próximos">
         <x-slot name="afterHeader">
             <x-filament::link :href="$calendario" icon="rh-chev-r" icon-position="after" size="sm">Calendário</x-filament::link>

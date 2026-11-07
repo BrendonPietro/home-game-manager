@@ -23,6 +23,7 @@ use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
+use UnitEnum;
 
 /**
  * Contas do painel (tabela `seguranca`): login, senha, ativo, grupos e permissões avulsas do painel.
@@ -35,9 +36,11 @@ class SegurancaResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = 'rh-lock';
 
-    protected static ?int $navigationSort = 100;
+    protected static string|UnitEnum|null $navigationGroup = 'Sistema';
 
-    protected static ?string $navigationLabel = 'Segurança';
+    protected static ?int $navigationSort = 30;
+
+    protected static ?string $navigationLabel = 'Contas do painel';
 
     protected static ?string $modelLabel = 'conta do painel';
 
@@ -59,10 +62,10 @@ class SegurancaResource extends Resource
                     ->label('Usuário')
                     ->required()
                     ->maxLength(60)
-                    ->regex('/^[A-Za-z0-9._-]+$/')
-                    ->validationMessages(['regex' => 'Use só letras, números, ponto, traço e sublinhado.'])
+                    ->regex('/^[A-Za-z0-9._@+-]+$/')
+                    ->validationMessages(['regex' => 'Use só letras, números, ponto, traço, sublinhado e @ (pode ser o e-mail).'])
                     ->unique(ignoreRecord: true)
-                    ->helperText('Para entrar no painel (sem e-mail).')
+                    ->helperText('Para entrar no painel: um nome curto ou o e-mail (o mesmo do site, se quiser).')
                     ->mutateStateForValidationUsing(fn (?string $state): ?string => self::login($state))
                     ->dehydrateStateUsing(fn (?string $state): ?string => self::login($state)),
                 TextInput::make('password')

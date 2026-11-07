@@ -13,6 +13,7 @@ use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
+use UnitEnum;
 
 /**
  * Rankings (docs/regras.md, "Rankings"): vários ao mesmo tempo, cada um com as posições que pontuam,
@@ -25,7 +26,9 @@ class RankingResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = 'rh-list';
 
-    protected static ?int $navigationSort = 50;
+    protected static string|UnitEnum|null $navigationGroup = 'Cadastros';
+
+    protected static ?int $navigationSort = 60;
 
     protected static ?string $modelLabel = 'ranking';
 

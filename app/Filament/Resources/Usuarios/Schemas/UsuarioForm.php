@@ -3,18 +3,18 @@
 namespace App\Filament\Resources\Usuarios\Schemas;
 
 use App\Models\Usuario;
-use Filament\Facades\Filament;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Text;
 use Filament\Schemas\Schema;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Str;
 
+/**
+ * Cadastros → Jogadores: os dados da pessoa e o que ela faz na noite. O acesso ao site (e-mail, senha e
+ * grupos) fica em Sistema → Usuários do site, com a permissão própria `acessos.*`.
+ */
 class UsuarioForm
 {
     public static function configure(Schema $schema): Schema
@@ -57,54 +57,14 @@ class UsuarioForm
                             ->helperText('Inativo não aparece para confirmar jogadores.'),
                     ]),
 
-                // Dar acesso ao site é coisa de quem edita usuários (o grupo Geral só cadastra jogadores).
-                Section::make('Acesso ao site')
-                    ->description('Quem opera a noite entra no site com e-mail e senha.')
-                    ->visible(fn (): bool => (bool) Filament::auth()->user()?->can('usuarios.editar'))
-                    ->columns(2)
-                    ->schema([
-                        Toggle::make('acessa_site')
-                            ->label('Acessa o site')
-                            ->live()
-                            ->columnSpanFull(),
-                        TextInput::make('email')
-                            ->label('E-mail')
-                            ->email()
-                            ->maxLength(255)
-                            ->unique(ignoreRecord: true)
-                            ->required(fn (Get $get): bool => (bool) $get('acessa_site'))
-                            // O login do site compara em minúsculas: valida e grava já limpo.
-                            ->mutateStateForValidationUsing(fn (?string $state): ?string => self::email($state))
-                            ->dehydrateStateUsing(fn (?string $state): ?string => self::email($state))
-                            ->visible(fn (Get $get): bool => (bool) $get('acessa_site')),
-                        TextInput::make('password')
-                            ->label('Senha')
-                            ->password()
-                            ->revealable()
-                            ->minLength(8)
-                            ->required(fn (Get $get, ?Usuario $record): bool => $get('acessa_site') && blank($record?->password))
-                            ->dehydrated(fn (?string $state): bool => filled($state))
-                            ->helperText(fn (?Usuario $record): ?string => filled($record?->password) ? 'Em branco mantém a senha atual.' : null)
-                            ->visible(fn (Get $get): bool => (bool) $get('acessa_site')),
-                        Select::make('roles')
-                            ->label('Grupos do site')
-                            ->relationship('roles', 'name', fn (Builder $query) => $query->where('guard_name', 'web'))
-                            ->multiple()
-                            ->preload()
-                            ->required(fn (Get $get): bool => (bool) $get('acessa_site'))
-                            ->helperText('Operador lança entradas, pagamentos e eliminações; Admin também altera o jogo.')
-                            ->visible(fn (Get $get): bool => (bool) $get('acessa_site'))
-                            ->columnSpanFull(),
-                    ]),
+                Text::make(fn (?Usuario $record): string => $record?->acessa_site
+                    ? 'Entra no site com '.$record->email.'. E-mail, senha e grupos em Sistema → Usuários do site.'
+                    : 'Para entrar no site de operação, dê acesso em Sistema → Usuários do site.')
+                    ->color('gray'),
 
                 Textarea::make('observacoes')
                     ->label('Observações')
                     ->rows(3),
             ]);
-    }
-
-    private static function email(?string $email): ?string
-    {
-        return filled($email) ? Str::lower(trim($email)) : null;
     }
 }

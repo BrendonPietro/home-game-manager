@@ -142,6 +142,13 @@ class JogoForm
                     ->relationship('temporada', 'nome')
                     ->preload()
                     ->placeholder('Sem temporada'),
+                // O tipo de evento nas Métricas: criar a partir do modelo já preenche.
+                Select::make('modelo_id')
+                    ->label('Tipo de evento (modelo)')
+                    ->options(fn (): array => Jogo::query()->modelos()->orderBy('nome_modelo')->pluck('nome_modelo', 'id')->all())
+                    ->placeholder('Sem modelo')
+                    ->helperText('Compara as médias por tipo de torneio em Métricas.')
+                    ->visible(! $modelo),
                 TextInput::make('lugares_por_mesa')
                     ->label('Lugares por mesa')
                     ->integer()
