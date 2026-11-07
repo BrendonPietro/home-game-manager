@@ -28,6 +28,8 @@ Em 11/2026 o site e o painel passaram por um pente-fino com a skill **unslop** (
 - **Cor:** a cor de estado fica no ponto ou no ícone, não na borda. Badges com superfície neutra e ponto colorido (só **Ao vivo** é cheio). Avisos com borda neutra e o ícone em âmbar ou verde. Botões e cartões com borda `line-200`; campos, checkbox e switch mantêm `line-control` para parecerem clicáveis. Nada de brilho colorido nem gradiente fora do feltro. Gráfico com um acento só: o resto no cinza da rampa.
 - **Raios:** 4 (badge, checkbox), 8 (botão, campo, assento, caixa dentro de modal ou gaveta), 12 (card, painel, modal). O de dentro é menor que o de fora: o raio de fora menos o espaço entre eles, nunca menos de 4.
 - **Movimento:** uma curva (`--ease`) e três durações (`--dur-1` 150ms em hover e toque, `--dur-2` 200ms, `--dur-3` 300ms para o que muda de lugar). Anima só cor, fundo, borda, opacidade e `transform`; botões e cartões de ação encolhem 2% no toque.
+- **Barra de rolagem:** fina, nas cores do clube (`scrollbar-color` com `line-200` no site e `--rh-borda` no painel; `::-webkit-scrollbar` para o Safari), com o espaço sempre reservado (`scrollbar-gutter: stable` no `<html>`): o topo não pula de lado quando um modal trava a rolagem ou a página muda de altura.
+- **Fontes carregadas antes:** `<x-fontes />` pré-carrega Barlow 400 e 500 e Barlow Condensed 500 (site, painel e impressão), para o texto não piscar na troca de página.
 - **Texto:** sem ponto de exclamação e sem ponto final em rótulo, subtítulo, legenda e mensagem de "nada aqui"; frase de duas orações ou mais mantém o ponto.
 
 ## Tokens principais
@@ -145,6 +147,16 @@ Layouts que não cabem nessas grades (ex.: `1.6fr 1fr 1fr 1fr`) ficam no parcial
 ### Vitrine
 
 `/vitrine` (só com `APP_ENV=local`) mostra todos os componentes com os dados da Poker Night #18, para comparar com os protótipos.
+
+## Logo e favicon
+
+O logo do clube (o R vermelho e preto no círculo) fica em `resources/images/logo.png`, quadrado, no fundo claro `#f7f7f7`. Os ícones saem dele pelo `php artisan icones:gerar` (`App\Console\Commands\GerarIcones`, com Imagick, que o Laragon tem) e os arquivos gerados vão no repositório, então a hospedagem não precisa de Imagick:
+
+- `public/favicon.ico`: 16, 32 e 48 px, cantos arredondados (18% do lado). Nitidez leve no 32 e no 48; no 16 ela só granulava.
+- `public/icone-192.png`: aba em tela de alta densidade e atalho do Android, também arredondado.
+- `public/apple-touch-icon.png`: 180 px sem transparência (o iOS arredonda sozinho).
+
+O fundo claro do logo fica no ícone de propósito: o preto do R sumiria numa aba escura com fundo transparente. Os três entram pelo componente `<x-icones />` (layout do site, página de impressão do relatório e o painel pelo render hook `HEAD_END`), com `?v=` pela data do arquivo para o navegador não ficar com o antigo. Para trocar o logo: substituir `resources/images/logo.png` e rodar `php artisan icones:gerar`.
 
 ## Breakpoints
 

@@ -168,7 +168,7 @@ class EventoForm
         return app(Conflitos::class)->de($get('data'), $get('hora_inicio'), $get('hora_fim'), $get('mesas') ?? [], self::idDoEvento($record));
     }
 
-    /** "Mesa 02 está livre nesse horário." ou "Mesa 02 já tem Poker Night #19 (20:00) nesse horário." */
+    /** "Mesa 02 está livre nesse horário." ou "Mesa 02 já tem Mesa alugada — Felipe (19:00–23:30) nesse horário." (o torneio não ocupa mesas do cadastro) */
     private static function aviso(Get $get, ?Model $record): string
     {
         $mesas = Mesa::query()->whereKey($get('mesas'))->orderBy('nome')->pluck('nome', 'id');

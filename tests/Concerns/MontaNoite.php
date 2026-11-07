@@ -53,7 +53,7 @@ trait MontaNoite
         $this->operador->assignRole('Operador');
 
         $this->jogo = $jogo ?? Jogo::factory()->emAndamento()->comEntradasPadrao()->create();
-        $this->mesa = $this->jogo->mesas()->create(['mesa_id' => Mesa::factory()->create(['nome' => 'Mesa 01'])->id, 'lugares' => 9, 'ordem' => 1]);
+        $this->mesa = $this->jogo->mesas()->create(['nome' => 'Mesa 01', 'lugares' => 9, 'ordem' => 1]);
     }
 
     /** Jogador sentado no próximo lugar e jogando. */

@@ -4,18 +4,25 @@ namespace App\Filament\Resources\Jogos\Pages;
 
 use App\Actions\Jogo\AgendarJogo;
 use App\Actions\Jogo\CancelarJogo;
+use App\Actions\Jogo\RefazerPeloCadastro;
 use App\Enums\StatusJogo;
 use App\Exceptions\RegraDoJogo;
 use App\Filament\Resources\Jogos\JogoResource;
+use App\Filament\Resources\Jogos\Pages\Concerns\ConfereAPremiacao;
+use App\Services\Jogo\Calculadora;
 use App\Services\Jogo\EventoDoJogo;
+use App\Services\Jogo\ResumoFinanceiro;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ViewAction;
+use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 
 class EditJogo extends EditRecord
 {
+    use ConfereAPremiacao;
+
     protected static string $resource = JogoResource::class;
 
     protected function getHeaderActions(): array
@@ -69,8 +76,39 @@ class EditJogo extends EditRecord
         ));
     }
 
+    /** Salvar e refazer o jogo em andamento ficam juntos: se o refazer esbarrar numa regra, nada fica gravado. */
+    protected ?bool $hasDatabaseTransactions = true;
+
+    /** Os números de antes, para o histórico de um jogo em andamento (só vive durante o salvar). */
+    private ?ResumoFinanceiro $antes = null;
+
+    protected function beforeSave(): void
+    {
+        // Roda antes de gravar as relações (entradas do cadastro, taxas, premiação): ainda é o "antes".
+        if ($this->record->status === StatusJogo::EmAndamento) {
+            $this->antes = app(Calculadora::class)->doJogo($this->record->load('taxas', 'premiacoes'));
+        }
+    }
+
     protected function afterSave(): void
     {
         app(EventoDoJogo::class)->sincronizar($this->record);
+
+        // Sem `jogos.andamento` as abas de dinheiro ficam travadas: não há o que refazer.
+        if ($this->record->status !== StatusJogo::EmAndamento || ! Filament::auth()->user()->can(RefazerPeloCadastro::PERMISSAO)) {
+            return;
+        }
+
+        try {
+            $alteracao = app(RefazerPeloCadastro::class)($this->record, Filament::auth()->user(), $this->antes);
+        } catch (RegraDoJogo $erro) {
+            Notification::make()->danger()->title('Não salvou')->body($erro->getMessage())->persistent()->send();
+
+            $this->halt(shouldRollbackDatabaseTransaction: true);
+        }
+
+        if ($alteracao) {
+            Notification::make()->warning()->title('Jogo refeito pelo cadastro')->body($alteracao->descricao)->send();
+        }
     }
 }

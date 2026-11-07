@@ -1122,6 +1122,56 @@
         color: var(--rh-ink-2);
     }
 
+    /* Premiação manual do jogo: a posição (1º, 2º…) à esquerda de cada campo, contada na ordem da lista */
+    .rh-premiacao .fi-fo-simple-repeater-items {
+        counter-reset: rh-posicao;
+    }
+
+    .rh-premiacao .fi-fo-simple-repeater-item {
+        counter-increment: rh-posicao;
+    }
+
+    .rh-premiacao .fi-fo-simple-repeater-item::before {
+        content: counter(rh-posicao) 'º';
+        flex: none;
+        align-self: center;
+        width: 2rem;
+        font-family: var(--font-display);
+        font-size: 1rem;
+        font-weight: 500;
+        font-variant-numeric: tabular-nums;
+        color: var(--rh-ink-2);
+    }
+
+    /* Barra de rolagem fina, nas cores do tema (claro e escuro). O espaço dela fica sempre reservado
+       (scrollbar-gutter): o topo não pula de lado quando um modal trava a rolagem ou a página muda de altura. */
+    html {
+        scrollbar-gutter: stable;
+        scrollbar-color: var(--rh-borda) transparent;
+    }
+
+    * {
+        scrollbar-width: thin;
+    }
+
+    @supports not (scrollbar-color: auto) {
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--rh-borda);
+            background-clip: padding-box;
+            border: 2px solid transparent;
+            border-radius: 999px;
+        }
+    }
+
     /* Lista de pendências (modal do dashboard) */
     .rh-pendencias {
         display: flex;

@@ -11,6 +11,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex">
     <title>{{ $relatorio->arquivo() }}</title>
+    <x-icones />
+    <x-fontes />
     <style>
         @font-face { font-family: 'Barlow'; src: url('{{ $fonte('Barlow-400.woff2') }}') format('woff2'); font-weight: 400; }
         @font-face { font-family: 'Barlow'; src: url('{{ $fonte('Barlow-600.woff2') }}') format('woff2'); font-weight: 600; }

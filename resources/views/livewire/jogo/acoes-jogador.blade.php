@@ -27,7 +27,7 @@
 		TipoItem::Opcional => [null, null],
 	};
 	$rotulo = fn (TipoItem $tipo): string => $tipo === TipoItem::Rebuy && ! $torneio ? 'Recompra' : $tipo->label();
-	$local = $participante->jogoMesa ? $participante->jogoMesa->mesa->nome.' · Lugar '.$participante->lugar : 'Sem lugar';
+	$local = $participante->jogoMesa ? $participante->jogoMesa->nome.' · Lugar '.$participante->lugar : 'Sem lugar';
 	$situacao = match ($participante->status) {
 		StatusParticipante::Eliminado => 'Eliminado'.($participante->posicao_final ? ' · '.$participante->posicao_final.'º' : ''),
 		StatusParticipante::Saiu => 'Saiu (cash-out)',
@@ -361,7 +361,7 @@
 				</form>
 			@elseif ($modal === 'cashout')
 				@php
-					$valorFicha = 'R$ '.rtrim(rtrim(number_format((float) $jogo->valor_ficha, 4, ',', '.'), '0'), ',');
+					$valorFicha = Dinheiro::ficha($jogo->valor_ficha);
 					$previa = $fichasDigitadas !== null && (float) $jogo->valor_ficha > 0 ? Dinheiro::multiplicar($fichasDigitadas, $jogo->valor_ficha) : null;
 				@endphp
 				<form class="rh-modal" style="max-width:400px" wire:submit="confirmarCashOut" role="dialog" aria-modal="true" aria-labelledby="cashout-titulo">

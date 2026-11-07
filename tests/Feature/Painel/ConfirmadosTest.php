@@ -10,7 +10,6 @@ use App\Filament\Resources\Jogos\Pages\EditJogo;
 use App\Filament\Resources\Jogos\RelationManagers\ConfirmadosRelationManager;
 use App\Filament\Resources\Jogos\RelationManagers\HistoricoRelationManager;
 use App\Models\Jogo;
-use App\Models\Mesa;
 use App\Models\Participante;
 use App\Models\Seguranca;
 use App\Models\Usuario;
@@ -69,7 +68,7 @@ class ConfirmadosTest extends TestCase
 
     public function test_pagamento_antecipado_abate_do_buyin_e_quem_nao_veio_fica_com_credito(): void
     {
-        $mesa = $this->jogo->mesas()->create(['mesa_id' => Mesa::factory()->create()->id, 'lugares' => 9, 'ordem' => 1]);
+        $mesa = $this->jogo->mesas()->create(['nome' => 'Mesa 1', 'lugares' => 9, 'ordem' => 1]);
         [$ana, $beto, $caio] = collect(['Ana', 'Beto', 'Caio'])
             ->map(fn (string $nome) => $this->jogo->participantes()->create(['usuario_id' => Usuario::factory()->create(['nome' => $nome, 'apelido' => null])->id]))
             ->all();

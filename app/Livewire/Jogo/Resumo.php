@@ -66,7 +66,7 @@ class Resumo extends Component
 
     public function render(Calculadora $calculadora, Entradas $entradas, Saldos $saldos): View
     {
-        $participantes = $this->jogo->participantes()->with(['usuario', 'jogoMesa.mesa'])->get();
+        $participantes = $this->jogo->participantes()->with(['usuario', 'jogoMesa'])->get();
         $porJogador = $entradas->porJogador($this->jogo);
         $contas = $saldos->doJogo($this->jogo);
 
@@ -86,7 +86,7 @@ class Resumo extends Component
 
         return view('livewire.jogo.resumo', [
             'resumo' => $calculadora->doJogo($this->jogo),
-            'mesas' => $this->jogo->mesas()->with('mesa')->get(),
+            'mesas' => $this->jogo->mesas()->get(),
             'linhas' => $visiveis,
             'total' => $linhas->count(),
             'contagem' => $this->contagem($porJogador) + [

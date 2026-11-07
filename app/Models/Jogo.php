@@ -37,6 +37,7 @@ class Jogo extends Model
         'nome',
         'data',
         'horario',
+        'horario_fim',
         'floor_id',
         'metodo_premiacao',
         'lugares_por_mesa',

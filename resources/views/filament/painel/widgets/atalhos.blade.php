@@ -6,7 +6,8 @@
                 <nav class="rh-atalhos__grupo" aria-label="{{ $modulo['grupo'] }}" wire:key="modulo-{{ md5($modulo['grupo']) }}">
                     <span class="rh-label">{{ $modulo['grupo'] }}</span>
                     @foreach ($modulo['itens'] as $item)
-                        <a class="rh-atalho" href="{{ $item['url'] }}">
+                        {{-- Mesma troca de tela do menu (SPA, já busca no hover). --}}
+                        <a class="rh-atalho" {{ \Filament\Support\generate_href_html($item['url']) }}>
                             @if ($item['icone'])
                                 <x-filament::icon :icon="$item['icone']" class="rh-atalho__icone" />
                             @endif

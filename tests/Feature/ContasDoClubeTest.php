@@ -116,33 +116,4 @@ class ContasDoClubeTest extends TestCase
         $this->assertTrue(Hash::check('nova-senha-123', $conta->fresh()->password));
         $this->assertSame('brendon@exemplo.com', $conta->fresh()->login);
     }
-
-    public function test_troca_a_propria_senha_no_site(): void
-    {
-        $this->seed(ContasDoClubeSeeder::class);
-        $seij = Usuario::query()->where('email', 'seij@exemplo.com')->sole();
-        $lembrar = $seij->remember_token;
-
-        $this->actingAs($seij, 'web')
-            ->get(route('conta'))
-            ->assertOk()
-            ->assertSee(['Minha conta', 'seij@exemplo.com', 'TROCAR SENHA']);
-
-        $this->from(route('conta'))->put(route('conta.atualizar'), ['senha_atual' => 'errada', 'senha' => 'nova-senha-123', 'senha_confirmation' => 'nova-senha-123'])
-            ->assertSessionHasErrors(['senha_atual' => 'A senha atual não confere.']);
-        $this->from(route('conta'))->put(route('conta.atualizar'), ['senha_atual' => 'senha-dos-admins', 'senha' => 'curta', 'senha_confirmation' => 'curta'])
-            ->assertSessionHasErrors('senha');
-        $this->from(route('conta'))->put(route('conta.atualizar'), ['senha_atual' => 'senha-dos-admins', 'senha' => 'senha-dos-admins', 'senha_confirmation' => 'senha-dos-admins'])
-            ->assertSessionHasErrors(['senha' => 'A senha nova precisa ser diferente da atual.']);
-
-        $this->put(route('conta.atualizar'), ['senha_atual' => 'senha-dos-admins', 'senha' => 'nova-senha-123', 'senha_confirmation' => 'nova-senha-123'])
-            ->assertRedirect(route('conta'))
-            ->assertSessionHas('aviso', 'Senha trocada');
-
-        $this->assertTrue(Hash::check('nova-senha-123', $seij->fresh()->password));
-        $this->assertNotSame($lembrar, $seij->fresh()->remember_token);
-
-        // A topbar leva a Minha conta pelo avatar.
-        $this->get(route('jogos.index'))->assertSee('href="'.route('conta').'"', false);
-    }
 }

@@ -12,7 +12,6 @@ use App\Enums\StatusParticipante;
 use App\Exceptions\RegraDoJogo;
 use App\Livewire\Jogo\Concerns\EscolheQuemSenta;
 use App\Models\Jogo;
-use App\Models\Mesa;
 use App\Models\Participante;
 use App\Models\Usuario;
 use App\Support\EtapaDoJogo;
@@ -31,8 +30,6 @@ class Mesas extends Component
     public Jogo $jogo;
 
     public ?int $selecionado = null;
-
-    public string $mesaNova = '';
 
     public ?string $erro = null;
 
@@ -103,22 +100,12 @@ class Mesas extends Component
 
     public function adicionarMesa(): void
     {
-        if ($this->mesaNova === '') {
-            $this->erro = 'Escolha a mesa para adicionar.';
-
-            return;
-        }
-
-        $mesa = Mesa::query()->findOrFail($this->mesaNova);
-
-        if ($this->executar(fn () => app(AdicionarMesa::class)($this->jogo, $mesa, $this->quem()))) {
-            $this->mesaNova = '';
-        }
+        $this->executar(fn () => app(AdicionarMesa::class)($this->jogo, $this->quem()));
     }
 
     public function removerMesa(int $jogoMesaId): void
     {
-        $mesa = $this->jogo->mesas()->with('mesa')->findOrFail($jogoMesaId);
+        $mesa = $this->jogo->mesas()->findOrFail($jogoMesaId);
 
         $this->executar(fn () => app(RemoverMesa::class)($mesa, $this->quem()));
     }
@@ -158,7 +145,7 @@ class Mesas extends Component
 
     public function render(): View
     {
-        $mesas = $this->jogo->mesas()->with(['mesa', 'dealer', 'participantes.usuario'])->get();
+        $mesas = $this->jogo->mesas()->with(['dealer', 'participantes.usuario'])->get();
         $semLugar = $this->jogo->participantes()
             ->whereNull('jogo_mesa_id')
             ->whereIn('status', [StatusParticipante::Confirmado, StatusParticipante::Jogando])
@@ -176,7 +163,6 @@ class Mesas extends Component
             'selecionadoNome' => $selecionado?->usuario->nome_exibicao,
             'selecionadoSentado' => $selecionado?->jogo_mesa_id !== null,
             'dealers' => Usuario::query()->ativos()->dealers()->orderBy('nome')->get(),
-            'mesasLivres' => Mesa::query()->ativas()->whereNotIn('id', $mesas->pluck('mesa_id'))->orderBy('nome')->get(),
             'quemSenta' => $this->dadosDoLugarVazio(),
         ]);
     }

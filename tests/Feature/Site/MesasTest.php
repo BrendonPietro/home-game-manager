@@ -6,7 +6,6 @@ use App\Enums\StatusJogo;
 use App\Livewire\Jogo\Mesas;
 use App\Models\Jogo;
 use App\Models\JogoMesa;
-use App\Models\Mesa;
 use App\Models\Participante;
 use App\Models\Usuario;
 use Database\Seeders\PermissoesSeeder;
@@ -31,7 +30,7 @@ class MesasTest extends TestCase
         $this->entrarComo('Admin');
 
         $this->jogo = Jogo::factory()->agendado()->comEntradasPadrao()->create(['nome' => 'Poker Night #19']);
-        $this->mesa1 = $this->jogo->mesas()->create(['mesa_id' => Mesa::factory()->create(['nome' => 'Mesa 01'])->id, 'lugares' => 9, 'ordem' => 1]);
+        $this->mesa1 = $this->jogo->mesas()->create(['nome' => 'Mesa 01', 'lugares' => 9, 'ordem' => 1]);
     }
 
     /** Com site.fora_da_noite: as mesas se montam antes do jogo começar. */
@@ -147,6 +146,19 @@ class MesasTest extends TestCase
             ->assertSee('3/9')
             ->call('ajustarLugares', $this->mesa1->id, '2')
             ->assertSee('Tem jogador no lugar');
+    }
+
+    public function test_adicionar_mesa_sem_o_cadastro_de_mesas(): void
+    {
+        $this->jogo->forceFill(['lugares_por_mesa' => 8])->save();
+
+        Livewire::test(Mesas::class, ['jogo' => $this->jogo])
+            ->assertSee('Adicionar mesa')
+            ->call('adicionarMesa')
+            ->assertHasNoErrors()
+            ->assertSee('Mesa 2');
+
+        $this->assertSame([['Mesa 01', 9], ['Mesa 2', 8]], $this->jogo->mesas()->get()->map(fn ($m) => [$m->nome, $m->lugares])->all());
     }
 
     public function test_iniciar_leva_para_a_tela_ao_vivo(): void

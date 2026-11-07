@@ -10,6 +10,112 @@ Registro das atualizações do sistema do Rodrigues Home Game, organizadas por:
 - Docs: documentação;
 - Chore: manutenção.
 
+## 0.26.0
+
+Site só para o torneio, etapa 6: a bugadinha do topo, a velocidade e as barras de rolagem.
+
+### Fix
+- **O topo não pula mais de lado** quando se clica em algo que abre modal ou quando a página muda de altura (site e painel). Era a barra de rolagem sumindo (o modal do Filament põe `overflow: hidden` no `<html>`) e o conteúdo andando o tamanho dela; agora o espaço da barra fica reservado (`scrollbar-gutter: stable`). Conferido: com o modal aberto, o topo fica no mesmo lugar.
+- O texto não pisca mais na troca de página: as fontes mais usadas vêm pré-carregadas (`<x-fontes />`).
+
+### Perf
+- **Painel em SPA, com pré-busca**: menu, topo e links (também os atalhos e a agenda do Painel de controle) trocam a tela sem recarregar o painel inteiro, e a página já começa a carregar quando o mouse passa no link. O site e a página de impressão abrem de verdade.
+- Medido: o servidor responde em 100 a 250 ms no painel e 70 a 100 ms no site (a primeira visita depois de mudar código recompila as views; em produção o `php artisan optimize` resolve). O que pesava era recarregar a página inteira a cada clique.
+- Deploy: `php artisan optimize` e `php artisan filament:optimize` no lugar dos três caches soltos.
+
+### Style
+- **Barras de rolagem** finas, nas cores do clube (site) e do tema (painel, claro e escuro).
+
+### Test
+- SPA no painel com o site fora dele (`Painel\DashboardTest`) e as fontes pré-carregadas no site e no painel (`IconesTest`).
+
+## 0.25.0
+
+Site só para o torneio, etapa 5: a tela de jogadores.
+
+### Feat
+- **Jogadores** fica só com o que é de jogador: saíram a coluna e o filtro de acesso ao site e a dica "dê acesso em Usuários do site" do formulário (o acesso continua em Sistema → Usuários do site).
+- A coluna "Na noite" virou duas: **Dealer** e **Floor** ("Sim" ou —).
+- "Ativo" virou **Ações**: o check verde vira o X vermelho num clique (e volta), sem abrir nada, ao lado de Editar e Excluir.
+- No formulário, saiu o título "Na noite": os checks de dealer, floor e ativo ficam no fim dos dados.
+
+### Test
+- `Painel\UsuariosTest`: colunas Dealer e Floor, ativo num clique e o formulário sem acesso ao site.
+
+## 0.24.0
+
+Site só para o torneio, etapa 4: editar o torneio em andamento.
+
+### Feat
+- **Admin e Desenvolvedor editam o jogo em andamento** no painel (permissão nova `jogos.andamento`, "Jogos · editar em andamento"): as abas Dinheiro, Premiação e Mesas abrem, com um aviso. Modalidade e blinds continuam travadas (o relógio não muda no meio).
+- Ao salvar, o jogo se refaz pelo cadastro (`Actions\Jogo\RefazerPeloCadastro`): as entradas já lançadas passam a valer o valor, as fichas e o percentual da premiação de agora; no cash game o cash-out segue o valor da ficha; com as entradas fechadas, os prêmios e as posições são regravados. O que cada um deve e o prize pool acompanham.
+- Fica no histórico como **Cadastro alterado** (correção), com o que mudou, e aparece um aviso depois de salvar. Se o recálculo esbarrar numa regra, nada fica gravado (a edição tem transação).
+- Linha de entrada ou opcional com entrada lançada não se apaga (desative); a mesa não fica com menos lugares que o último ocupado.
+
+### Fix
+- O valor da ficha do cash game no Painel de controle (e no painel do jogador) sai com as casas certas (`Dinheiro::ficha`, "R$ 0,02"); o `Dinheiro::brl` não aceita 4 casas.
+
+### Refactor
+- A gravação dos prêmios das posições saiu do `FecharEntradas` para o `Posicoes::gravarPremios`, usado pelos dois.
+
+### Test
+- `Jogo\RefazerPeloCadastroTest` (entradas e saldos, prêmios e posições com as entradas fechadas, cash-out, permissão) e, no `Painel\JogosTest`, a edição pelo painel com e sem a permissão.
+
+## 0.23.0
+
+Site só para o torneio, etapa 3: as mesas do torneio sem o cadastro de mesas.
+
+### Feat
+- A mesa do torneio tem **nome próprio** ("Mesa 1", "Mesa 2"…) e não depende do cadastro de mesas, que fica para aluguéis e reservas: o torneio pode ter quantas mesas precisar, mesmo com uma só cadastrada.
+- No painel, a aba Mesas do jogo pede nome, dealer e lugares; o **+** já traz "Mesa N" com os lugares por mesa do jogo. No site (montar as mesas), **Adicionar mesa** cria a próxima mesa direto, sem escolher do cadastro.
+- Na agenda, o jogo não ocupa mais mesas do cadastro (torneio e aluguel não se cruzam no aviso de mesa ocupada); o resumo do jogo no calendário mostra as mesas do próprio jogo.
+- Cadastro de mesas: a coluna "Jogos" virou "Na agenda" (eventos), e a mesa só não se exclui se tiver aluguel, reserva ou bloqueio.
+
+### Chore
+- Migração `jogo_mesas`: entra `nome` (as mesas que já existem herdam o nome da mesa cadastrada) e sai `mesa_id`; o evento dos jogos solta as mesas da agenda.
+
+### Test
+- Testes ajustados para a mesa com nome; novos: adicionar mesa sem cadastro (Action e tela do site), próximo nome, torneio que não ocupa as mesas do cadastro, mesa com evento que não se exclui.
+
+## 0.22.0
+
+Site só para o torneio, etapa 2: premiação e botões + no cadastro do jogo.
+
+### Feat
+- **Premiação manual**: cada campo mostra a posição à esquerda (1º, 2º…), que aparece conforme as posições são adicionadas; sem as setas de arrastar (posições fixas: para mudar, troca o valor); o botão de adicionar virou **+**.
+- **Sugestões** pelo número de posições da lista: **Concentrada no 1º** (ex.: 55 / 30 / 15) e **Mais equilibrada** (ex.: 40 / 35 / 25), em múltiplos de 5 e com pelo menos 5% por posição. O clique só preenche os campos, e os botões se refazem ao adicionar ou tirar posição.
+- **Soma ao vivo** embaixo dos campos ("Soma 95%: falta 5%"). Fora de 100%, salvar mostra um alerta com OK e o jogo não salva. Posição adicionada e não preenchida não conta e some ao salvar.
+- Na aba Mesas, o botão de adicionar também virou **+**.
+
+### Test
+- `Painel\JogosTest`: o alerta dos 100% (faltando e sobrando), a posição vazia que some, as sugestões (sempre 100, múltiplos de 5, do maior para o menor, de 1 a 30 posições) e o clique na sugestão pelo formulário.
+
+## 0.21.0
+
+Site só para o torneio, etapa 1: login pela janela do torneio.
+
+### Feat
+- **Janela do site** (`App\Support\JanelaDoSite`) para quem não é admin (sem `site.fora_da_noite`): o torneio aparece de 3 h antes do início até 3 h depois do **término previsto**, campo novo do cadastro do jogo (`jogos.horario_fim`; antes do início = dia seguinte; vazio = início + 12 h). Em andamento, fica aberto até finalizar.
+- Fora da janela a pessoa **continua logada** (antes saía) e vê "Nenhum torneio agora", com o próximo torneio e a hora em que o site abre; ATUALIZAR leva ao jogo quando abre.
+- No painel, **Abrir no site** / **Abrir a noite** (Painel de controle e calendário) e o link do fechamento nas pendências abrem em outra aba; sem login no site, passa pelo login e volta para o jogo.
+
+### Refactor
+- Saiu a tela **Minha conta** do site (`/conta`) e o link no avatar da topbar: a senha do site muda no painel, em Usuários do site. O Perfil do painel continua.
+
+### Test
+- `Site\AcessoDoSiteTest` refeito para a janela (as contas de horário, antes, durante e depois, finalizado até 3 h depois do término, admin a qualquer hora, login no meio do caminho volta para o jogo).
+
+## 0.20.0
+
+Favicon com o logo do clube.
+
+### Feat
+- **Favicon e ícones** no site e no painel (e na página de impressão do relatório), a partir do logo do clube: `favicon.ico` (16, 32 e 48), `icone-192.png` e `apple-touch-icon.png`, no fundo claro do logo com os cantos arredondados, legível em aba clara e escura. Antes era o `favicon.ico` vazio do Laravel.
+- `php artisan icones:gerar` refaz os ícones de `resources/images/logo.png` (Imagick, só no local).
+
+### Test
+- `IconesTest` (o `.ico` com os três tamanhos, os PNGs nos tamanhos certos, site e painel apontando para eles).
+
 ## 0.19.0
 
 Painel em módulos, etapa C: o Painel de controle vira a porta de entrada, com destaques e atalhos.

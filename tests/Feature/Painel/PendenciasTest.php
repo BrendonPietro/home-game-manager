@@ -8,7 +8,6 @@ use App\Enums\DirecaoPagamento;
 use App\Enums\StatusParticipante;
 use App\Enums\TipoItem;
 use App\Models\Jogo;
-use App\Models\Mesa;
 use App\Models\Usuario;
 use App\Services\Jogo\Saldos;
 use App\Services\Painel\Indicadores;
@@ -31,7 +30,7 @@ class PendenciasTest extends TestCase
 
         // Um cash game finalizado, com cash-out, no mesmo período.
         $cash = Jogo::factory()->cashGame()->emAndamento()->comEntradasPadrao()->create(['valor_ficha' => '0.01']);
-        $mesa = $cash->mesas()->create(['mesa_id' => Mesa::factory()->create()->id, 'lugares' => 9]);
+        $mesa = $cash->mesas()->create(['nome' => 'Mesa 1', 'lugares' => 9]);
         $sentar = function (string $nome, int $lugar) use ($cash, $mesa) {
             $participante = $cash->participantes()->create(['usuario_id' => Usuario::factory()->create(['nome' => $nome, 'apelido' => null])->id, 'jogo_mesa_id' => $mesa->id, 'lugar' => $lugar]);
             $participante->forceFill(['status' => StatusParticipante::Jogando])->save();

@@ -66,9 +66,13 @@ class Evento extends Model
         };
     }
 
-    /** "Mesa 01 + Mesa 02" ou "—" */
+    /** "Mesa 01 + Mesa 02" ou "—". O jogo não ocupa mesas do cadastro: mostra as mesas do próprio jogo. */
     public function nomesDasMesas(): string
     {
-        return $this->mesas->sortBy('nome')->pluck('nome')->join(' + ') ?: '—';
+        $nomes = $this->jogo_id
+            ? ($this->jogo?->mesas->pluck('nome') ?? collect())
+            : $this->mesas->sortBy('nome')->pluck('nome');
+
+        return $nomes->join(' + ') ?: '—';
     }
 }

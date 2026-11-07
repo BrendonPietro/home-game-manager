@@ -31,7 +31,8 @@
                         {{ $podeEditar ? 'Editar' : 'Ver' }}
                     </x-filament::button>
                     @if ($site = $this->urlNoSite($proximo))
-                        <x-filament::button tag="a" :href="$site">{{ $aoVivo ? 'Abrir a noite' : 'Abrir no site' }}</x-filament::button>
+                        {{-- Em outra aba: sem login no site, passa pelo login e volta para o jogo. --}}
+                        <x-filament::button tag="a" :href="$site" target="_blank" icon="rh-arrow-r" icon-position="after">{{ $aoVivo ? 'Abrir a noite' : 'Abrir no site' }}</x-filament::button>
                     @endif
                 </div>
             </div>

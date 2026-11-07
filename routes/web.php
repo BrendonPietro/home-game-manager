@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\ContaController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\JogoController;
 use App\Http\Controllers\RelogioPublicoController;
@@ -18,16 +17,13 @@ Route::middleware('guest:web')->group(function () {
     Route::post('/login', [AuthController::class, 'store']);
 });
 
-// Fim da noite para quem só opera (sem `site.fora_da_noite`): o site volta a abrir com o próximo jogo.
-Route::view('/sem-torneio', 'site.pages.sem-torneio')->name('sem-torneio');
-
-// site.acesso: conta desativada sai na hora; o Operador só fica no site com um jogo em andamento.
+// site.acesso: conta desativada sai na hora; quem não é admin só vê o torneio dentro da janela dele
+// (3 h antes do início a 3 h depois do término previsto, App\Support\JanelaDoSite).
 Route::middleware(['auth:web', 'site.acesso'])->group(function () {
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
 
-    // Minha conta: trocar a própria senha (o avatar da topbar leva para cá).
-    Route::get('/conta', [ContaController::class, 'editar'])->name('conta');
-    Route::put('/conta', [ContaController::class, 'atualizar'])->middleware('throttle:6,1')->name('conta.atualizar');
+    // Fora da janela: continua logado, sem nada do torneio, e diz quando o próximo abre.
+    Route::get('/sem-torneio', [HomeController::class, 'semTorneio'])->name('sem-torneio');
 
     // Tela 02: dashboard
     Route::get('/', [HomeController::class, 'index'])->name('home');

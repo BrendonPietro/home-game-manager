@@ -51,7 +51,7 @@
 	<div class="rh-ptable__rail">
 		<div class="rh-ptable__felt">
 			<div class="rh-ptable__center">
-				<span class="rh-ptable__name">{{ $jogoMesa->mesa->nome }}</span>
+				<span class="rh-ptable__name">{{ $jogoMesa->nome }}</span>
 				<span class="rh-label">{{ $subtitulo ?? $lugares.' lugares' }}</span>
 				<span class="rh-ptable__suits">♠♥♣♦</span>
 			</div>

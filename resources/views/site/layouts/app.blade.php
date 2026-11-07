@@ -8,6 +8,8 @@
 	<meta name="robots" content="noindex, nofollow">
 
 	<title>{{ $titulo ? $titulo.' · ' : '' }}{{ config('app.name') }}</title>
+	<x-icones />
+	<x-fontes />
 
 	@vite(['resources/scss/site/index.scss', 'resources/js/site/app.js'])
 	@livewireStyles

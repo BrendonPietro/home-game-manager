@@ -47,17 +47,7 @@
 		@if ($podeOrganizar)
 			<button type="button" class="rh-btn rh-btn--block" wire:click="sortear" wire:confirm="Sortear de novo o lugar de todos os confirmados?" wire:loading.attr="disabled">@svg('rh-rotate') Sortear lugares</button>
 
-			@if ($mesasLivres->isNotEmpty())
-				<div class="rh-row" style="flex-wrap:nowrap">
-					<select class="rh-select" wire:model="mesaNova" aria-label="Mesa para adicionar" style="flex:1;min-width:0">
-						<option value="">Adicionar mesa…</option>
-						@foreach ($mesasLivres as $mesa)
-							<option value="{{ $mesa->id }}">{{ $mesa->nome }} ({{ $mesa->lugares }} lugares)</option>
-						@endforeach
-					</select>
-					<button type="button" class="rh-btn rh-btn--icon" wire:click="adicionarMesa" aria-label="Adicionar a mesa escolhida">@svg('rh-plus')</button>
-				</div>
-			@endif
+			<button type="button" class="rh-btn rh-btn--block" wire:click="adicionarMesa" wire:loading.attr="disabled">@svg('rh-plus') Adicionar mesa</button>
 
 			<div class="rh-mesas__dica">
 				@svg('rh-move')
@@ -91,7 +81,7 @@
 			@endphp
 			<section class="rh-panel rh-mesas__mesa" wire:key="mesa-{{ $jogoMesa->id }}">
 				<div class="rh-panel__hd">
-					<h3 class="rh-heading">{{ $jogoMesa->mesa->nome }}</h3>
+					<h3 class="rh-heading">{{ $jogoMesa->nome }}</h3>
 					<span class="rh-badge rh-badge--plain">{{ $porLugar->count() }}/{{ $jogoMesa->lugares }}</span>
 					<span class="rh-spacer"></span>
 
@@ -117,10 +107,10 @@
 						<span class="rh-small rh-muted">Dealer: {{ $jogoMesa->dealer?->nome_exibicao ?? '—' }}</span>
 					@endif
 
-					<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-btn--sm" x-on:click="$dispatch('girar-mesa', {{ $jogoMesa->id }})" aria-label="Girar a {{ $jogoMesa->mesa->nome }}" title="Girar a mesa">@svg('rh-rotate')</button>
+					<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-btn--sm" x-on:click="$dispatch('girar-mesa', {{ $jogoMesa->id }})" aria-label="Girar a {{ $jogoMesa->nome }}" title="Girar a mesa">@svg('rh-rotate')</button>
 
 					@if ($podeOrganizar && $porLugar->isEmpty())
-						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-btn--sm" wire:click="removerMesa({{ $jogoMesa->id }})" wire:confirm="Tirar a {{ $jogoMesa->mesa->nome }} deste jogo?" aria-label="Tirar a {{ $jogoMesa->mesa->nome }} do jogo" title="Tirar do jogo">@svg('rh-x')</button>
+						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-btn--sm" wire:click="removerMesa({{ $jogoMesa->id }})" wire:confirm="Tirar a {{ $jogoMesa->nome }} deste jogo?" aria-label="Tirar a {{ $jogoMesa->nome }} do jogo" title="Tirar do jogo">@svg('rh-x')</button>
 					@endif
 				</div>
 

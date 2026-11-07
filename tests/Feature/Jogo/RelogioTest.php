@@ -68,7 +68,7 @@ class RelogioTest extends TestCase
     public function test_iniciar_o_jogo_deixa_o_nivel_1_parado(): void
     {
         $jogo = Jogo::factory()->agendado()->comEntradasPadrao()->create(['estrutura_blinds_id' => $this->estrutura->id]);
-        $mesa = $jogo->mesas()->create(['mesa_id' => $this->mesa->mesa_id, 'lugares' => 9, 'ordem' => 1]);
+        $mesa = $jogo->mesas()->create(['nome' => 'Mesa 01', 'lugares' => 9, 'ordem' => 1]);
         foreach ([1, 2] as $lugar) {
             $jogo->participantes()->create(['usuario_id' => Usuario::factory()->create()->id, 'jogo_mesa_id' => $mesa->id, 'lugar' => $lugar]); // confirmado
         }

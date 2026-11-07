@@ -52,3 +52,37 @@ button {
 [x-cloak] {
 	display: none !important;
 }
+
+// Barra de rolagem fina, nas cores do clube. O espaço dela fica sempre reservado (scrollbar-gutter): o topo
+// e o conteúdo não pulam de lado quando a página passa a rolar ou um modal trava a rolagem.
+html {
+	scrollbar-gutter: stable;
+	scrollbar-color: var(--line-200) transparent;
+}
+
+* {
+	scrollbar-width: thin;
+}
+
+// Navegador sem scrollbar-color (Safari): o mesmo desenho pelo ::-webkit-scrollbar.
+@supports not (scrollbar-color: auto) {
+	::-webkit-scrollbar {
+		width: 10px;
+		height: 10px;
+	}
+
+	::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	::-webkit-scrollbar-thumb {
+		background: var(--line-200);
+		background-clip: padding-box;
+		border: 2px solid transparent;
+		border-radius: 999px;
+	}
+
+	::-webkit-scrollbar-thumb:hover {
+		background-color: var(--ink-300);
+	}
+}

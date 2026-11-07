@@ -109,6 +109,12 @@ class Dinheiro
         return $sinal.intdiv($centavos, 100).'.'.str_pad((string) ($centavos % 100), 2, '0', STR_PAD_LEFT);
     }
 
+    /** Valor da ficha do cash game, que tem até 4 casas: '0.0200' → 'R$ 0,02', '0.0050' → 'R$ 0,005'. */
+    public static function ficha(string|float|null $valor): string
+    {
+        return 'R$ '.rtrim(rtrim(number_format((float) $valor, 4, ',', '.'), '0'), ',');
+    }
+
     /**
      * Reais → 'R$ 1.890'. Centavos só aparecem quando existem ('R$ 12,50').
      * Com $sinal: '+R$ 795' / '−R$ 200' (sinal de menos tipográfico); zero fica 'R$ 0'.

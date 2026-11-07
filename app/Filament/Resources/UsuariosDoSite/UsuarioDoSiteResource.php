@@ -208,7 +208,7 @@ class UsuarioDoSiteResource extends Resource
             ->dehydrated(fn (?string $state): bool => filled($state))
             ->helperText(fn (?Usuario $record): string => filled($record?->password)
                 ? 'Em branco mantém a senha atual.'
-                : 'Senha inicial: a pessoa troca em Minha conta, no site.');
+                : 'A senha do site só muda aqui (o site não tem tela de conta).');
     }
 
     private static function campoGrupos(): Select

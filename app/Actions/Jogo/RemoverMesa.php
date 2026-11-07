@@ -33,7 +33,7 @@ class RemoverMesa
             $sentados = $jogoMesa->participantes()->get();
 
             if ($sentados->contains(fn (Participante $p) => ! $p->estaFora())) {
-                throw new RegraDoJogo("Tire os jogadores da {$jogoMesa->mesa->nome} antes de removê-la.");
+                throw new RegraDoJogo("Tire os jogadores da {$jogoMesa->nome} antes de removê-la.");
             }
 
             $sentados->each->update(['jogo_mesa_id' => null, 'lugar' => null]);

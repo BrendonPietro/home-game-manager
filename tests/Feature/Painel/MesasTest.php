@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Painel;
 
+use App\Actions\Agenda\SalvarEvento;
 use App\Filament\Resources\Mesas\MesaResource;
 use App\Filament\Resources\Mesas\Pages\ManageMesas;
 use App\Models\Jogo;
@@ -62,12 +63,14 @@ class MesasTest extends TestCase
             ->assertHasFormErrors(['nome' => 'unique', 'lugares' => 'max']);
     }
 
-    public function test_mesa_usada_em_jogo_nao_se_exclui(): void
+    public function test_mesa_com_evento_na_agenda_nao_se_exclui(): void
     {
         $this->entrarNoPainel('Admin');
         $usada = Mesa::factory()->create();
         $livre = Mesa::factory()->create();
-        Jogo::factory()->create()->mesas()->create(['mesa_id' => $usada->id, 'lugares' => 9]);
+        app(SalvarEvento::class)(null, ['tipo' => 'aluguel', 'cliente' => 'Renan', 'status' => 'reservado', 'valor' => '300', 'data' => '2026-10-30', 'mesas' => [$usada->id]]);
+        // A mesa do torneio não é a do cadastro: não segura a exclusão.
+        Jogo::factory()->create()->mesas()->create(['nome' => $livre->nome, 'lugares' => 9]);
 
         Livewire::test(ManageMesas::class)
             ->assertActionHidden(TestAction::make('delete')->table($usada))

@@ -205,7 +205,7 @@
 					@else
 						<dl class="rh-kv">
 							<dt>Quantidade de mesas</dt><dd>{{ $jogo->mesas->count() }}</dd>
-							<dt>Lugares</dt><dd>{{ $jogo->mesas->map(fn ($m) => $m->mesa->nome.': '.$m->lugares)->implode(' · ') }}</dd>
+							<dt>Lugares</dt><dd>{{ $jogo->mesas->map(fn ($m) => $m->nome.': '.$m->lugares)->implode(' · ') }}</dd>
 							<dt>Capacidade total</dt><dd>{{ $jogo->mesas->sum('lugares') }} lugares</dd>
 							<dt>Dealers</dt><dd>{{ $jogo->mesas->map(fn ($m) => $m->dealer?->nome_exibicao)->filter()->implode(' · ') ?: 'Sem dealer' }}</dd>
 						</dl>

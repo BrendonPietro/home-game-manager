@@ -2,11 +2,14 @@
 
 namespace App\Filament\Resources\Modelos\Pages;
 
+use App\Filament\Resources\Jogos\Pages\Concerns\ConfereAPremiacao;
 use App\Filament\Resources\Modelos\ModeloResource;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateModelo extends CreateRecord
 {
+    use ConfereAPremiacao;
+
     protected static string $resource = ModeloResource::class;
 
     /** Modelo não tem data; o nome do jogo acompanha o do modelo (cada jogo criado ganha o seu). */

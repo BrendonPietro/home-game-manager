@@ -8,7 +8,6 @@ use App\Enums\Periodicidade;
 use App\Enums\StatusJogo;
 use App\Enums\TipoItem;
 use App\Models\Jogo;
-use App\Models\Mesa;
 use App\Models\Ranking;
 use App\Models\Usuario;
 use App\Services\Jogo\CopiaDoJogo;
@@ -27,7 +26,7 @@ class CopiaDoJogoTest extends TestCase
         $modelo->itens()->create(['tipo' => TipoItem::Opcional, 'nome' => 'Churrasco', 'valor' => 30, 'compravel_com' => ['jogador'], 'percentual_premiacao' => 0]);
         $modelo->taxas()->create(['nome' => 'Dealers', 'calculo' => CalculoTaxa::PorUnidade, 'valor' => 215, 'quantidade' => 2]);
         $modelo->premiacoes()->createMany([['posicao' => 1, 'percentual' => 60], ['posicao' => 2, 'percentual' => 40]]);
-        $modelo->mesas()->create(['mesa_id' => Mesa::factory()->create()->id, 'dealer_id' => Usuario::factory()->dealer()->create()->id, 'lugares' => 8, 'ordem' => 1]);
+        $modelo->mesas()->create(['nome' => 'Mesa 1', 'dealer_id' => Usuario::factory()->dealer()->create()->id, 'lugares' => 8, 'ordem' => 1]);
         $modelo->rankings()->attach(Ranking::query()->create(['nome' => 'Anual', 'periodicidade' => Periodicidade::Anual]));
 
         return $modelo;

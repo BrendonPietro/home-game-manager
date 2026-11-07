@@ -4,7 +4,6 @@ namespace Tests\Feature\Site;
 
 use App\Livewire\Jogo\Jogadores;
 use App\Models\Jogo;
-use App\Models\Mesa;
 use App\Models\Usuario;
 use Database\Seeders\PermissoesSeeder;
 use Database\Seeders\PokerNight18Seeder;
@@ -33,7 +32,7 @@ class JogadoresTest extends TestCase
 
         $this->jogo = Jogo::factory()->agendado()->comEntradasPadrao()->create(['nome' => 'Poker Night #19']);
         foreach (['Mesa 01', 'Mesa 02'] as $ordem => $nome) {
-            $this->jogo->mesas()->create(['mesa_id' => Mesa::factory()->create(['nome' => $nome])->id, 'lugares' => 9, 'ordem' => $ordem]);
+            $this->jogo->mesas()->create(['nome' => $nome, 'lugares' => 9, 'ordem' => $ordem]);
         }
     }
 

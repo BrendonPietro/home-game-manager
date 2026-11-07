@@ -6,6 +6,7 @@ use App\Actions\Agenda\SalvarEvento;
 use App\Enums\Periodicidade;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\Metricas;
+use App\Filament\Resources\Usuarios\UsuarioResource;
 use App\Filament\Widgets\ArrecadacaoPorJogo;
 use App\Filament\Widgets\Atalhos;
 use App\Filament\Widgets\CaixaDoMes;
@@ -48,7 +49,8 @@ class DashboardTest extends TestCase
 
         // #20 (25/10) agendado com 2 confirmados.
         $this->proximo = Jogo::factory()->agendado()->comEntradasPadrao()->create(['nome' => 'Poker Night #20', 'data' => '2026-10-25', 'horario' => '20:00']);
-        $this->proximo->mesas()->create(['mesa_id' => Mesa::query()->sole()->id, 'lugares' => 9, 'ordem' => 1]);
+        $this->proximo->mesas()->create(['nome' => 'Mesa 1', 'lugares' => 9, 'ordem' => 1]);
+        Mesa::factory()->create(['nome' => 'Mesa 01']); // cadastro do clube (aluguéis)
         Usuario::factory()->count(2)->create()->each(fn (Usuario $u) => $this->proximo->participantes()->create(['usuario_id' => $u->id]));
         app(EventoDoJogo::class)->sincronizar($this->proximo);
 
@@ -68,6 +70,16 @@ class DashboardTest extends TestCase
             ->assertDontSee('Arrecadação por jogo'); // os gráficos foram para as Métricas
 
         $this->get(Metricas::getUrl())->assertOk()->assertSee(['Arrecadação por jogo', 'Prize pool por jogo', 'Jogos por mês']);
+    }
+
+    public function test_painel_troca_de_tela_sem_recarregar_e_o_site_abre_de_verdade(): void
+    {
+        // SPA: os links do painel (também os atalhos) trocam a tela sem recarregar e já buscam no hover.
+        $this->get(Dashboard::getUrl())
+            ->assertSee('href="'.UsuarioResource::getUrl().'" wire:navigate.hover', false)
+            // O site é do mesmo domínio, mas abre em outra aba, fora do SPA.
+            ->assertSee('href="'.route('jogos.conferencia', $this->proximo).'" target="_blank"', false)
+            ->assertDontSee('href="'.route('jogos.conferencia', $this->proximo).'" wire:navigate', false);
     }
 
     public function test_proximo_jogo_em_destaque(): void

@@ -51,7 +51,7 @@ class JogoController extends Controller
     /** Tela 04: conferir com o grupo o que foi cadastrado no painel antes de começar. */
     public function conferencia(Jogo $jogo, Calculadora $calculadora): View
     {
-        $jogo->load(['itens', 'taxas', 'premiacoes', 'mesas.mesa', 'mesas.dealer', 'floor', 'temporada', 'estruturaBlinds.niveis'])
+        $jogo->load(['itens', 'taxas', 'premiacoes', 'mesas.dealer', 'floor', 'temporada', 'estruturaBlinds.niveis'])
             ->loadCount('participantes');
 
         return view('site.pages.conferencia', [

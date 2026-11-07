@@ -60,6 +60,15 @@ class PainelPanelProvider extends PanelProvider
             ->login(Login::class)
             ->profile(Perfil::class, isSimple: false) // trocar a própria senha (menu do usuário → Perfil)
             ->renderHook(PanelsRenderHook::AUTH_LOGIN_FORM_AFTER, fn () => view('filament.painel.link-site'))
+            ->renderHook(PanelsRenderHook::HEAD_START, fn () => view('components.fontes')) // sem a fonte piscar
+            ->renderHook(PanelsRenderHook::HEAD_END, fn () => view('components.icones')) // o mesmo favicon do site
+            // Troca de tela sem recarregar o painel inteiro (menu e topo ficam) e já busca a página no hover do link.
+            // O site (mesmo domínio) e a página de impressão abrem de verdade: não entram no SPA.
+            ->spa(hasPrefetching: true)
+            ->spaUrlExceptions(fn (): array => [
+                url('/'), url('/jogos*'), url('/relogio*'), url('/login*'), url('/logout*'), url('/sem-torneio*'), url('/vitrine*'),
+                url('/painel/relatorios/imprimir*'),
+            ])
             ->brandName('Rodrigues Home Game')
             ->brandLogo(fn () => view('filament.painel.marca'))
             ->brandLogoHeight('1.75rem')

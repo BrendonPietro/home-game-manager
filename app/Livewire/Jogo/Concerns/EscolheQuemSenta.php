@@ -99,7 +99,7 @@ trait EscolheQuemSenta
         }
 
         [$mesaId, $lugar] = $this->lugarVazio;
-        $mesa = $this->jogo->mesas()->with('mesa')->find($mesaId);
+        $mesa = $this->jogo->mesas()->find($mesaId);
 
         if ($mesa === null) {
             return null;
@@ -128,7 +128,7 @@ trait EscolheQuemSenta
         $padrao = $buyins->firstWhere('padrao', true) ?? $buyins->first(); // o mesmo do RegistrarEntrada::buyinPadrao
 
         return [
-            'titulo' => $mesa->mesa->nome.' · Lugar '.$lugar,
+            'titulo' => $mesa->nome.' · Lugar '.$lugar,
             'confirmados' => $confirmados,
             'cadastro' => $cadastro,
             'buyin' => $this->jogo->eTorneio() && $padrao

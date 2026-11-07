@@ -2,11 +2,14 @@
 
 namespace App\Filament\Resources\Jogos\Schemas;
 
+use App\Actions\Jogo\AdicionarMesa;
+use App\Actions\Jogo\RefazerPeloCadastro;
 use App\Enums\CalculoTaxa;
 use App\Enums\MetodoPremiacao;
 use App\Enums\Modalidade;
 use App\Enums\StatusJogo;
 use App\Enums\TipoItem;
+use App\Models\Entrada;
 use App\Models\EstruturaBlinds;
 use App\Models\Item;
 use App\Models\Jogo;
@@ -20,8 +23,10 @@ use App\Services\Jogo\Calculadora;
 use App\Services\Jogo\ResumoFinanceiro;
 use App\Support\Dinheiro;
 use App\Support\PadroesDoJogo;
+use App\Support\SugestaoDePremiacao;
 use Closure;
 use Filament\Actions\Action;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
@@ -33,6 +38,7 @@ use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
@@ -67,7 +73,7 @@ class JogoForm
                         ->inline()
                         ->required()
                         ->live()
-                        ->disabled(fn (?Jogo $record): bool => ! self::estruturaAberta($record)),
+                        ->disabled(fn (?Jogo $record): bool => ! self::antesDeComecar($record)),
                     TextEntry::make('status')
                         ->badge()
                         ->formatStateUsing(fn (StatusJogo $state): string => $state->label())
@@ -89,7 +95,18 @@ class JogoForm
     }
 
     /** Entradas, opcionais, taxas, premiação e mesas só se mexem antes de iniciar. */
+    /**
+     * Dinheiro, premiação e mesas: abertos em rascunho e agendado; em andamento, só para quem tem `jogos.andamento`
+     * (Admin e Desenvolvedor), e salvar refaz as entradas já lançadas e os prêmios (RefazerPeloCadastro).
+     */
     public static function estruturaAberta(?Jogo $jogo): bool
+    {
+        return self::antesDeComecar($jogo)
+            || ($jogo->status === StatusJogo::EmAndamento && (Filament::auth()->user()?->can(RefazerPeloCadastro::PERMISSAO) ?? false));
+    }
+
+    /** Modalidade, blinds e a simulação: só antes de começar (o tipo de jogo e o relógio não mudam no meio). */
+    public static function antesDeComecar(?Jogo $jogo): bool
     {
         return $jogo === null || in_array($jogo->status, [StatusJogo::Rascunho, StatusJogo::Agendado], true);
     }
@@ -130,13 +147,25 @@ class JogoForm
                     ->placeholder('Poker Night #19')
                     ->columnSpanFull()
                     ->visible(! $modelo),
-                DatePicker::make('data')
-                    ->required()
+                Grid::make(['default' => 1, 'sm' => 3])
+                    ->columnSpanFull()
+                    ->schema([
+                        DatePicker::make('data')
+                            ->required()
+                            ->visible(! $modelo),
+                        TimePicker::make('horario')
+                            ->label('Horário')
+                            ->seconds(false)
+                            ->default(fn (): ?string => PadroesDoJogo::valor('horario')),
+                        // O site abre para quem não é admin 3 h antes do início e fecha 3 h depois disto (JanelaDoSite).
+                        TimePicker::make('horario_fim')
+                            ->label('Término previsto')
+                            ->seconds(false)
+                            ->helperText('Antes do horário de início = no dia seguinte. Vazio: 12 h depois do início.'),
+                    ]),
+                Text::make('Quem não é admin entra no site de 3 h antes do início até 3 h depois do término previsto.')
+                    ->columnSpanFull()
                     ->visible(! $modelo),
-                TimePicker::make('horario')
-                    ->label('Horário')
-                    ->seconds(false)
-                    ->default(fn (): ?string => PadroesDoJogo::valor('horario')),
                 Select::make('temporada_id')
                     ->label('Temporada')
                     ->relationship('temporada', 'nome')
@@ -186,7 +215,7 @@ class JogoForm
     {
         return Tab::make('Blinds')
             ->visible(fn (Get $get): bool => self::eTorneio($get))
-            ->disabled(fn (?Jogo $record): bool => ! self::estruturaAberta($record))
+            ->disabled(fn (?Jogo $record): bool => ! self::antesDeComecar($record))
             ->schema([
                 Select::make('estrutura_blinds_id')
                     ->label('Estrutura de blinds')
@@ -211,6 +240,9 @@ class JogoForm
         return Tab::make('Dinheiro')
             ->disabled(fn (?Jogo $record): bool => ! self::estruturaAberta($record))
             ->schema([
+                Text::make('Jogo em andamento: ao salvar, as entradas já lançadas passam a valer os valores daqui, o que cada um deve e o prize pool se refazem (e os prêmios, com as entradas fechadas), e a mudança vai para o histórico.')
+                    ->color('warning')
+                    ->visible(fn (?Jogo $record): bool => $record?->status === StatusJogo::EmAndamento && self::estruturaAberta($record)),
                 Section::make('Entradas')
                     ->description('Premiação diz quanto de cada entrada vai para o prize pool (100% é o normal; Outro deixa digitar, ex.: 75%). O + adiciona uma variação (ex.: rebuy duplo). Jogo sem rebuy ou sem add-on: desative a linha padrão.')
                     ->schema([
@@ -246,7 +278,7 @@ class JogoForm
 
         return Section::make('Simulação do prize pool')
             ->description('Estimativa com o cadastro como está agora (buy-in, rebuy e add-on padrão e os opcionais obrigatórios). Não grava nada.')
-            ->visible(fn (?Jogo $record): bool => self::estruturaAberta($record))
+            ->visible(fn (?Jogo $record): bool => self::antesDeComecar($record))
             ->schema([
                 Grid::make(['md' => 3])->schema([
                     $quantos('Jogadores', '12'),
@@ -350,7 +382,8 @@ class JogoForm
             ->addActionLabel('Variação de '.$rotulo)
             // A linha padrão não se apaga: desativa.
             ->deleteAction(fn (Action $action) => $action->hidden(
-                fn (array $arguments, Repeater $component): bool => (bool) ($component->getRawItemState($arguments['item'])['padrao'] ?? false),
+                fn (array $arguments, Repeater $component): bool => (bool) ($component->getRawItemState($arguments['item'])['padrao'] ?? false)
+                    || self::temEntradas($arguments['item']),
             ));
     }
 
@@ -391,7 +424,14 @@ class JogoForm
             ])
             ->defaultItems(0)
             ->orderColumn('ordem')
-            ->addActionLabel('Opcional');
+            ->addActionLabel('Opcional')
+            ->deleteAction(fn (Action $action) => $action->hidden(fn (array $arguments): bool => self::temEntradas($arguments['item'])));
+    }
+
+    /** Linha já gravada com entrada lançada no jogo: não se apaga (desative), senão a entrada perde o item. */
+    private static function temEntradas(string $chave): bool
+    {
+        return str_starts_with($chave, 'record-') && Entrada::query()->where('jogo_item_id', substr($chave, 7))->exists();
     }
 
     /**
@@ -520,12 +560,14 @@ class JogoForm
                     ->live(),
                 Text::make(fn (): string => 'Pelo número de jogadores: '.self::resumoDasRegras().'. Os valores são gravados ao fechar entradas.')
                     ->visible(fn (Get $get): bool => ! $manual($get)),
+                // Posições fixas, na ordem (o 1º, 2º… aparece ao lado de cada uma pelo CSS .rh-premiacao):
+                // para mudar, troca o valor. Posição sem percentual some ao salvar (ConfereAPremiacao).
                 Repeater::make('premiacoes')
-                    ->label('Percentual por posição (na ordem: 1º, 2º, 3º…)')
+                    ->label('Percentual por posição')
                     ->relationship()
                     ->simple(
                         TextInput::make('percentual')
-                            ->required()
+                            ->hiddenLabel()
                             ->numeric()
                             ->minValue(0.01)
                             ->maxValue(100)
@@ -534,20 +576,82 @@ class JogoForm
                             ->live(onBlur: true),
                     )
                     ->orderColumn('posicao')
-                    ->minItems(1)
+                    ->reorderable(false)
+                    ->live() // a soma e as sugestões acompanham ao adicionar ou tirar posição
                     ->defaultItems(0)
-                    ->addActionLabel('Posição')
+                    ->addAction(fn (Action $action): Action => $action
+                        ->label('Adicionar posição')
+                        ->hiddenLabel()
+                        ->icon('rh-plus')
+                        ->tooltip('Adicionar posição'))
+                    ->extraAttributes(['class' => 'rh-premiacao'])
                     ->visible($manual)
                     ->rule(fn (): Closure => function (string $attribute, mixed $value, Closure $fail): void {
-                        $soma = collect($value)->sum(fn ($item) => Dinheiro::centavos(is_array($item) ? ($item['percentual'] ?? null) : $item));
+                        $soma = self::somaDaPremiacao((array) $value);
 
                         if ($soma !== 10000) {
-                            // 9250 → "92,5"
-                            $somaTexto = str_replace('.', ',', rtrim(rtrim(Dinheiro::decimal($soma), '0'), '.'));
-                            $fail("Os percentuais precisam somar 100% (agora somam {$somaTexto}%).");
+                            $fail(self::textoDaSoma($soma).'. Os percentuais precisam somar 100%.');
                         }
                     }),
+                Text::make(fn (Get $get): string => self::textoDaSoma(self::somaDaPremiacao((array) $get('premiacoes'))))
+                    ->color(fn (Get $get): string => self::somaDaPremiacao((array) $get('premiacoes')) === 10000 ? 'gray' : 'danger')
+                    ->visible(fn (Get $get): bool => $manual($get) && filled($get('premiacoes'))),
+                // Sugestões pelo número de posições na lista (preenchidas ou não): o clique só preenche os campos.
+                Actions::make([
+                    self::sugestao('concentrada', 'Concentrada no 1º', [SugestaoDePremiacao::class, 'concentrada']),
+                    self::sugestao('equilibrada', 'Mais equilibrada', [SugestaoDePremiacao::class, 'equilibrada']),
+                ])
+                    ->key('sugestoes_da_premiacao')
+                    ->visible(fn (Get $get): bool => $manual($get) && count((array) $get('premiacoes')) >= 2),
             ]);
+    }
+
+    /** Botão de sugestão: "Concentrada no 1º · 57 / 29 / 14", e o clique preenche as posições na ordem. */
+    private static function sugestao(string $nome, string $rotulo, callable $dividir): Action
+    {
+        return Action::make('sugestao_'.$nome)
+            ->label(fn (Get $get): string => $rotulo.' · '.SugestaoDePremiacao::texto($dividir(count((array) $get('premiacoes')))))
+            ->color('gray')
+            ->size('sm')
+            ->action(function (Get $get, Set $set) use ($dividir): void {
+                $itens = (array) $get('premiacoes');
+                $percentuais = $dividir(count($itens));
+                $posicao = 0;
+
+                foreach ($itens as $chave => $item) {
+                    $valor = (string) $percentuais[$posicao++];
+                    $itens[$chave] = is_array($item) ? ['percentual' => $valor] + $item : $valor;
+                }
+
+                $set('premiacoes', $itens);
+            });
+    }
+
+    /** Percentual de um item da premiação (o repeater simples guarda o valor solto ou em ['percentual' => …]). */
+    public static function percentualDoItem(mixed $item): mixed
+    {
+        return is_array($item) ? ($item['percentual'] ?? null) : $item;
+    }
+
+    /** Soma dos percentuais preenchidos, em centésimos (100% = 10000). */
+    public static function somaDaPremiacao(array $itens): int
+    {
+        return collect($itens)->sum(fn (mixed $item): int => is_numeric(self::percentualDoItem($item))
+            ? Dinheiro::centavos(self::percentualDoItem($item))
+            : 0);
+    }
+
+    /** "Soma 100%", "Soma 95%: falta 5%", "Soma 102,5%: sobra 2,5%". */
+    public static function textoDaSoma(int $soma): string
+    {
+        // 9250 → "92,5"
+        $texto = fn (int $centesimos): string => str_replace('.', ',', rtrim(rtrim(Dinheiro::decimal($centesimos), '0'), '.'));
+
+        return match (true) {
+            $soma === 10000 => 'Soma 100%',
+            $soma < 10000 => 'Soma '.$texto($soma).'%: falta '.$texto(10000 - $soma).'%',
+            default => 'Soma '.$texto($soma).'%: sobra '.$texto($soma - 10000).'%',
+        };
     }
 
     private static function resumoDasRegras(): string
@@ -592,21 +696,17 @@ class JogoForm
                         TableColumn::make('Dealer'),
                         TableColumn::make('Lugares')->markAsRequired(),
                     ])
+                    // Mesas do torneio, sem o cadastro de mesas (que é dos aluguéis): "Mesa 1", "Mesa 2"…
                     ->schema([
-                        Select::make('mesa_id')
-                            ->options(fn (?string $state) => Mesa::query()
-                                ->where(fn (Builder $q) => $q->where('ativa', true)->orWhere('id', $state))
-                                ->orderBy('nome')
-                                ->pluck('nome', 'id'))
+                        TextInput::make('nome')
                             ->required()
+                            ->maxLength(40)
                             ->distinct()
-                            ->disableOptionsWhenSelectedInSiblingRepeaterItems()
-                            ->live()
-                            ->afterStateUpdated(function (?string $state, Set $set): void {
-                                if ($mesa = Mesa::query()->find($state)) {
-                                    $set('lugares', $mesa->lugares);
-                                }
-                            }),
+                            // A linha nova ainda está sem nome: conta só as que já têm.
+                            ->default(fn (Get $get): string => AdicionarMesa::proximoNome(array_values(array_filter(
+                                array_map(fn ($mesa) => is_array($mesa) ? ($mesa['nome'] ?? null) : null, (array) $get('../../mesas')),
+                                fn (?string $nome): bool => filled($nome),
+                            )))),
                         Select::make('dealer_id')
                             ->options(fn (?string $state) => Usuario::query()
                                 ->where(fn (Builder $q) => $q->where('pode_ser_dealer', true)->where('ativo', true)->orWhere('id', $state))
@@ -616,14 +716,19 @@ class JogoForm
                             ->placeholder('Sem dealer'),
                         TextInput::make('lugares')
                             ->integer()
-                            ->minValue(2)
+                            // Com gente sentada (jogo em andamento), não fica menor que o último lugar ocupado.
+                            ->minValue(fn (?JogoMesa $record): int => max(2, (int) $record?->participantes()->max('lugar')))
                             ->maxValue(12)
-                            ->default(9)
+                            ->default(fn (Get $get): int => (int) ($get('../../lugares_por_mesa') ?: 9))
                             ->required(),
                     ])
                     ->defaultItems(0)
                     ->orderColumn('ordem')
-                    ->addActionLabel('Mesa')
+                    ->addAction(fn (Action $action): Action => $action
+                        ->label('Adicionar mesa')
+                        ->hiddenLabel()
+                        ->icon('rh-plus')
+                        ->tooltip('Adicionar mesa'))
                     // Mesa com jogadores sentados não sai daqui: troque os lugares no site antes.
                     ->deleteAction(fn (Action $action) => $action->hidden(
                         fn (array $arguments): bool => str_starts_with($arguments['item'], 'record-')

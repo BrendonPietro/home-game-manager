@@ -107,7 +107,7 @@
 									@endif
 								</span>
 							</td>
-							<td class="rh-muted">{{ $participante->jogoMesa?->mesa->nome ?? '—' }}</td>
+							<td class="rh-muted">{{ $participante->jogoMesa?->nome ?? '—' }}</td>
 							<td class="n">{{ Dinheiro::brlCentavos($conta->investido) }}</td>
 							<td class="n">{!! $conta->premio ? e(Dinheiro::brlCentavos($conta->premio)) : '<span class="rh-faint">—</span>' !!}</td>
 							<td @class(['n', 'rh-pos' => $definido && $conta->resultado() > 0, 'rh-neg' => $definido && $conta->resultado() < 0])>

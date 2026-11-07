@@ -6,6 +6,7 @@ use App\Enums\CalculoTaxa;
 use App\Enums\MetodoPremiacao;
 use App\Enums\Modalidade;
 use App\Enums\StatusJogo;
+use App\Enums\TipoAlteracao;
 use App\Enums\TipoItem;
 use App\Filament\Resources\Jogos\JogoResource;
 use App\Filament\Resources\Jogos\Pages\CreateJogo;
@@ -15,7 +16,9 @@ use App\Models\EstruturaBlinds;
 use App\Models\Jogo;
 use App\Models\Mesa;
 use App\Models\Usuario;
+use App\Services\Jogo\Calculadora;
 use App\Support\PadroesDoJogo;
+use App\Support\SugestaoDePremiacao;
 use Database\Seeders\EstruturasBlindsSeeder;
 use Database\Seeders\PokerNight18Seeder;
 use Database\Seeders\RegrasPremiacaoSeeder;
@@ -85,12 +88,12 @@ class JogosTest extends TestCase
 
     public function test_cria_torneio_com_entradas_opcionais_taxas_e_mesas(): void
     {
-        $mesa = Mesa::factory()->create(['nome' => 'Mesa 01', 'lugares' => 8]);
+        $mesa = Mesa::factory()->create(['nome' => 'Mesa 01', 'lugares' => 8]); // só do cadastro: o jogo não usa
         $dealer = Usuario::factory()->dealer()->create(['nome' => 'Sérgio']);
 
         Livewire::test(CreateJogo::class)
             ->fillForm($this->torneio([
-                'mesas' => [['mesa_id' => (string) $mesa->id, 'dealer_id' => (string) $dealer->id, 'lugares' => 8]],
+                'mesas' => [['nome' => 'Mesa 1', 'dealer_id' => (string) $dealer->id, 'lugares' => 8]],
             ]))
             ->call('create')
             ->assertHasNoFormErrors();
@@ -115,25 +118,72 @@ class JogosTest extends TestCase
         $this->assertSame(2, $jogo->taxas[1]->quantidade);
 
         $this->assertSame($dealer->id, $jogo->mesas->sole()->dealer_id);
-        $this->assertSame([$mesa->id], $jogo->evento->mesas->pluck('id')->all());
+        $this->assertSame('Mesa 1', $jogo->mesas->sole()->nome);
+        $this->assertSame([], $jogo->evento->mesas->pluck('id')->all()); // o jogo não ocupa o cadastro
         $this->assertSame('2026-10-11', $jogo->evento->data->toDateString());
     }
 
     public function test_premiacao_manual_precisa_somar_100(): void
     {
+        // Não fecha 100%: alerta com OK e não salva.
         Livewire::test(CreateJogo::class)
             ->fillForm($this->torneio(['metodo_premiacao' => 'manual', 'premiacoes' => [['percentual' => '60'], ['percentual' => '30']]]))
+            ->assertSee('Soma 90%: falta 10%')
             ->call('create')
-            ->assertHasFormErrors(['premiacoes'])
-            ->assertSee('Os percentuais precisam somar 100% (agora somam 90%).');
+            ->assertNotified('A premiação não fecha 100%');
 
         Livewire::test(CreateJogo::class)
-            ->fillForm($this->torneio(['metodo_premiacao' => 'manual', 'premiacoes' => [['percentual' => '60'], ['percentual' => '25'], ['percentual' => '15']]]))
+            ->fillForm($this->torneio(['metodo_premiacao' => 'manual', 'premiacoes' => [['percentual' => '60'], ['percentual' => '45']]]))
+            ->call('create')
+            ->assertNotified('A premiação não fecha 100%');
+
+        $this->assertSame(0, Jogo::query()->count());
+
+        // Posição adicionada e não preenchida não existe: some ao salvar, e as outras ficam 1º, 2º, 3º.
+        Livewire::test(CreateJogo::class)
+            ->fillForm($this->torneio(['metodo_premiacao' => 'manual', 'premiacoes' => [
+                ['percentual' => '60'], ['percentual' => null], ['percentual' => '25'], ['percentual' => '15'], ['percentual' => null],
+            ]]))
+            ->assertSee('Soma 100%')
             ->call('create')
             ->assertHasNoFormErrors();
 
         $this->assertSame(['60.00', '25.00', '15.00'], Jogo::query()->sole()->premiacoes->pluck('percentual')->all());
         $this->assertSame([1, 2, 3], Jogo::query()->sole()->premiacoes->pluck('posicao')->all());
+    }
+
+    public function test_sugestoes_de_premiacao_pelo_numero_de_posicoes(): void
+    {
+        // Em múltiplos de 5, como as entradas e os prêmios.
+        $this->assertSame([55, 30, 15], SugestaoDePremiacao::concentrada(3));
+        $this->assertSame([40, 35, 25], SugestaoDePremiacao::equilibrada(3));
+        $this->assertSame([65, 35], SugestaoDePremiacao::concentrada(2));
+        $this->assertSame([100], SugestaoDePremiacao::concentrada(1));
+
+        // Sempre 100%, com pelo menos 1% por posição, também com muitas posições.
+        foreach (range(1, 30) as $lugares) {
+            foreach ([SugestaoDePremiacao::concentrada($lugares), SugestaoDePremiacao::equilibrada($lugares)] as $divisao) {
+                $this->assertSame(100, array_sum($divisao));
+                $this->assertCount($lugares, $divisao);
+                $this->assertGreaterThanOrEqual(1, min($divisao));
+                $this->assertSame($divisao, array_values(collect($divisao)->sortDesc()->all())); // do 1º para o último
+
+                if ($lugares <= 20) {
+                    $this->assertSame([], array_values(array_filter($divisao, fn (int $p): bool => $p % 5 !== 0)));
+                }
+            }
+        }
+
+        // No formulário: os botões contam as posições da lista (preenchidas ou não) e o clique preenche.
+        Livewire::test(CreateJogo::class)
+            ->fillForm($this->torneio(['metodo_premiacao' => 'manual', 'premiacoes' => [['percentual' => null], ['percentual' => null], ['percentual' => null]]]))
+            ->assertSee(['Concentrada no 1º · 55 / 30 / 15', 'Mais equilibrada · 40 / 35 / 25'])
+            ->callAction(TestAction::make('sugestao_equilibrada')->schemaComponent('sugestoes_da_premiacao'))
+            ->assertSee('Soma 100%')
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $this->assertSame(['40.00', '35.00', '25.00'], Jogo::query()->sole()->premiacoes->pluck('percentual')->all());
     }
 
     public function test_cash_game_pede_valor_da_ficha_e_nao_tem_add_on(): void
@@ -194,27 +244,59 @@ class JogosTest extends TestCase
         $this->assertSame(StatusJogo::Rascunho, $jogo->fresh()->status);
     }
 
-    public function test_jogo_em_andamento_nao_mexe_na_estrutura_pelo_painel(): void
+    public function test_admin_muda_o_cadastro_do_jogo_em_andamento_e_as_entradas_acompanham(): void
     {
         $this->seed(PokerNight18Seeder::class);
         $noite = Jogo::query()->where('nome', PokerNight18Seeder::NOME)->sole();
-        $itens = $noite->itens()->count();
+        $addons = $noite->entradas()->validas()->where('tipo', TipoItem::Addon)->count();
+        $arrecadacao = app(Calculadora::class)->doJogo($noite)->arrecadacao;
+
+        $tela = Livewire::test(EditJogo::class, ['record' => $noite->getRouteKey()])
+            ->assertFormFieldIsDisabled('modalidade')
+            ->assertFormFieldIsDisabled('estrutura_blinds_id') // o relógio não muda no meio
+            ->assertFormFieldIsEnabled('itens_addon')
+            ->assertFormFieldIsEnabled('mesas')
+            ->assertSee('Jogo em andamento: ao salvar, as entradas já lançadas passam a valer os valores daqui')
+            ->assertActionHidden('agendar')
+            ->assertActionHidden('cancelar');
+
+        // Add-on de R$ 50 para R$ 60.
+        $itens = $tela->get('data.itens_addon');
+        $itens[array_key_first($itens)]['valor'] = '60';
+
+        $tela->set('data.itens_addon', $itens)
+            ->call('save')
+            ->assertHasNoFormErrors()
+            ->assertNotified('Jogo refeito pelo cadastro');
+
+        $this->assertSame(['60.00'], $noite->entradas()->validas()->where('tipo', TipoItem::Addon)->pluck('valor')->unique()->values()->all());
+        $this->assertSame($arrecadacao + $addons * 1000, app(Calculadora::class)->doJogo($noite)->arrecadacao);
+
+        $alteracao = $noite->alteracoes()->latest('id')->first();
+        $this->assertSame(TipoAlteracao::CadastroAlterado, $alteracao->tipo);
+        $this->assertStringContainsString("Add-on R$ 50 → R$ 60 ({$addons} entradas)", $alteracao->descricao);
+    }
+
+    public function test_sem_a_permissao_o_jogo_em_andamento_fica_travado(): void
+    {
+        $this->seed(PokerNight18Seeder::class);
+        $noite = Jogo::query()->where('nome', PokerNight18Seeder::NOME)->sole();
+        $conta = $this->entrarNoPainel('Admin');
+        $conta->syncRoles([]);
+        $conta->givePermissionTo(['jogos.ver', 'jogos.editar']);
+
+        $this->get(JogoResource::getUrl('edit', ['record' => $noite]))->assertOk();
 
         Livewire::test(EditJogo::class, ['record' => $noite->getRouteKey()])
-            ->assertFormFieldIsDisabled('modalidade')
             ->assertFormFieldIsDisabled('itens_buyin')
-            ->assertFormFieldIsDisabled('estrutura_blinds_id')
             ->assertFormFieldIsDisabled('mesas')
-            ->assertActionHidden('agendar')
-            ->assertActionHidden('cancelar')
+            ->assertDontSee('Jogo em andamento: ao salvar')
             ->fillForm(['observacoes' => 'Noite de referência'])
             ->call('save')
             ->assertHasNoFormErrors();
 
-        $noite->refresh();
-        $this->assertSame('Noite de referência', $noite->observacoes);
-        $this->assertSame($itens, $noite->itens()->count());
-        $this->assertSame(2, $noite->mesas()->count());
+        $this->assertSame('Noite de referência', $noite->fresh()->observacoes);
+        $this->assertSame(0, $noite->alteracoes()->where('tipo', TipoAlteracao::CadastroAlterado)->count());
     }
 
     public function test_so_exclui_rascunho_sem_entradas(): void

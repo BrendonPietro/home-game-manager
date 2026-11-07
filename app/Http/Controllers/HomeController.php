@@ -8,6 +8,7 @@ use App\Models\Jogo;
 use App\Models\Usuario;
 use App\Services\Jogo\Calculadora;
 use App\Services\Jogo\Relogio;
+use App\Support\JanelaDoSite;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
@@ -19,6 +20,17 @@ use Illuminate\View\View;
  */
 class HomeController extends Controller
 {
+    /** Fora da janela do torneio (quem não é admin): continua logado e vê quando o próximo abre. */
+    public function semTorneio(): View
+    {
+        $proximo = JanelaDoSite::proximo();
+
+        return view('site.pages.sem-torneio', [
+            'proximo' => $proximo,
+            'abre' => $proximo ? JanelaDoSite::abre($proximo) : null,
+        ]);
+    }
+
     public function index(Calculadora $calculadora, Relogio $relogio): View
     {
         $proximo = $this->proximoJogo();

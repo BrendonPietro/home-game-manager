@@ -172,6 +172,6 @@ class EliminacoesTest extends TestCase
         // Diminuir a mesa tira quem caiu do lugar 8; tirar a mesa ainda pede que ninguém esteja jogando.
         app(AjustarMesa::class)($this->mesa, 6, null, $this->admin);
         $this->assertSame([null, null], [$lucas->fresh()->jogo_mesa_id, $lucas->fresh()->lugar]);
-        $this->assertRegra('Tire os jogadores da Mesa 01 antes de removê-la.', fn () => app(RemoverMesa::class)($this->mesa->load('mesa'), $this->admin));
+        $this->assertRegra('Tire os jogadores da Mesa 01 antes de removê-la.', fn () => app(RemoverMesa::class)($this->mesa, $this->admin));
     }
 }

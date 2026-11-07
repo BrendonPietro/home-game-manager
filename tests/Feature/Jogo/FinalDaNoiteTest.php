@@ -138,7 +138,7 @@ class FinalDaNoiteTest extends TestCase
     public function test_finalizar_cash_game_pede_o_cash_out_de_todos(): void
     {
         $cash = Jogo::factory()->cashGame()->emAndamento()->comEntradasPadrao()->create();
-        $mesa = $cash->mesas()->create(['mesa_id' => $this->mesa->mesa_id, 'lugares' => 9]);
+        $mesa = $cash->mesas()->create(['nome' => 'Mesa 01', 'lugares' => 9]);
         $jogadores = collect(['Ana', 'Beto'])->map(function (string $nome, int $i) use ($cash, $mesa) {
             $p = $cash->participantes()->create(['usuario_id' => $this->jogador($nome)->usuario_id, 'jogo_mesa_id' => $mesa->id, 'lugar' => $i + 1]);
             $p->forceFill(['status' => 'jogando'])->save();

@@ -9,9 +9,9 @@ class MesaPolicy extends PoliticaDoPainel
 {
     protected const RECURSO = 'mesas';
 
-    /** Mesa que já foi usada em algum jogo não se exclui (o banco também barra): desative. */
+    /** Mesa com aluguel, reserva ou bloqueio na agenda não se exclui: desative. */
     public function delete(Seguranca $conta, Model $mesa): bool
     {
-        return parent::delete($conta, $mesa) && ! $mesa->jogoMesas()->exists();
+        return parent::delete($conta, $mesa) && ! $mesa->eventos()->exists();
     }
 }

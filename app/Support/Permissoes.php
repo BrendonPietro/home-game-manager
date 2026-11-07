@@ -38,7 +38,12 @@ class Permissoes
         'site.fora_da_noite' => 'Usar o site sem jogo em andamento',
     ];
 
-    /** "Jogos · ver", "Lançar entradas" */
+    /** Ações do painel que não são ver/criar/editar/excluir. */
+    private const ACOES = [
+        'andamento' => 'editar em andamento',
+    ];
+
+    /** "Jogos · ver", "Jogos · editar em andamento", "Lançar entradas" */
     public static function rotulo(string $nome, string $guard = 'painel'): string
     {
         if ($guard === 'web') {
@@ -47,7 +52,7 @@ class Permissoes
 
         [$recurso, $acao] = array_pad(explode('.', $nome, 2), 2, '');
 
-        return (self::RECURSOS[$recurso] ?? $recurso).' · '.$acao;
+        return (self::RECURSOS[$recurso] ?? $recurso).' · '.(self::ACOES[$acao] ?? $acao);
     }
 
     /**

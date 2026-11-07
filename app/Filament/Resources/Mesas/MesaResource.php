@@ -20,7 +20,8 @@ use Filament\Tables\Table;
 use UnitEnum;
 
 /**
- * Tela 22: mesas físicas do clube. Mesa usada em jogo não se exclui (MesaPolicy): desative.
+ * Tela 22: mesas físicas do clube, para aluguéis e reservas (o torneio tem as mesas dele). Mesa com evento
+ * na agenda não se exclui (MesaPolicy): desative.
  */
 class MesaResource extends Resource
 {
@@ -62,7 +63,7 @@ class MesaResource extends Resource
                     ->prefix('R$'),
                 Toggle::make('ativa')
                     ->default(true)
-                    ->helperText('Mesa inativa não aparece para montar jogos.')
+                    ->helperText('Mesa inativa não aparece para aluguéis e reservas.')
                     ->inline(false),
                 Textarea::make('observacoes')
                     ->label('Observações')
@@ -87,9 +88,9 @@ class MesaResource extends Resource
                     ->formatStateUsing(fn (?string $state) => Dinheiro::brl($state))
                     ->placeholder('—')
                     ->sortable(),
-                TextColumn::make('jogo_mesas_count')
-                    ->label('Jogos')
-                    ->counts('jogoMesas')
+                TextColumn::make('eventos_count')
+                    ->label('Na agenda')
+                    ->counts('eventos')
                     ->numeric()
                     ->sortable(),
                 IconColumn::make('ativa')

@@ -31,7 +31,8 @@ class EventoDoJogo
             ],
         );
 
-        $evento->mesas()->sync($jogo->mesas()->pluck('mesa_id'));
+        // O jogo não ocupa mesas do cadastro: torneio e aluguel não se cruzam na agenda.
+        $evento->mesas()->detach();
 
         return $evento;
     }

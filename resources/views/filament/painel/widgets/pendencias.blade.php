@@ -20,7 +20,7 @@
                             <td class="n">{{ Dinheiro::brlCentavos(abs($linha['saldo'])) }}</td>
                             <td class="n">
                                 @if ($url = EtapaDoJogo::url($linha['jogo'], 'fechamento'))
-                                    <x-filament::link :href="$url" size="sm">Fechamento</x-filament::link>
+                                    <x-filament::link :href="$url" target="_blank" size="sm">Fechamento</x-filament::link>
                                 @endif
                             </td>
                         </tr>

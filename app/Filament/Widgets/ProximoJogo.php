@@ -57,7 +57,7 @@ class ProximoJogo extends Widget
     {
         $financeiro = Filament::auth()->user()->can('financeiro.ver');
         $calculadora = app(Calculadora::class);
-        $ficha = $jogo->valor_ficha ? ['Valor da ficha', Dinheiro::brl($jogo->valor_ficha)] : null;
+        $ficha = $jogo->valor_ficha ? ['Valor da ficha', Dinheiro::ficha($jogo->valor_ficha)] : null;
 
         if ($jogo->status === StatusJogo::EmAndamento) {
             $resumo = $calculadora->doJogo($jogo);

@@ -24,6 +24,7 @@ class PermissoesSeeder extends Seeder
     public const EXTRAS_PAINEL = [
         'relatorios.ver', 'relatorios.exportar', 'financeiro.ver', 'configuracoes.editar',
         'pagamentos.registrar', // pagamento antecipado no pré-torneio (lista de confirmados do jogo)
+        'jogos.andamento', // mudar o cadastro com o jogo em andamento (refaz entradas e prêmios: RefazerPeloCadastro)
     ];
 
     public const SITE_OPERADOR = [

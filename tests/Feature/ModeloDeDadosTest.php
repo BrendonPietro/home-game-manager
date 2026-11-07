@@ -106,7 +106,7 @@ class ModeloDeDadosTest extends TestCase
         $this->assertSame('100.00', $jogo->itens()->create(['tipo' => TipoItem::Buyin, 'nome' => 'Y', 'valor' => 1])->fresh()->percentual_premiacao);
 
         // Mesa, participante, entrada com opcional vinculado, pagamento.
-        $jogoMesa = $jogo->mesas()->create(['mesa_id' => Mesa::factory()->create()->id, 'lugares' => 9]);
+        $jogoMesa = $jogo->mesas()->create(['nome' => 'Mesa 1', 'lugares' => 9]);
         $participante = $jogo->participantes()->create([
             'usuario_id' => Usuario::factory()->create()->id,
             'jogo_mesa_id' => $jogoMesa->id,

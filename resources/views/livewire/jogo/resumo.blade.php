@@ -49,7 +49,7 @@
 				<div class="rh-seg" role="group" aria-label="Mesa">
 					<button type="button" wire:click="filtrarMesa(null)" aria-pressed="{{ $mesa === null ? 'true' : 'false' }}">Todas as mesas</button>
 					@foreach ($mesas as $jogoMesa)
-						<button type="button" wire:key="filtro-mesa-{{ $jogoMesa->id }}" wire:click="filtrarMesa({{ $jogoMesa->id }})" aria-pressed="{{ $mesa === $jogoMesa->id ? 'true' : 'false' }}">{{ $jogoMesa->mesa->nome }}</button>
+						<button type="button" wire:key="filtro-mesa-{{ $jogoMesa->id }}" wire:click="filtrarMesa({{ $jogoMesa->id }})" aria-pressed="{{ $mesa === $jogoMesa->id ? 'true' : 'false' }}">{{ $jogoMesa->nome }}</button>
 					@endforeach
 				</div>
 			@endif
@@ -94,7 +94,7 @@
 									@endif
 								</span>
 							</td>
-							<td class="rh-muted">{{ $participante->jogoMesa ? $participante->jogoMesa->mesa->nome.' · '.$participante->lugar : 'Sem lugar' }}</td>
+							<td class="rh-muted">{{ $participante->jogoMesa ? $participante->jogoMesa->nome.' · '.$participante->lugar : 'Sem lugar' }}</td>
 							<td>
 								@if ($compras?->buyin)
 									<span class="rh-chip">{{ $jogo->fichaDoBuyin($compras->buyin) }}</span>

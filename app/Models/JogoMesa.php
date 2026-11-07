@@ -6,14 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-/** Mesa usada num jogo, com o dealer dela. */
+/**
+ * Mesa do jogo ("Mesa 1", "Mesa 2"…), com os lugares e o dealer dela. Não depende do cadastro de mesas,
+ * que fica para aluguéis e reservas: o torneio pode ter mais mesas do que as cadastradas.
+ */
 class JogoMesa extends Model
 {
     protected $table = 'jogo_mesas';
 
     protected $fillable = [
         'jogo_id',
-        'mesa_id',
+        'nome',
         'dealer_id',
         'lugares',
         'ordem',
@@ -30,11 +33,6 @@ class JogoMesa extends Model
     public function jogo(): BelongsTo
     {
         return $this->belongsTo(Jogo::class);
-    }
-
-    public function mesa(): BelongsTo
-    {
-        return $this->belongsTo(Mesa::class);
     }
 
     public function dealer(): BelongsTo

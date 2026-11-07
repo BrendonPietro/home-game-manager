@@ -16,7 +16,6 @@ use App\Enums\Periodicidade;
 use App\Enums\TipoItem;
 use App\Models\Item;
 use App\Models\Jogo;
-use App\Models\Mesa;
 use App\Models\Participante;
 use App\Models\Ranking;
 use App\Models\Usuario;
@@ -60,7 +59,7 @@ class NoiteDeReferenciaTest extends TestCase
         $jogo->taxas()->create(['nome' => 'Casa', 'calculo' => CalculoTaxa::Percentual, 'valor' => 10]);
         $mesas = [];
         foreach ([1, 2] as $numero) {
-            $mesas[$numero] = $jogo->mesas()->create(['mesa_id' => Mesa::factory()->create(['nome' => "Mesa 0{$numero}"])->id, 'lugares' => 9, 'ordem' => $numero]);
+            $mesas[$numero] = $jogo->mesas()->create(['nome' => "Mesa 0{$numero}", 'lugares' => 9, 'ordem' => $numero]);
         }
 
         // Antes da noite: lista e lugares do protótipo.

@@ -49,8 +49,8 @@ class MesasDoJogoTest extends TestCase
         $this->admin->assignRole('Admin');
 
         $this->jogo = Jogo::factory()->agendado()->comEntradasPadrao()->create();
-        $this->mesa1 = $this->jogo->mesas()->create(['mesa_id' => Mesa::factory()->create(['nome' => 'Mesa 01'])->id, 'lugares' => 9, 'ordem' => 1]);
-        $this->mesa2 = $this->jogo->mesas()->create(['mesa_id' => Mesa::factory()->create(['nome' => 'Mesa 02'])->id, 'lugares' => 9, 'ordem' => 2]);
+        $this->mesa1 = $this->jogo->mesas()->create(['nome' => 'Mesa 01', 'lugares' => 9, 'ordem' => 1]);
+        $this->mesa2 = $this->jogo->mesas()->create(['nome' => 'Mesa 02', 'lugares' => 9, 'ordem' => 2]);
     }
 
     private function confirmado(?JogoMesa $mesa = null, ?int $lugar = null): Participante
@@ -98,7 +98,7 @@ class MesasDoJogoTest extends TestCase
     public function test_lugar_fora_da_mesa_ou_mesa_de_outro_jogo(): void
     {
         $joao = $this->confirmado();
-        $outra = Jogo::factory()->agendado()->create()->mesas()->create(['mesa_id' => Mesa::factory()->create()->id, 'lugares' => 9]);
+        $outra = Jogo::factory()->agendado()->create()->mesas()->create(['nome' => 'Mesa 1', 'lugares' => 9]);
 
         foreach ([[$this->mesa1, 10, 'A Mesa 01 tem 9 lugares.'], [$outra, 1, 'Essa mesa não é deste jogo.']] as [$mesa, $lugar, $mensagem]) {
             try {
@@ -184,21 +184,34 @@ class MesasDoJogoTest extends TestCase
         }
     }
 
-    public function test_adicionar_e_remover_mesa_acompanham_a_agenda(): void
+    public function test_adicionar_e_remover_mesa_sem_o_cadastro_de_mesas(): void
     {
         app(EventoDoJogo::class)->sincronizar($this->jogo);
-        $mesa3 = Mesa::factory()->create(['nome' => 'Mesa 03', 'lugares' => 8]);
+        $this->jogo->forceFill(['lugares_por_mesa' => 8])->save();
 
-        $nova = app(AdicionarMesa::class)($this->jogo, $mesa3, $this->admin);
-        $this->assertSame([8, 3], [$nova->lugares, $nova->ordem]);
-        $this->assertContains($mesa3->id, $this->jogo->evento->mesas()->pluck('mesas.id')->all());
+        // Não precisa de mesa cadastrada: "Mesa 3" (depois da Mesa 02) com os lugares por mesa do jogo.
+        $nova = app(AdicionarMesa::class)($this->jogo, $this->admin);
+        $this->assertSame(['Mesa 3', 8, 3], [$nova->nome, $nova->lugares, $nova->ordem]);
+        $this->assertSame('Mesa 4', app(AdicionarMesa::class)($this->jogo, $this->admin)->nome);
+        $this->assertSame(0, Mesa::query()->count());
 
-        app(RemoverMesa::class)($nova->load('mesa'), $this->admin);
-        $this->assertNotContains($mesa3->id, $this->jogo->fresh()->evento->mesas()->pluck('mesas.id')->all());
+        // O jogo não ocupa mesas do cadastro na agenda.
+        $this->assertSame([], $this->jogo->evento->mesas()->pluck('mesas.id')->all());
+
+        app(RemoverMesa::class)($nova, $this->admin);
+        $this->assertSame(['Mesa 01', 'Mesa 02', 'Mesa 4'], $this->jogo->mesas()->pluck('nome')->all());
 
         $this->confirmado($this->mesa2, 1);
         $this->expectExceptionMessage('Tire os jogadores da Mesa 02 antes de removê-la.');
-        app(RemoverMesa::class)($this->mesa2->load('mesa'), $this->admin);
+        app(RemoverMesa::class)($this->mesa2, $this->admin);
+    }
+
+    public function test_proximo_nome_de_mesa(): void
+    {
+        $this->assertSame('Mesa 1', AdicionarMesa::proximoNome([]));
+        $this->assertSame('Mesa 3', AdicionarMesa::proximoNome(['Mesa 01', 'Mesa 2']));
+        $this->assertSame('Mesa 3', AdicionarMesa::proximoNome(['Final', 'Principal']));
+        $this->assertSame('Mesa 8', AdicionarMesa::proximoNome(['Mesa 7']));
     }
 
     public function test_iniciar_o_torneio(): void
@@ -269,7 +282,7 @@ class MesasDoJogoTest extends TestCase
     public function test_cash_game_inicia_sem_fase_e_operador_nao_inicia(): void
     {
         $cash = Jogo::factory()->cashGame()->agendado()->comEntradasPadrao()->create();
-        $mesa = $cash->mesas()->create(['mesa_id' => Mesa::factory()->create()->id, 'lugares' => 9]);
+        $mesa = $cash->mesas()->create(['nome' => 'Mesa 1', 'lugares' => 9]);
         foreach ([1, 2] as $lugar) {
             $cash->participantes()->create(['usuario_id' => Usuario::factory()->create()->id, 'jogo_mesa_id' => $mesa->id, 'lugar' => $lugar]);
         }

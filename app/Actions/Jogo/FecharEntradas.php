@@ -8,7 +8,6 @@ use App\Enums\StatusJogo;
 use App\Enums\TipoAlteracao;
 use App\Exceptions\RegraDoJogo;
 use App\Models\Jogo;
-use App\Models\Premiacao;
 use App\Models\Usuario;
 use App\Services\Jogo\Calculadora;
 use App\Services\Jogo\Historico;
@@ -60,14 +59,7 @@ class FecharEntradas
                 throw new RegraDoJogo("Nenhuma regra de premiação cobre {$resumo->jogadores} jogadores: ajuste no painel.");
             }
 
-            foreach ($resumo->premios as $premio) {
-                $jogo->premiacoes()->updateOrCreate(
-                    ['posicao' => $premio['posicao']],
-                    ['percentual' => $premio['percentual'], 'valor' => Dinheiro::decimal($premio['valor'])],
-                );
-            }
-
-            Premiacao::query()->where('jogo_id', $jogo->id)->where('posicao', '>', count($resumo->premios))->delete();
+            $this->posicoes->gravarPremios($jogo, $resumo->premios);
 
             // Quem caiu e não voltou com rebuy sai de vez (a ordem da queda dá a posição).
             $jogo->eliminacoes()->validas()->emAberto()->update(['definitiva' => true]);

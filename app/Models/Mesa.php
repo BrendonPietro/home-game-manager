@@ -7,9 +7,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
-/** Mesa física do clube. */
+/** Mesa física do clube, para aluguéis, reservas e bloqueios da agenda (o torneio tem as mesas dele: JogoMesa). */
 class Mesa extends Model
 {
     /** @use HasFactory<MesaFactory> */
@@ -32,11 +31,6 @@ class Mesa extends Model
             'valor_aluguel' => 'decimal:2',
             'ativa' => 'boolean',
         ];
-    }
-
-    public function jogoMesas(): HasMany
-    {
-        return $this->hasMany(JogoMesa::class);
     }
 
     public function eventos(): BelongsToMany

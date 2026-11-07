@@ -52,7 +52,7 @@ class TrocarLugar
             }
 
             if ($lugar === null || $lugar < 1 || $lugar > $mesa->lugares) {
-                throw new RegraDoJogo("A {$mesa->mesa->nome} tem {$mesa->lugares} lugares.");
+                throw new RegraDoJogo("A {$mesa->nome} tem {$mesa->lugares} lugares.");
             }
 
             $chegando = $jogo->status === StatusJogo::EmAndamento && $participante->status === StatusParticipante::Confirmado;

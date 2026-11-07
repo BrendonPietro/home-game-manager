@@ -16,7 +16,7 @@
         @else
             <div class="rh-list">
                 @foreach ($eventos as $evento)
-                    <a class="rh-li" href="{{ $this->urlDoMes($evento) }}" wire:key="proximo-{{ $evento->id }}">
+                    <a class="rh-li" {{ \Filament\Support\generate_href_html($this->urlDoMes($evento)) }} wire:key="proximo-{{ $evento->id }}">
                         <span class="rh-datebox rh-datebox--sm">
                             <span>{{ Datas::mes($evento->data) }}</span>
                             <b>{{ $evento->data->format('d') }}</b>

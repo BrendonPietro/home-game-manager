@@ -212,6 +212,7 @@ class Calendario extends Page
                 Action::make('abrirJogo')
                     ->label('Abrir no site')
                     ->url(EtapaDoJogo::url($record->jogo))
+                    ->openUrlInNewTab()
                     ->visible(EtapaDoJogo::url($record->jogo) !== null),
             ] : []);
     }

@@ -260,7 +260,7 @@ class AcoesJogador extends Component
 
     private function participante(): Participante
     {
-        return $this->jogo->participantes()->with(['usuario', 'jogoMesa.mesa'])->findOrFail($this->participanteId);
+        return $this->jogo->participantes()->with(['usuario', 'jogoMesa'])->findOrFail($this->participanteId);
     }
 
     /** @return Collection<int, Item> */

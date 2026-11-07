@@ -113,11 +113,11 @@
 				@if ($mesas->count() > 1)
 					<div class="rh-seg" role="group" aria-label="Mesa em exibição">
 						@foreach ($mesas as $jogoMesa)
-							<button type="button" wire:key="ver-mesa-{{ $jogoMesa->id }}" wire:click="verMesa({{ $jogoMesa->id }})" aria-pressed="{{ $jogoMesa->is($mesaAtual) ? 'true' : 'false' }}">{{ $jogoMesa->mesa->nome }} · {{ $naMesa[$jogoMesa->id] ?? 0 }}</button>
+							<button type="button" wire:key="ver-mesa-{{ $jogoMesa->id }}" wire:click="verMesa({{ $jogoMesa->id }})" aria-pressed="{{ $jogoMesa->is($mesaAtual) ? 'true' : 'false' }}">{{ $jogoMesa->nome }} · {{ $naMesa[$jogoMesa->id] ?? 0 }}</button>
 						@endforeach
 					</div>
 				@elseif ($mesaAtual)
-					<h2 class="rh-heading">{{ $mesaAtual->mesa->nome }}</h2>
+					<h2 class="rh-heading">{{ $mesaAtual->nome }}</h2>
 				@endif
 
 				<span class="rh-spacer"></span>

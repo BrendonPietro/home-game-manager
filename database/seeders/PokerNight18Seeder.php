@@ -158,17 +158,16 @@ class PokerNight18Seeder extends Seeder
         $jogoMesas = [];
 
         foreach (self::MESAS as $numero => [$nomeMesa, $nomeDealer]) {
-            $mesa = Mesa::query()->firstOrCreate(['nome' => $nomeMesa], ['lugares' => 9]);
+            // O clube tem as mesas cadastradas (para aluguéis); o torneio tem as dele, com o mesmo nome.
+            Mesa::query()->firstOrCreate(['nome' => $nomeMesa], ['lugares' => 9]);
             $dealer = Usuario::query()->firstOrCreate(['nome' => $nomeDealer], ['pode_ser_dealer' => true]);
 
             $jogoMesas[$numero] = $jogo->mesas()->create([
-                'mesa_id' => $mesa->id,
+                'nome' => $nomeMesa,
                 'dealer_id' => $dealer->id,
                 'lugares' => 9,
                 'ordem' => $numero,
             ]);
-
-            $evento->mesas()->attach($mesa->id);
         }
 
         return $jogoMesas;

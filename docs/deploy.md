@@ -64,9 +64,8 @@ O projeto não depende de WebSocket, fila nem cron, então funciona em hospedage
 php artisan migrate --force
 php artisan filament:assets          # se o Filament mudou
 php artisan storage:link             # primeira vez (fotos, logo)
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
+php artisan optimize                 # config, rotas, views e eventos em cache
+php artisan filament:optimize        # componentes e ícones do Filament em cache
 ```
 
 ## Produção
@@ -86,7 +85,7 @@ CONTAS_ADMIN="Nome <email>, Nome <email>"   # grupo Admin
 CONTAS_ADMIN_SENHA=
 ```
 
-- Cada um entra com a senha inicial e troca: no site em **Minha conta** (o avatar na topbar), no painel em **Perfil** (menu da conta). Depois disso, as duas `*_SENHA` podem sair do `.env` de produção.
+- Cada um entra com a senha inicial e troca a do painel em **Perfil** (menu da conta); a do site muda no painel, em Sistema → Usuários do site. Depois disso, as duas `*_SENHA` podem sair do `.env` de produção.
 - Rodar o seed de novo não mexe em quem já existe (a senha trocada continua); conta nova entra acrescentando o e-mail na lista e rodando `php artisan db:seed --class=ContasDoClubeSeeder --force`, ou pelo painel (Usuários e Segurança).
 - As contas `dev` (painel) e `dev@rodrigues.test` (site) e as de teste só são criadas no ambiente local.
 

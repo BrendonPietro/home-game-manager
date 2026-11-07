@@ -20,6 +20,7 @@ enum TipoAlteracao: string
     case DesfezPagamento = 'desfez_pagamento';
     case AcertoFeito = 'acerto_feito';
     case DesfezAcerto = 'desfez_acerto';
+    case CadastroAlterado = 'cadastro_alterado';
 
     public function label(): string
     {
@@ -35,12 +36,13 @@ enum TipoAlteracao: string
             self::DesfezPagamento => 'Pagamento desfeito',
             self::AcertoFeito => 'Acerto feito',
             self::DesfezAcerto => 'Acerto desfeito',
+            self::CadastroAlterado => 'Cadastro alterado',
         };
     }
 
-    /** Correção (voltar fase, desfazer): aparece em destaque no histórico. */
+    /** Correção (voltar fase, desfazer, cadastro mudado com o jogo rodando): aparece em destaque no histórico. */
     public function correcao(): bool
     {
-        return in_array($this, [self::VoltouAosRebuys, self::ReabriuEntradas, self::Desfez, self::DesfezPagamento, self::DesfezAcerto], true);
+        return in_array($this, [self::VoltouAosRebuys, self::ReabriuEntradas, self::Desfez, self::DesfezPagamento, self::DesfezAcerto, self::CadastroAlterado], true);
     }
 }

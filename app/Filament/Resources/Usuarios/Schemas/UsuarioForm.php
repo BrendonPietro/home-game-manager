@@ -2,18 +2,17 @@
 
 namespace App\Filament\Resources\Usuarios\Schemas;
 
-use App\Models\Usuario;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Text;
 use Filament\Schemas\Schema;
 
 /**
- * Cadastros → Jogadores: os dados da pessoa e o que ela faz na noite. O acesso ao site (e-mail, senha e
- * grupos) fica em Sistema → Usuários do site, com a permissão própria `acessos.*`.
+ * Cadastros → Jogadores: só quem joga, com os dados, se pode ser dealer ou floor e se está ativo. Nada de
+ * acesso ao site aqui: isso fica em Sistema → Usuários do site (permissão própria `acessos.*`).
  */
 class UsuarioForm
 {
@@ -43,24 +42,18 @@ class UsuarioForm
                             ->tel()
                             ->maxLength(20)
                             ->placeholder('(11) 91234-5678'),
+                        Grid::make(['default' => 1, 'sm' => 3])
+                            ->columnSpanFull()
+                            ->schema([
+                                Toggle::make('pode_ser_dealer')
+                                    ->label('Pode ser dealer'),
+                                Toggle::make('pode_ser_floor')
+                                    ->label('Pode ser floor'),
+                                Toggle::make('ativo')
+                                    ->default(true)
+                                    ->helperText('Inativo não aparece para confirmar jogadores.'),
+                            ]),
                     ]),
-
-                Section::make('Na noite')
-                    ->columns(3)
-                    ->schema([
-                        Toggle::make('pode_ser_dealer')
-                            ->label('Pode ser dealer'),
-                        Toggle::make('pode_ser_floor')
-                            ->label('Pode ser floor'),
-                        Toggle::make('ativo')
-                            ->default(true)
-                            ->helperText('Inativo não aparece para confirmar jogadores.'),
-                    ]),
-
-                Text::make(fn (?Usuario $record): string => $record?->acessa_site
-                    ? 'Entra no site com '.$record->email.'. E-mail, senha e grupos em Sistema → Usuários do site.'
-                    : 'Para entrar no site de operação, dê acesso em Sistema → Usuários do site.')
-                    ->color('gray'),
 
                 Textarea::make('observacoes')
                     ->label('Observações')

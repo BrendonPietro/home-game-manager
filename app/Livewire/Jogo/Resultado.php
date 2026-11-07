@@ -104,7 +104,7 @@ class Resultado extends Component
 
     public function render(Saldos $saldos): View
     {
-        $jogaram = $this->jogo->participantes()->with(['usuario', 'jogoMesa.mesa'])
+        $jogaram = $this->jogo->participantes()->with(['usuario', 'jogoMesa'])
             ->whereHas('entradas', fn ($entradas) => $entradas->validas()->where('tipo', TipoItem::Buyin))
             ->get();
         $contas = $saldos->doJogo($this->jogo);

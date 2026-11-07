@@ -103,8 +103,7 @@ Tudo atrás de `auth` (guard `web`, tabela `usuarios`) e das permissões do site
 | Tela | Rota | Nome | Implementação |
 |---|---|---|---|
 | 01 Login | `GET/POST /login`, `POST /logout` | `login`, `logout` | `AuthController` (e-mail e senha; `guest:web` / `auth:web`) |
-| Minha conta | `GET/PUT /conta` | `conta`, `conta.atualizar` | `ContaController`: trocar a própria senha (pelo avatar da topbar) |
-| Sem torneio | `GET /sem-torneio` | `sem-torneio` | Página sem login para onde vai quem não tem `site.fora_da_noite` quando não há jogo em andamento |
+| Sem torneio | `GET /sem-torneio` | `sem-torneio` | `HomeController@semTorneio`: quem não tem `site.fora_da_noite` fica aqui, logado, fora da janela do torneio (`JanelaDoSite`), sabendo quando o próximo abre |
 | 02 Dashboard | `GET /` | `home` | `HomeController@index` (jogo ao vivo ou próximo agendado com prize pool real/estimado, números, últimos finalizados, agenda, última noite) |
 | 03 Seleção do jogo | `GET /jogos` | `jogos.index` | `JogoController@index` (abas Próximos / Em andamento / Finalizados, busca `?busca=`, destaque do jogo ao vivo ou de hoje) |
 | 04 Conferência | `GET /jogos/{jogo}/conferencia` | `jogos.conferencia` | `JogoController@conferencia` |

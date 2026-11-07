@@ -290,7 +290,7 @@ class AoVivo extends Component
     {
         $this->jogo = $relogio->sincronizar($this->jogo); // o nível segue o relógio, a cada atualização
 
-        $mesas = $this->jogo->mesas()->with(['mesa', 'dealer'])->get();
+        $mesas = $this->jogo->mesas()->with('dealer')->get();
         $mesaAtual = $mesas->firstWhere('id', $this->mesa) ?? $mesas->first();
         $participantes = $this->jogo->participantes()->with('usuario')->get();
         $porJogador = $entradas->porJogador($this->jogo);

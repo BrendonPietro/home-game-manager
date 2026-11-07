@@ -4,6 +4,8 @@ namespace App\Services\Jogo;
 
 use App\Enums\TipoItem;
 use App\Models\Jogo;
+use App\Models\Premiacao;
+use App\Support\Dinheiro;
 
 /**
  * Posição e prêmio de quem caiu, com as entradas fechadas (docs/regras.md, "Fases de um torneio").
@@ -14,6 +16,24 @@ use App\Models\Jogo;
  */
 class Posicoes
 {
+    /**
+     * Grava o prêmio de cada posição (jogo_premiacoes: percentual e valor) e tira as posições que sobraram.
+     * Fechar entradas grava; o jogo em andamento editado no painel regrava (RefazerPeloCadastro).
+     *
+     * @param  list<array{posicao: int, percentual: string, valor: int}>  $premios  do ResumoFinanceiro
+     */
+    public function gravarPremios(Jogo $jogo, array $premios): void
+    {
+        foreach ($premios as $premio) {
+            $jogo->premiacoes()->updateOrCreate(
+                ['posicao' => $premio['posicao']],
+                ['percentual' => $premio['percentual'], 'valor' => Dinheiro::decimal($premio['valor'])],
+            );
+        }
+
+        Premiacao::query()->where('jogo_id', $jogo->id)->where('posicao', '>', count($premios))->delete();
+    }
+
     public function recalcular(Jogo $jogo): void
     {
         $comBuyin = $jogo->entradas()->validas()->where('tipo', TipoItem::Buyin)->distinct()->pluck('participante_id');

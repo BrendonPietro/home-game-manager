@@ -47,10 +47,10 @@ class PokerNight18Test extends TestCase
         );
         $this->assertSame(['50.00', '30.00', '20.00'], $jogo->premiacoes()->orderBy('posicao')->pluck('percentual')->all());
 
-        $mesas = $jogo->mesas()->with(['mesa', 'dealer'])->get();
-        $this->assertSame(['Mesa 01', 'Mesa 02'], $mesas->pluck('mesa.nome')->all());
+        $mesas = $jogo->mesas()->with('dealer')->get();
+        $this->assertSame(['Mesa 01', 'Mesa 02'], $mesas->pluck('nome')->all());
         $this->assertSame(['Sérgio', 'Paulo'], $mesas->pluck('dealer.nome')->all());
-        $this->assertSame(['Mesa 01', 'Mesa 02'], $jogo->evento->mesas->pluck('nome')->sort()->values()->all());
+        $this->assertSame([], $jogo->evento->mesas->all()); // o jogo não ocupa mesas do cadastro na agenda
 
         $this->assertSame(12, $jogo->participantes()->count());
         $this->assertSame(12, $jogo->participantes()->where('status', StatusParticipante::Jogando)->count());

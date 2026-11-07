@@ -55,6 +55,31 @@ class UsuariosTest extends TestCase
             ->assertCanNotSeeTableRecords([$thiago]);
     }
 
+    public function test_colunas_dealer_floor_e_ativo_num_clique(): void
+    {
+        $this->entrarNoPainel('Admin');
+        $sergio = Usuario::factory()->dealer()->create(['nome' => 'Sérgio', 'apelido' => null]);
+        $ana = Usuario::factory()->create(['nome' => 'Ana', 'apelido' => null, 'pode_ser_floor' => true]);
+
+        Livewire::test(ListUsuarios::class)
+            ->assertTableColumnStateSet('dealer', 'Sim', $sergio)
+            ->assertTableColumnStateNotSet('dealer', 'Sim', $ana)
+            ->assertTableColumnStateSet('floor', 'Sim', $ana)
+            ->assertDontSee(['Acesso ao site', 'Na noite'])
+            ->assertSee('Ações')
+            // O check vira o X vermelho e volta, sem modal.
+            ->callAction(TestAction::make('ativo')->table($ana))
+            ->assertHasNoActionErrors();
+
+        $this->assertFalse($ana->fresh()->ativo);
+
+        Livewire::test(ListUsuarios::class)
+            ->assertActionHasLabel(TestAction::make('ativo')->table($ana), 'Inativo')
+            ->callAction(TestAction::make('ativo')->table($ana));
+
+        $this->assertTrue($ana->fresh()->ativo);
+    }
+
     public function test_cadastro_minimo_so_com_nome(): void
     {
         $this->entrarNoPainel('Admin');
@@ -75,8 +100,10 @@ class UsuariosTest extends TestCase
         $this->entrarNoPainel('Geral');
         $existente = Usuario::factory()->create();
 
+        // Só jogador: nada de acesso ao site neste cadastro.
         Livewire::test(CreateUsuario::class)
-            ->assertSee('dê acesso em Sistema → Usuários do site')
+            ->assertDontSee(['Usuários do site', 'Na noite'])
+            ->assertSee(['Pode ser dealer', 'Pode ser floor'])
             ->fillForm(['nome' => 'Felipe'])
             ->call('create')
             ->assertHasNoFormErrors();
@@ -84,6 +111,7 @@ class UsuariosTest extends TestCase
         $this->assertDatabaseHas('usuarios', ['nome' => 'Felipe', 'acessa_site' => false]);
 
         Livewire::test(ListUsuarios::class)
+            ->assertActionHidden(TestAction::make('ativo')->table($existente))
             ->assertActionHidden(TestAction::make('edit')->table($existente))
             ->assertActionHidden(TestAction::make('delete')->table($existente));
 

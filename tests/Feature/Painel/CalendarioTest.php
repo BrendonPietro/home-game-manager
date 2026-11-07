@@ -38,7 +38,7 @@ class CalendarioTest extends TestCase
     private function jogo(string $nome, string $data, string $horario = '20:00'): Jogo
     {
         $jogo = Jogo::factory()->agendado()->comEntradasPadrao()->create(['nome' => $nome, 'data' => $data, 'horario' => $horario]);
-        $jogo->mesas()->create(['mesa_id' => $this->mesa1->id, 'lugares' => 9, 'ordem' => 1]);
+        $jogo->mesas()->create(['nome' => 'Mesa 1', 'lugares' => 9, 'ordem' => 1]);
         app(EventoDoJogo::class)->sincronizar($jogo);
 
         return $jogo;
@@ -104,14 +104,25 @@ class CalendarioTest extends TestCase
 
     public function test_avisa_mesa_ocupada_no_horario(): void
     {
+        $this->aluguel('Felipe'); // Mesa 02, 08/10 das 19:00 às 23:30
+
+        $this->calendario()
+            ->mountAction(TestAction::make('novoEvento')->arguments(['data' => '2026-10-08']))
+            ->fillForm(['tipo' => 'reserva', 'hora_inicio' => '18:00', 'hora_fim' => '22:00', 'mesas' => [(string) $this->mesa1->id]])
+            ->assertMountedActionModalSee('Mesa 01 está livre nesse horário.')
+            ->fillForm(['mesas' => [(string) $this->mesa1->id, (string) $this->mesa2->id]])
+            ->assertMountedActionModalSee('Mesa 02 já tem Mesa alugada — Felipe (19:00–23:30) nesse horário.');
+    }
+
+    public function test_torneio_nao_ocupa_as_mesas_do_cadastro(): void
+    {
         $this->jogo('Poker Night #19', '2026-10-11');
 
         $this->calendario()
             ->mountAction(TestAction::make('novoEvento')->arguments(['data' => '2026-10-11']))
-            ->fillForm(['tipo' => 'reserva', 'hora_inicio' => '18:00', 'hora_fim' => '22:00', 'mesas' => [(string) $this->mesa2->id]])
-            ->assertMountedActionModalSee('Mesa 02 está livre nesse horário.')
-            ->fillForm(['mesas' => [(string) $this->mesa1->id, (string) $this->mesa2->id]])
-            ->assertMountedActionModalSee('Mesa 01 já tem Poker Night #19 (20:00) nesse horário.');
+            ->fillForm(['tipo' => 'aluguel', 'cliente' => 'Renan', 'hora_inicio' => '19:00', 'hora_fim' => '23:00', 'mesas' => [(string) $this->mesa1->id]])
+            ->assertMountedActionModalSee('Mesa 01 está livre nesse horário.')
+            ->assertMountedActionModalDontSee('Poker Night #19');
     }
 
     public function test_edita_e_exclui_evento(): void
@@ -141,7 +152,7 @@ class CalendarioTest extends TestCase
             ->assertActionHidden(TestAction::make('editarEvento')->arguments(['evento' => $jogo->evento->id]))
             ->mountAction(TestAction::make('verEvento')->arguments(['evento' => $jogo->evento->id]))
             ->assertMountedActionModalSee('♠ Torneio')
-            ->assertMountedActionModalSee('Dom 04/10/2026 · 20:00 · Mesa 01')
+            ->assertMountedActionModalSee('Dom 04/10/2026 · 20:00 · Mesa 1') // as mesas do próprio jogo
             ->assertMountedActionModalSee('R$ 100')
             ->assertMountedActionModalSee('Abrir no site');
     }
