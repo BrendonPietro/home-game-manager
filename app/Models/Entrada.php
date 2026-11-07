@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\DestinoItem;
 use App\Enums\TipoItem;
 use App\Models\Concerns\Cancelavel;
 use Illuminate\Database\Eloquent\Model;
@@ -10,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Item comprado por um jogador. Valor, fichas e destino copiados do item na hora.
+ * Item comprado por um jogador. Valor, fichas e o percentual da premiação copiados do item na hora.
  * Gravada só por App\Actions\Jogo\RegistrarEntrada; nunca apagada.
  */
 class Entrada extends Model
@@ -27,7 +26,7 @@ class Entrada extends Model
         'tipo',
         'valor',
         'fichas',
-        'destino',
+        'percentual_premiacao',
         'vinculada_a',
         'registrado_por',
     ];
@@ -36,7 +35,7 @@ class Entrada extends Model
     {
         return [
             'tipo' => TipoItem::class,
-            'destino' => DestinoItem::class,
+            'percentual_premiacao' => 'decimal:2',
             'valor' => 'decimal:2',
             'fichas' => 'integer',
             'cancelada_em' => 'datetime',

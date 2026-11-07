@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Http\Middleware\AcessoDoSite;
+use App\Models\Permissao;
 use App\Models\Usuario;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -34,6 +36,15 @@ class UsuarioFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'password' => static::$senha ??= Hash::make('password'),
         ]);
+    }
+
+    /** Usa o site também sem jogo em andamento (`site.fora_da_noite`, como o Admin do site). */
+    public function foraDaNoite(): static
+    {
+        return $this->comAcesso()->afterCreating(function (Usuario $usuario): void {
+            Permissao::findOrCreate(AcessoDoSite::FORA_DA_NOITE, 'web');
+            $usuario->givePermissionTo(AcessoDoSite::FORA_DA_NOITE);
+        });
     }
 
     public function dealer(): static

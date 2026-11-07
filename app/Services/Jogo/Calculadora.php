@@ -3,7 +3,6 @@
 namespace App\Services\Jogo;
 
 use App\Enums\CalculoTaxa;
-use App\Enums\DestinoItem;
 use App\Enums\MetodoPremiacao;
 use App\Enums\TipoItem;
 use App\Models\Entrada;
@@ -20,14 +19,22 @@ use Illuminate\Support\Collection;
  * Tudo em centavos inteiros. Referência: Poker Night #18 = R$ 2.100 / 210 / 1.890 → 950 / 565 / 375
  * (prêmios arredondados para R$ 5; sem arredondar, 945 / 567 / 378).
  *
- * Um lançamento é o que importa de uma entrada para a conta: tipo, valor em centavos e destino.
+ * Um lançamento é o que importa de uma entrada para a conta: tipo, valor em centavos e o percentual
+ * que vai para a premiação, em centésimos de ponto (75% = 7500).
+ *
+ * Torneio sem centavos: a premiação bruta desce para o real inteiro (os centavos ficam fora da
+ * premiação, com a casa), a taxa em % arredonda para o real e os prêmios saem em reais (R$ 5 com o
+ * "Arredondar prêmios", senão R$ 1), com a sobra para o 1º. Cash game fica como está nas fichas.
  */
 class Calculadora
 {
+    /** @var Collection<int, RegraPremiacao>|null regras do clube, lidas uma vez por instância (relatórios somam muitos jogos) */
+    private ?Collection $regras = null;
+
     /** Números do jogo a partir das entradas válidas (canceladas não contam). */
     public function doJogo(Jogo $jogo): ResumoFinanceiro
     {
-        $entradas = $jogo->entradas()->validas()->get(['tipo', 'valor', 'destino', 'participante_id']);
+        $entradas = $jogo->entradas()->validas()->get(['tipo', 'valor', 'percentual_premiacao', 'participante_id']);
 
         // Jogador = quem tem pelo menos um buy-in válido.
         $jogadores = $entradas->where('tipo', TipoItem::Buyin)->pluck('participante_id')->unique()->count();
@@ -37,7 +44,7 @@ class Calculadora
             $entradas->map(fn (Entrada $entrada): array => [
                 'tipo' => $entrada->tipo,
                 'valor' => Dinheiro::centavos($entrada->valor),
-                'destino' => $entrada->destino,
+                'percentual' => Dinheiro::centavos($entrada->percentual_premiacao),
             ]),
             $jogadores,
         );
@@ -59,7 +66,7 @@ class Calculadora
         $lancamentos = collect();
         $lancar = function (?Item $item, int $vezes) use ($lancamentos): void {
             for ($i = 0; $item && $i < $vezes; $i++) {
-                $lancamentos->push(['tipo' => $item->tipo, 'valor' => Dinheiro::centavos($item->valor), 'destino' => $item->destino]);
+                $lancamentos->push(['tipo' => $item->tipo, 'valor' => Dinheiro::centavos($item->valor), 'percentual' => Dinheiro::centavos($item->percentual_premiacao)]);
             }
         };
 
@@ -77,23 +84,24 @@ class Calculadora
     }
 
     /**
-     * @param  Collection<int, array{tipo: TipoItem, valor: int, destino: DestinoItem}>  $lancamentos
+     * @param  Collection<int, array{tipo: TipoItem, valor: int, percentual: int}>  $lancamentos  percentual em centésimos (75% = 7500)
      */
     public function calcular(Jogo $jogo, Collection $lancamentos, int $jogadores): ResumoFinanceiro
     {
         $arrecadacao = $lancamentos->sum('valor');
 
-        // A fração do destino vale sobre a soma de cada destino (não lançamento a lançamento).
-        $premiacaoBruta = $lancamentos->groupBy(fn (array $l): string => $l['destino']->value)
-            ->sum(fn (Collection $doDestino, string $destino): int => intdiv(
-                $doDestino->sum('valor') * DestinoItem::from($destino)->percentual(),
-                100,
-            ));
+        // O percentual vale sobre a soma de quem tem o mesmo percentual (não lançamento a lançamento).
+        $premiacaoBruta = $lancamentos->groupBy(fn (array $l): int => $l['percentual'])
+            ->sum(fn (Collection $doPercentual, int $percentual): int => intdiv($doPercentual->sum('valor') * $percentual, 10000));
+
+        if ($jogo->eTorneio()) {
+            $premiacaoBruta = intdiv($premiacaoBruta, Dinheiro::REAL) * Dinheiro::REAL; // os centavos ficam com a casa
+        }
         $entradas = $lancamentos->filter(fn (array $l): bool => $l['tipo']->eEntrada())->count();
 
         $taxas = $jogo->taxas->map(fn (Taxa $taxa): array => [
             'nome' => $taxa->nome,
-            'valor' => $this->taxa($taxa, $premiacaoBruta, $jogadores, $entradas),
+            'valor' => $this->taxa($taxa, $premiacaoBruta, $jogadores, $entradas, $jogo->eTorneio()),
         ])->values()->all();
 
         $totalTaxas = array_sum(array_column($taxas, 'valor'));
@@ -112,13 +120,16 @@ class Calculadora
         );
     }
 
-    private function taxa(Taxa $taxa, int $premiacaoBruta, int $jogadores, int $entradas): int
+    private function taxa(Taxa $taxa, int $premiacaoBruta, int $jogadores, int $entradas, bool $emReais): int
     {
         $valor = Dinheiro::centavos($taxa->valor);
 
         return match ($taxa->calculo) {
             CalculoTaxa::Fixo => $valor,
-            CalculoTaxa::Percentual => Dinheiro::percentual($premiacaoBruta, $taxa->valor),
+            // No torneio, a taxa em % arredonda para o real (meio real para cima): 10% de 1.235 = 124.
+            CalculoTaxa::Percentual => $emReais
+                ? Dinheiro::arredondarParaReal(Dinheiro::percentual($premiacaoBruta, $taxa->valor))
+                : Dinheiro::percentual($premiacaoBruta, $taxa->valor),
             CalculoTaxa::PorUnidade => $valor * max(1, (int) $taxa->quantidade),
             CalculoTaxa::PorJogador => $valor * $jogadores,
             CalculoTaxa::PorEntrada => $valor * $entradas,
@@ -127,8 +138,9 @@ class Calculadora
 
     /**
      * Prize pool × percentual de cada posição, para baixo; a sobra do arredondamento vai para o 1º.
-     * Com "Arredondar prêmios para R$ 5" (ArredondarPremios), do 2º para baixo o prêmio desce para o
-     * múltiplo de R$ 5 e o 1º leva a diferença: R$ 1.890 em 50/30/20 → 950 / 565 / 375.
+     * Do 2º para baixo o prêmio desce para o múltiplo de R$ 5 com "Arredondar prêmios para R$ 5"
+     * (ArredondarPremios, o padrão), senão para o real, e o 1º leva a diferença:
+     * R$ 1.890 em 50/30/20 → 950 / 565 / 375.
      *
      * @return list<array{posicao: int, percentual: string, valor: int}>
      */
@@ -137,15 +149,15 @@ class Calculadora
         $percentuais = $this->percentuais($jogo, $jogadores);
         $somaDosPercentuais = array_sum(array_map(fn ($p) => Dinheiro::centavos($p), $percentuais));
         $sobraParaO1o = $somaDosPercentuais === 10000;
-        $arredondar = ArredondarPremios::ativo();
+        $multiplo = ArredondarPremios::ativo() ? ArredondarPremios::MULTIPLO : Dinheiro::REAL;
         $premios = [];
 
         foreach ($percentuais as $indice => $percentual) {
             $valor = intdiv($prizePool * Dinheiro::centavos($percentual), 10000);
 
             // O 1º só não arredonda quando vai receber a sobra (ele fecha a conta do prize pool).
-            if ($arredondar && ($indice > 0 || ! $sobraParaO1o)) {
-                $valor = ArredondarPremios::paraBaixo($valor);
+            if ($indice > 0 || ! $sobraParaO1o) {
+                $valor = ArredondarPremios::paraBaixo($valor, $multiplo);
             }
 
             $premios[] = [
@@ -173,6 +185,10 @@ class Calculadora
             return [];
         }
 
-        return RegraPremiacao::query()->paraJogadores($jogadores)->first()?->percentuais ?? [];
+        // A mesma escolha do RegraPremiacao::scopeParaJogadores: a faixa de maior mínimo que cobre o número.
+        $this->regras ??= RegraPremiacao::query()->orderByDesc('jogadores_min')->get();
+
+        return $this->regras->first(fn (RegraPremiacao $regra): bool => $regra->jogadores_min <= $jogadores
+            && ($regra->jogadores_max === null || $regra->jogadores_max >= $jogadores))?->percentuais ?? [];
     }
 }

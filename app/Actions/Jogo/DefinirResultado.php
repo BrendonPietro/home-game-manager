@@ -6,11 +6,13 @@ use App\Actions\Jogo\Concerns\ChecaRegras;
 use App\Enums\FaseTorneio;
 use App\Enums\StatusJogo;
 use App\Enums\StatusParticipante;
+use App\Enums\TipoAlteracao;
 use App\Enums\TipoItem;
 use App\Exceptions\RegraDoJogo;
 use App\Models\Jogo;
 use App\Models\Participante;
 use App\Models\Usuario;
+use App\Services\Jogo\Historico;
 use App\Services\Jogo\Posicoes;
 use App\Services\Jogo\Relogio;
 use Illuminate\Support\Facades\DB;
@@ -25,7 +27,7 @@ class DefinirResultado
 {
     use ChecaRegras;
 
-    public function __construct(private Posicoes $posicoes, private Relogio $relogio) {}
+    public function __construct(private Posicoes $posicoes, private Relogio $relogio, private Historico $historico) {}
 
     /** @param  array<int|string, int|string>  $posicoes  participanteId => posição */
     public function __invoke(Jogo $jogo, array $posicoes, Usuario $quem): void
@@ -81,6 +83,8 @@ class DefinirResultado
             }
 
             $this->posicoes->recalcular($jogo);
+
+            $this->historico->registrar($jogo, $quem, TipoAlteracao::DefiniuResultado, 'Definiu o resultado de quem estava em jogo ('.$emJogo->count().' jogadores)', dados: ['posicoes' => $posicoes->all()]);
         });
     }
 }

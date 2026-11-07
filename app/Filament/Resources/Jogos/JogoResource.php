@@ -6,6 +6,8 @@ use App\Filament\Resources\Jogos\Pages\CreateJogo;
 use App\Filament\Resources\Jogos\Pages\EditJogo;
 use App\Filament\Resources\Jogos\Pages\ListJogos;
 use App\Filament\Resources\Jogos\Pages\ViewJogo;
+use App\Filament\Resources\Jogos\RelationManagers\ConfirmadosRelationManager;
+use App\Filament\Resources\Jogos\RelationManagers\HistoricoRelationManager;
 use App\Filament\Resources\Jogos\Schemas\JogoForm;
 use App\Filament\Resources\Jogos\Tables\JogosTable;
 use App\Filament\Resources\Modelos\ModeloResource;
@@ -52,6 +54,15 @@ class JogoResource extends Resource
     public static function table(Table $table): Table
     {
         return JogosTable::configure($table);
+    }
+
+    /** Pré-torneio (aba Confirmados: lista e pagamentos antecipados) e o histórico de alterações do jogo. */
+    public static function getRelations(): array
+    {
+        return [
+            ConfirmadosRelationManager::class,
+            HistoricoRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

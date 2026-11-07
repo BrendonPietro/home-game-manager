@@ -2,8 +2,8 @@
 
 namespace Tests\Feature\Jogo;
 
+use App\Actions\Jogo\AbrirIntervalo;
 use App\Actions\Jogo\AjustarMesa;
-use App\Actions\Jogo\EncerrarRebuys;
 use App\Actions\Jogo\FecharEntradas;
 use App\Actions\Jogo\RemoverMesa;
 use App\Actions\Jogo\TrocarLugar;
@@ -39,9 +39,9 @@ class EliminacoesTest extends TestCase
         }, $nomes);
     }
 
-    private function encerrarRebuys(): void
+    private function abrirIntervalo(): void
     {
-        app(EncerrarRebuys::class)($this->jogo, $this->admin);
+        app(AbrirIntervalo::class)($this->jogo, $this->admin);
     }
 
     private function fecharEntradas(): void
@@ -67,7 +67,7 @@ class EliminacoesTest extends TestCase
         $this->assertSame(StatusParticipante::Jogando, $joao->fresh()->status);
     }
 
-    public function test_encerrar_rebuys_deixa_definitivo_quem_nao_voltou(): void
+    public function test_no_intervalo_quem_caiu_ainda_volta_e_fechar_entradas_deixa_definitivo(): void
     {
         [$joao, $lucas, $carlos] = $this->comBuyin('João', 'Lucas', 'Carlos', 'Diego');
 
@@ -75,28 +75,38 @@ class EliminacoesTest extends TestCase
         $voltou = $this->eliminar($lucas);
         $this->entrar($lucas, TipoItem::Rebuy);
 
-        $this->encerrarRebuys();
+        $this->abrirIntervalo();
 
         $jogo = $this->jogo->fresh();
         $this->assertSame(FaseTorneio::Intervalo, $jogo->fase);
-        $this->assertNotNull($jogo->rebuys_encerrados_em);
-        $this->assertTrue($caiu->fresh()->definitiva);
-        $this->assertFalse($voltou->fresh()->definitiva);
-        $this->assertRegra('Os rebuys já foram encerrados.', fn () => $this->encerrarRebuys());
+        $this->assertNotNull($jogo->intervalo_aberto_em);
+        $this->assertFalse($caiu->fresh()->definitiva, 'no intervalo ainda dá para voltar');
+        $this->assertRegra('O intervalo já foi aberto.', fn () => $this->abrirIntervalo());
 
-        // No intervalo a eliminação já é definitiva, mas a posição só sai ao fechar as entradas.
-        $this->assertTrue($this->eliminar($carlos)->definitiva);
-        $this->assertNull($carlos->fresh()->posicao_final);
+        // Carlos cai no intervalo (provisória) e João, que esperou o intervalo, volta com rebuy.
+        $doCarlos = $this->eliminar($carlos);
+        $this->assertFalse($doCarlos->definitiva);
+        $rebuy = $this->entrar($joao, TipoItem::Rebuy);
+        $this->assertSame($rebuy->id, $caiu->fresh()->voltou_com);
+        $this->assertSame(StatusParticipante::Jogando, $joao->fresh()->status);
+
+        // Fechar entradas: quem não voltou fica de vez, na ordem em que caiu, e já tem a posição.
+        $this->fecharEntradas();
+
+        $this->assertTrue($doCarlos->fresh()->definitiva);
+        $this->assertFalse($voltou->fresh()->definitiva);
+        $this->assertSame(4, $carlos->fresh()->posicao_final);
+        $this->assertRegra('As entradas já foram fechadas.', fn () => $this->entrar($carlos, TipoItem::Rebuy));
     }
 
     public function test_fechar_entradas_grava_os_premios_e_as_posicoes(): void
     {
         [$ana, $beto, $caio, $dudu] = $this->comBuyin('Ana', 'Beto', 'Caio', 'Dudu');
 
-        $this->assertRegra('Encerre os rebuys antes de fechar as entradas.', fn () => $this->fecharEntradas());
+        $this->assertRegra('Abra o intervalo antes de fechar as entradas.', fn () => $this->fecharEntradas());
 
         $this->eliminar($ana);
-        $this->encerrarRebuys();
+        $this->abrirIntervalo();
         $this->eliminar($caio);
 
         $this->fecharEntradas();
@@ -122,7 +132,7 @@ class EliminacoesTest extends TestCase
     {
         $this->comBuyin('João');
         $this->jogador('Lucas');
-        $this->encerrarRebuys();
+        $this->abrirIntervalo();
 
         $this->assertRegra('Fechar entradas pede pelo menos 2 jogadores com buy-in.', fn () => $this->fecharEntradas());
     }

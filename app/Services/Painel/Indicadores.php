@@ -11,7 +11,6 @@ use App\Models\Mesa;
 use App\Models\Participante;
 use App\Models\Usuario;
 use App\Services\Jogo\Calculadora;
-use App\Services\Jogo\Saldos;
 use App\Support\Dinheiro;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
@@ -30,10 +29,7 @@ class Indicadores
     /** Status que contam como jogo que aconteceu (ou vai acontecer). */
     private const NA_AGENDA = [StatusJogo::Agendado, StatusJogo::EmAndamento, StatusJogo::Finalizado];
 
-    public function __construct(
-        private Calculadora $calculadora,
-        private Saldos $saldos,
-    ) {}
+    public function __construct(private Calculadora $calculadora) {}
 
     /** O jogo em andamento ou, sem ele, o próximo agendado. */
     public function proximoJogo(): ?Jogo
@@ -121,18 +117,23 @@ class Indicadores
      */
     public function pendencias(): array
     {
-        $jogadores = Jogo::query()->reais()->comStatus(StatusJogo::Finalizado)
-            ->with('participantes.usuario')
-            ->orderBy('data')
+        // Uma consulta só para todos os finalizados (o saldo vem do banco), em vez de duas por jogo.
+        $comSaldo = Participante::query()
+            ->whereHas('jogo', fn (Builder $q) => $q->reais()->comStatus(StatusJogo::Finalizado))
+            ->comSaldo();
+
+        $jogadores = Participante::query()->fromSub($comSaldo, 'participantes')
+            ->where('saldo_em_aberto', '<>', 0)
+            ->with(['usuario', 'jogo'])
             ->get()
-            ->flatMap(fn (Jogo $jogo): Collection => $this->saldos->doJogo($jogo)
-                ->reject(fn ($saldo): bool => $saldo->quitado())
-                ->map(fn ($saldo): array => [
-                    'jogo' => $jogo,
-                    'participante' => $jogo->participantes->firstWhere('id', $saldo->participanteId),
-                    'saldo' => $saldo->saldo,
-                ])
-                ->values());
+            ->map(fn (Participante $participante): array => [
+                'jogo' => $participante->jogo,
+                'participante' => $participante,
+                'saldo' => Dinheiro::centavos($participante->saldo_em_aberto),
+            ])
+            ->reject(fn (array $linha): bool => $linha['saldo'] === 0) // resto de float do SQLite
+            ->sortBy(fn (array $linha): array => [$linha['jogo']->data, $linha['jogo']->id, $linha['participante']->id])
+            ->values();
 
         $alugueis = Aluguel::query()
             ->whereIn('status', [StatusAluguel::Reservado, StatusAluguel::Confirmado])

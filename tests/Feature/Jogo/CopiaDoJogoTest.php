@@ -24,7 +24,7 @@ class CopiaDoJogoTest extends TestCase
     private function modelo(): Jogo
     {
         $modelo = Jogo::factory()->modelo('Torneio de sábado')->comEntradasPadrao()->create(['horario' => '19:30']);
-        $modelo->itens()->create(['tipo' => TipoItem::Opcional, 'nome' => 'Churrasco', 'valor' => 30, 'compravel_com' => ['jogador'], 'destino' => 'fora']);
+        $modelo->itens()->create(['tipo' => TipoItem::Opcional, 'nome' => 'Churrasco', 'valor' => 30, 'compravel_com' => ['jogador'], 'percentual_premiacao' => 0]);
         $modelo->taxas()->create(['nome' => 'Dealers', 'calculo' => CalculoTaxa::PorUnidade, 'valor' => 215, 'quantidade' => 2]);
         $modelo->premiacoes()->createMany([['posicao' => 1, 'percentual' => 60], ['posicao' => 2, 'percentual' => 40]]);
         $modelo->mesas()->create(['mesa_id' => Mesa::factory()->create()->id, 'dealer_id' => Usuario::factory()->dealer()->create()->id, 'lugares' => 8, 'ordem' => 1]);

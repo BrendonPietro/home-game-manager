@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Enums\CalculoTaxa;
-use App\Enums\DestinoItem;
 use App\Enums\MetodoPremiacao;
 use App\Enums\TipoItem;
 use App\Models\Entrada;
@@ -30,10 +29,13 @@ class CalculadoraTest extends TestCase
         $this->calculadora = app(Calculadora::class);
     }
 
-    /** @return Collection<int, array{tipo: TipoItem, valor: int, destino: DestinoItem}> */
-    private function lancamentos(TipoItem $tipo, int $centavos, int $vezes, DestinoItem $destino = DestinoItem::Premiacao): Collection
+    /**
+     * @param  int  $percentual  quanto vai para a premiação, em centésimos (75% = 7500)
+     * @return Collection<int, array{tipo: TipoItem, valor: int, percentual: int}>
+     */
+    private function lancamentos(TipoItem $tipo, int $centavos, int $vezes, int $percentual = 10000): Collection
     {
-        return collect(array_fill(0, $vezes, ['tipo' => $tipo, 'valor' => $centavos, 'destino' => $destino]));
+        return collect(array_fill(0, $vezes, ['tipo' => $tipo, 'valor' => $centavos, 'percentual' => $percentual]));
     }
 
     public function test_poker_night_18(): void
@@ -70,18 +72,20 @@ class CalculadoraTest extends TestCase
     {
         $jogo = Jogo::factory()->create(); // regra do clube: 11 a 18 jogadores → 50/30/20
 
-        // R$ 1.123,70: 30% = 337,11 → 335 e 20% = 224,74 → 220; o 1º fica com o resto (568,70).
+        // R$ 1.123,70 arrecadados: os 70 centavos ficam com a casa (prize pool R$ 1.123). 30% = 336,90 → 335
+        // e 20% = 224,60 → 220; o 1º fica com o resto (568).
         $resumo = $this->calculadora->calcular($jogo, $this->lancamentos(TipoItem::Buyin, 112370, 1), 12);
-        $this->assertSame([56870, 33500, 22000], array_column($resumo->premios, 'valor'));
-        $this->assertSame(112370, array_sum(array_column($resumo->premios, 'valor')));
+        $this->assertSame([112300, 70], [$resumo->prizePool, $resumo->foraDaPremiacao]);
+        $this->assertSame([56800, 33500, 22000], array_column($resumo->premios, 'valor'));
+        $this->assertSame(112300, array_sum(array_column($resumo->premios, 'valor')));
 
         // Prize pool em múltiplo de R$ 5: todo mundo redondo. R$ 1.235: 617,50 / 370,50 / 247 → 620 / 370 / 245.
         $resumo = $this->calculadora->calcular($jogo, $this->lancamentos(TipoItem::Buyin, 123500, 1), 12);
         $this->assertSame([62000, 37000, 24500], array_column($resumo->premios, 'valor'));
 
-        // Prêmio menor que R$ 5 não vira zero. R$ 15: 7,50 / 4,50 / 3 → 7,50 / 4,50 / 3.
+        // Prêmio menor que R$ 5 não vira zero: desce para o real. R$ 15: 7,50 / 4,50 / 3 → 8 / 4 / 3.
         $resumo = $this->calculadora->calcular($jogo, $this->lancamentos(TipoItem::Buyin, 1500, 1), 12);
-        $this->assertSame([750, 450, 300], array_column($resumo->premios, 'valor'));
+        $this->assertSame([800, 400, 300], array_column($resumo->premios, 'valor'));
     }
 
     public function test_arredondar_premiacao_manual_que_nao_soma_100(): void
@@ -126,8 +130,8 @@ class CalculadoraTest extends TestCase
             ->merge($this->lancamentos(TipoItem::Buyin, 11000, 16))
             ->merge($this->lancamentos(TipoItem::Rebuy, 10000, 14))
             ->merge($this->lancamentos(TipoItem::Addon, 5000, 1))
-            ->merge($this->lancamentos(TipoItem::Opcional, 1000, 60, DestinoItem::Metade))
-            ->merge($this->lancamentos(TipoItem::Opcional, 3000, 16, DestinoItem::Fora));
+            ->merge($this->lancamentos(TipoItem::Opcional, 1000, 60, 5000))
+            ->merge($this->lancamentos(TipoItem::Opcional, 3000, 16, 0));
 
         $resumo = $this->calculadora->calcular($jogo->fresh(), $lancamentos, 16);
 
@@ -153,21 +157,46 @@ class CalculadoraTest extends TestCase
         $resumo = $this->calculadora->calcular($jogo->fresh(), $lancamentos, 4);
 
         $this->assertSame(60600, $resumo->premiacaoBruta);
-        // 4 jogadores × 10 · 6 entradas × 5 · 7,5% de 606 = 45,45
-        $this->assertSame([4000, 3000, 4545], array_column($resumo->taxas, 'valor'));
-        $this->assertSame(60600 - 11545, $resumo->prizePool);
+        // 4 jogadores × 10 · 6 entradas × 5 · 7,5% de 606 = 45,45 → R$ 45 (torneio não tem centavos)
+        $this->assertSame([4000, 3000, 4500], array_column($resumo->taxas, 'valor'));
+        $this->assertSame(60600 - 11500, $resumo->prizePool);
+
+        // Meio real para cima: 7,5% de 610 = 45,75 → R$ 46.
+        $resumo = $this->calculadora->calcular($jogo->fresh(), $this->lancamentos(TipoItem::Buyin, 61000, 1), 1);
+        $this->assertSame(4600, $resumo->taxas[2]['valor']);
     }
 
-    public function test_sobra_do_arredondamento_vai_para_o_primeiro(): void
+    public function test_sem_arredondar_para_5_os_premios_ficam_em_reais(): void
     {
-        ArredondarPremios::definir(false); // só os centavos
+        ArredondarPremios::definir(false);
         $jogo = Jogo::factory()->create(); // regra do clube: até 10 jogadores → 65/35
 
-        $resumo = $this->calculadora->calcular($jogo, $this->lancamentos(TipoItem::Buyin, 101, 1), 5);
+        $resumo = $this->calculadora->calcular($jogo, $this->lancamentos(TipoItem::Buyin, 10100, 1), 5);
 
-        // 65% de 1,01 = 0,6565 e 35% = 0,3535: 0,65 + 0,35 e o centavo que sobra vai para o 1º.
-        $this->assertSame([66, 35], array_column($resumo->premios, 'valor'));
-        $this->assertSame(101, array_sum(array_column($resumo->premios, 'valor')));
+        // 65% de 101 = 65,65 e 35% = 35,35: o 2º desce para R$ 35 e a sobra vai para o 1º (R$ 66).
+        $this->assertSame([6600, 3500], array_column($resumo->premios, 'valor'));
+        $this->assertSame(10100, array_sum(array_column($resumo->premios, 'valor')));
+    }
+
+    public function test_percentual_livre_por_item(): void
+    {
+        $jogo = Jogo::factory()->create();
+
+        // 10 buy-ins de R$ 100 (100%), 10 opcionais de R$ 10 a 75% e 10 churrascos de R$ 30 a 0%.
+        $lancamentos = $this->lancamentos(TipoItem::Buyin, 10000, 10)
+            ->merge($this->lancamentos(TipoItem::Opcional, 1000, 10, 7500))
+            ->merge($this->lancamentos(TipoItem::Opcional, 3000, 10, 0));
+
+        $resumo = $this->calculadora->calcular($jogo, $lancamentos, 10);
+
+        $this->assertSame(140000, $resumo->arrecadacao);
+        $this->assertSame(107500, $resumo->premiacaoBruta);  // 1.000 + 75
+        $this->assertSame(32500, $resumo->foraDaPremiacao);  // 25 do opcional + 300 do churrasco
+
+        // A soma do mesmo percentual vale junta, e o torneio tira os centavos: 3 × R$ 10 a 75% = 22,50 → R$ 22.
+        $resumo = $this->calculadora->calcular($jogo, $this->lancamentos(TipoItem::Opcional, 1000, 3, 7500)->merge($this->lancamentos(TipoItem::Buyin, 10000, 2)), 2);
+        $this->assertSame(22200, $resumo->premiacaoBruta);
+        $this->assertSame(800, $resumo->foraDaPremiacao); // 7,50 do opcional + os 50 centavos
     }
 
     public function test_premiacao_manual(): void
@@ -203,8 +232,8 @@ class CalculadoraTest extends TestCase
     {
         $jogo = Jogo::factory()->comEntradasPadrao('100.00')->create();
         $jogo->itens()->createMany([
-            ['tipo' => TipoItem::Opcional, 'nome' => 'Churrasco', 'valor' => 30, 'destino' => DestinoItem::Fora, 'obrigatorio' => true, 'compravel_com' => ['jogador']],
-            ['tipo' => TipoItem::Opcional, 'nome' => 'Opcional', 'valor' => 10, 'destino' => DestinoItem::Metade, 'obrigatorio' => true, 'compravel_com' => ['buyin', 'rebuy', 'addon']],
+            ['tipo' => TipoItem::Opcional, 'nome' => 'Churrasco', 'valor' => 30, 'percentual_premiacao' => 0, 'obrigatorio' => true, 'compravel_com' => ['jogador']],
+            ['tipo' => TipoItem::Opcional, 'nome' => 'Opcional', 'valor' => 10, 'percentual_premiacao' => 50, 'obrigatorio' => true, 'compravel_com' => ['buyin', 'rebuy', 'addon']],
         ]);
 
         $resumo = $this->calculadora->simular($jogo, 10, 5);
@@ -223,6 +252,9 @@ class CalculadoraTest extends TestCase
 
         $this->assertSame(120000, $resumo->prizePool);
         $this->assertSame([], $resumo->premios);
+
+        // No cash game o que está nas fichas vale até o centavo.
+        $this->assertSame(1050, $this->calculadora->calcular($jogo, $this->lancamentos(TipoItem::Buyin, 1050, 1), 1)->prizePool);
     }
 
     public function test_do_jogo_ignora_jogador_sem_buy_in(): void

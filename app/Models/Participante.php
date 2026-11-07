@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\DirecaoPagamento;
+use App\Enums\Modalidade;
 use App\Enums\StatusParticipante;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -69,6 +71,28 @@ class Participante extends Model
     public function scopeNaMesa(Builder $query): Builder
     {
         return $query->where('status', StatusParticipante::Jogando);
+    }
+
+    /**
+     * Acrescenta `saldo_em_aberto` (decimal): investido − prêmio (cash-out no cash game) − pago + recebido.
+     * É a conta do Services\Jogo\Saldos feita no banco, para listar pendências de muitos jogos numa
+     * consulta só (o dashboard do painel). Mudou a conta lá? Mude aqui e no Usuario::scopeComSaldoEmAberto.
+     */
+    public function scopeComSaldo(Builder $query): Builder
+    {
+        if ($query->getQuery()->columns === null) {
+            $query->select('participantes.*'); // selectRaw não põe o "*" sozinho
+        }
+
+        return $query->selectRaw(
+            '(select coalesce(sum(e.valor), 0) from entradas e where e.participante_id = participantes.id and e.cancelada_em is null)
+            - (select case when j.modalidade = ? then coalesce(participantes.cash_out, 0) else coalesce(participantes.premio, 0) end
+                from jogos j where j.id = participantes.jogo_id)
+            - (select coalesce(sum(pg.valor), 0) from pagamentos pg where pg.participante_id = participantes.id and pg.cancelado_em is null and pg.direcao = ?)
+            + (select coalesce(sum(pg.valor), 0) from pagamentos pg where pg.participante_id = participantes.id and pg.cancelado_em is null and pg.direcao = ?)
+            as saldo_em_aberto',
+            [Modalidade::CashGame->value, DirecaoPagamento::JogadorPagou->value, DirecaoPagamento::JogadorRecebeu->value],
+        );
     }
 
     /** Eliminado ou saiu (cash-out): o lugar continua dele até alguém sentar ali. */

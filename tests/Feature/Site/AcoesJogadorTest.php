@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Site;
 
-use App\Enums\DestinoItem;
+use App\Actions\Jogo\AbrirIntervalo;
 use App\Enums\StatusParticipante;
 use App\Enums\TipoItem;
 use App\Livewire\Jogo\AcoesJogador;
@@ -40,6 +40,24 @@ class AcoesJogadorTest extends TestCase
         ]);
     }
 
+    public function test_quem_caiu_volta_pelo_voltar_ate_no_intervalo(): void
+    {
+        $this->entrar($this->jogador('Lucas'), TipoItem::Buyin);
+        $this->entrar($this->joao, TipoItem::Buyin);
+        $this->eliminar($this->joao);
+        app(AbrirIntervalo::class)($this->jogo, $this->admin);
+
+        // No intervalo o João, que esperou para voltar, vê VOLTAR no lugar do buy-in.
+        $this->painel()
+            ->assertSee(['Voltar', 'entra como rebuy · R$ 100'])
+            ->call('abrirEntrada', 'rebuy')
+            ->assertSee('Volta ao jogo · João')
+            ->call('confirmarEntrada')
+            ->assertSet('aviso', 'Rebuy registrado para João.');
+
+        $this->assertSame(StatusParticipante::Jogando, $this->joao->fresh()->status);
+    }
+
     public function test_painel_mostra_o_que_comprou_a_conta_e_o_historico(): void
     {
         $this->entrar($this->jogador('Lucas'), TipoItem::Buyin);
@@ -49,7 +67,7 @@ class AcoesJogadorTest extends TestCase
 
         $this->painel()
             ->assertSeeInOrder(['rh-jogador__nome', 'João', 'Mesa 01 · Lugar 1'], false)
-            ->assertSeeInOrder(['Buy-in', '20.000 fichas', 'R$ 100', 'Rebuys · 1', 'R$ 100'])
+            ->assertSeeInOrder(['Buy-in', 'Às ', 'R$ 100', 'Rebuys · 1', 'R$ 100']) // fichas não se somam por jogador
             ->assertSeeInOrder(['Investido', 'R$ 200', 'Pago', 'R$ 150', 'Deve ao caixa', 'R$ 50'])
             ->assertSeeInOrder(['Histórico', 'Pagou R$ 150 (pix)', 'Rebuy · R$ 100', 'Buy-in · R$ 100'])
             ->assertSee('Desfazer')
@@ -73,7 +91,7 @@ class AcoesJogadorTest extends TestCase
     public function test_lancar_buyin_com_opcional_e_toque_duplo(): void
     {
         $churrasco = $this->jogo->itens()->create([
-            'tipo' => TipoItem::Opcional, 'nome' => 'Churrasco', 'valor' => 30, 'compravel_com' => ['jogador'], 'destino' => DestinoItem::Fora,
+            'tipo' => TipoItem::Opcional, 'nome' => 'Churrasco', 'valor' => 30, 'compravel_com' => ['jogador'], 'percentual_premiacao' => 0,
         ]);
 
         $this->painel()
@@ -100,7 +118,7 @@ class AcoesJogadorTest extends TestCase
             ->call('abrirEntrada', 'addon')
             ->call('confirmarEntrada')
             ->assertSet('modal', 'entrada')
-            ->assertSee('Add-on só no intervalo, depois de encerrar os rebuys.')
+            ->assertSee('Add-on só no intervalo: aperte ABRIR INTERVALO.')
             ->assertNotDispatched('caixa-mudou');
     }
 
@@ -129,9 +147,9 @@ class AcoesJogadorTest extends TestCase
 
         $this->painel()
             ->call('abrirEliminacao')
-            ->assertSee('Provisória: João pode voltar com rebuy até encerrar os rebuys.')
+            ->assertSee('Provisória: João pode voltar com rebuy, agora ou no intervalo, até fechar as entradas.')
             ->call('confirmarEliminacao')
-            ->assertSet('aviso', 'João eliminado: pode voltar com rebuy até encerrar os rebuys.')
+            ->assertSet('aviso', 'João eliminado: pode voltar com rebuy até fechar as entradas.')
             ->assertSee('Eliminado')
             ->assertDontSee('REGISTRAR ELIMINAÇÃO')
             ->call('abrirDesfazer')

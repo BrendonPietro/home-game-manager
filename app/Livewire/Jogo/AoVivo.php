@@ -2,17 +2,19 @@
 
 namespace App\Livewire\Jogo;
 
+use App\Actions\Jogo\AbrirIntervalo;
 use App\Actions\Jogo\AtualizarNivel;
 use App\Actions\Jogo\ControlarRelogio;
-use App\Actions\Jogo\EncerrarRebuys;
 use App\Actions\Jogo\FecharEntradas;
 use App\Actions\Jogo\TrocarLinkDoRelogio;
 use App\Actions\Jogo\TrocarLugar;
+use App\Actions\Jogo\VoltarFase;
 use App\Enums\ComandoRelogio;
 use App\Enums\FaseTorneio;
 use App\Enums\StatusParticipante;
 use App\Enums\TipoItem;
 use App\Exceptions\RegraDoJogo;
+use App\Livewire\Jogo\Concerns\EscolheQuemSenta;
 use App\Models\Entrada;
 use App\Models\Jogo;
 use App\Models\JogoMesa;
@@ -45,6 +47,8 @@ use Livewire\Component;
  */
 class AoVivo extends Component
 {
+    use EscolheQuemSenta;
+
     public Jogo $jogo;
 
     /** jogo_mesa em exibição (?mesa= na URL); vazio = a primeira. */
@@ -57,8 +61,11 @@ class AoVivo extends Component
     /** Jogador mudando de lugar: o próximo lugar clicado é o novo. */
     public ?int $movendo = null;
 
-    /** Modal da tela: nivel, relogio, link (do relógio), encerrar (rebuys) ou fechar (entradas). */
+    /** Modal da tela: nivel, relogio, link (do relógio), intervalo (abrir), fechar (entradas) ou voltar (fase). */
     public ?string $modal = null;
+
+    /** Motivo de voltar a fase (fica no histórico). */
+    public string $motivoCorrecao = '';
 
     public string $nivel = '';
 
@@ -92,6 +99,14 @@ class AoVivo extends Component
         }
 
         $ocupante = $this->jogo->participantes()->where('jogo_mesa_id', $jogoMesaId)->where('lugar', $lugar)->first();
+
+        // Lugar vazio: quem chegou atrasado senta ali (e, no torneio, já entra com o buy-in).
+        if ($ocupante === null && $this->quem()->can('mesas.organizar')) {
+            $this->selecionado = null;
+            $this->abrirLugarVazio($jogoMesaId, $lugar);
+
+            return;
+        }
 
         $this->selecionar($ocupante?->id);
     }
@@ -196,19 +211,19 @@ class AoVivo extends Component
         }
     }
 
-    // ── Fases do torneio: Encerrar rebuys (tela 07) e Fechar entradas (tela 11) ──
+    // ── Fases do torneio: Abrir intervalo (tela 07) e Fechar entradas (tela 11) ──
 
     public function abrirFase(): void
     {
-        $this->modal = $this->jogo->fase === FaseTorneio::Rebuys ? 'encerrar' : 'fechar';
+        $this->modal = $this->jogo->fase === FaseTorneio::Rebuys ? 'intervalo' : 'fechar';
         $this->erro = null;
     }
 
-    public function encerrarRebuys(): void
+    public function abrirIntervalo(): void
     {
-        if ($this->executar(fn () => app(EncerrarRebuys::class)($this->jogo, $this->quem()))) {
+        if ($this->executar(fn () => app(AbrirIntervalo::class)($this->jogo, $this->quem()))) {
             $this->modal = null;
-            $this->aviso = 'Rebuys encerrados: o add-on está aberto.';
+            $this->aviso = 'Intervalo aberto: add-on liberado, e quem caiu ainda volta com rebuy até fechar as entradas.';
         }
     }
 
@@ -217,6 +232,27 @@ class AoVivo extends Component
         if ($this->executar(fn () => app(FecharEntradas::class)($this->jogo, $this->quem()))) {
             $this->modal = null;
             $this->aviso = 'Entradas fechadas e prêmios gravados: cada eliminação agora dá a posição.';
+        }
+    }
+
+    // ── Correção: voltar a fase apertada antes da hora (jogo.corrigir, com motivo, no histórico) ──
+
+    public function abrirVoltarFase(): void
+    {
+        $this->modal = 'voltar';
+        $this->motivoCorrecao = '';
+        $this->erro = null;
+    }
+
+    public function voltarFase(): void
+    {
+        $reabriu = $this->jogo->fase === FaseTorneio::SemEntradas;
+
+        if ($this->executar(fn () => app(VoltarFase::class)($this->jogo, $this->motivoCorrecao, $this->quem()))) {
+            $this->modal = null;
+            $this->aviso = $reabriu
+                ? 'Entradas reabertas: buy-in, rebuy e add-on valem de novo. Feche as entradas quando terminar.'
+                : 'De volta à fase de rebuys: o add-on fecha até abrir o intervalo de novo.';
         }
     }
 
@@ -292,24 +328,26 @@ class AoVivo extends Component
                 ])
                 : collect(),
             // Só o que o modal aberto mostra.
-            'foraDeVez' => $this->modal === 'encerrar' ? $this->foraDeVez($participantes) : collect(),
+            'foraAgora' => in_array($this->modal, ['intervalo', 'fechar'], true) ? $this->foraAgora($participantes) : collect(),
             'semBuyin' => $this->modal === 'fechar'
                 ? $participantes->filter(fn (Participante $p) => $p->status === StatusParticipante::Jogando && ! $porJogador->get($p->id)?->buyin)
                     ->map->nome()->values()
                 : collect(),
-            'addon' => $this->modal === 'encerrar'
+            'quemSenta' => $this->dadosDoLugarVazio(),
+            'addon' => $this->modal === 'intervalo'
                 ? $this->jogo->itens()->ativos()->where('tipo', TipoItem::Addon)->orderBy('valor')->first()
                 : null,
         ]);
     }
 
     /**
-     * Quem está fora numa eliminação provisória e não voltou: fica eliminado de vez ao encerrar os rebuys.
+     * Quem está fora numa eliminação provisória e não voltou: ainda volta com rebuy no intervalo e fica
+     * eliminado de vez ao fechar as entradas.
      *
      * @param  Collection<int, Participante>  $participantes
      * @return Collection<int, string>
      */
-    private function foraDeVez(Collection $participantes): Collection
+    private function foraAgora(Collection $participantes): Collection
     {
         $ids = $this->jogo->eliminacoes()->validas()->emAberto()->pluck('participante_id');
 

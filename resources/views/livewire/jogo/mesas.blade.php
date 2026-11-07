@@ -5,7 +5,8 @@
 	$podeIniciar = auth('web')->user()->can('jogo.fases');
 	$sentados = $mesas->sum(fn ($m) => $m->participantes->count());
 	$confirmacao = 'Iniciar '.($torneio ? 'o torneio' : 'o jogo').' com '.$sentados.' '.($sentados === 1 ? 'jogador sentado' : 'jogadores sentados').'?'
-		.($semLugar->isNotEmpty() ? ' '.$semLugar->count().' sem lugar '.($semLugar->count() === 1 ? 'continua' : 'continuam').' esperando.' : '');
+		.($semLugar->isNotEmpty() ? ' '.$semLugar->count().' sem lugar '.($semLugar->count() === 1 ? 'continua' : 'continuam').' esperando.' : '')
+		.($torneio ? ' Cada sentado já entra com o buy-in.' : '');
 @endphp
 
 <div class="rh-grid rh-mesas">
@@ -64,7 +65,7 @@
 					@if ($selecionadoNome)
 						<b>{{ $selecionadoNome }}</b> selecionado: clique num lugar vazio para mover ou num jogador para trocar.
 					@else
-						Clique num jogador e depois em outro lugar para trocar ou mover.
+						Clique num lugar vazio para escolher quem senta, ou num jogador e depois em outro lugar para trocar ou mover.
 					@endif
 				</span>
 			</div>
@@ -80,7 +81,7 @@
 	</aside>
 
 	<div class="rh-col" style="gap:16px;min-width:0">
-		@if ($erro)
+		@if ($erro && ! $quemSenta)
 			<div class="rh-warn" role="alert">@svg('rh-alert')<div>{{ $erro }}</div></div>
 		@endif
 
@@ -145,4 +146,6 @@
 			</div></div>
 		@endforelse
 	</div>
+
+	@include('livewire.jogo.partials.quem-senta')
 </div>

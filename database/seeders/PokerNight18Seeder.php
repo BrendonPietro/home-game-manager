@@ -30,7 +30,7 @@ use RuntimeException;
  * Noite de referência (docs/prototipo, mesmos jogadores e lugares): 12 jogadores, 22 entradas,
  * R$ 2.100 arrecadados, taxa "Casa" 10% = R$ 210, prize pool R$ 1.890 → 950 / 565 / 375 (945 / 567 / 378 sem arredondar).
  *
- * Fica em andamento, no intervalo (rebuys encerrados, add-ons feitos, ninguém eliminado), como a
+ * Fica em andamento, no intervalo (intervalo aberto, add-ons feitos, ninguém eliminado), como a
  * tela ao vivo do protótipo; as fases 3 e 4 continuam a mesma noite até o fechamento. Usa a estrutura
  * Turbo 15 min (v2), com o relógio pausado no nível 6 (100 / 200) com 14:32, como no protótipo.
  *
@@ -100,7 +100,7 @@ class PokerNight18Seeder extends Seeder
                 'status' => StatusJogo::EmAndamento,
                 'fase' => FaseTorneio::Intervalo,
                 'iniciado_em' => $inicio->copy()->addMinutes(5),
-                'rebuys_encerrados_em' => $inicio->copy()->addMinutes(100),
+                'intervalo_aberto_em' => $inicio->copy()->addMinutes(100),
             ])->save();
 
             // Relógio como a faixa do protótipo: nível 6 (100 / 200), pausado com 14:32.
@@ -220,7 +220,7 @@ class PokerNight18Seeder extends Seeder
             'tipo' => $item->tipo,
             'valor' => $item->valor,
             'fichas' => $item->fichas,
-            'destino' => $item->destino,
+            'percentual_premiacao' => $item->percentual_premiacao,
         ]);
 
         $entrada->forceFill(['created_at' => $quando, 'updated_at' => $quando])->save();

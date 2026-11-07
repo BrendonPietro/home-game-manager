@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Database\Factories\MesaFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /** Mesa física do clube. */
 class Mesa extends Model
 {
-    /** @use HasFactory<\Database\Factories\MesaFactory> */
+    /** @use HasFactory<MesaFactory> */
     use HasFactory;
 
     protected $table = 'mesas';

@@ -2,9 +2,9 @@
 
 namespace Tests\Concerns;
 
+use App\Actions\Jogo\AbrirIntervalo;
 use App\Actions\Jogo\DefinirResultado;
 use App\Actions\Jogo\DesfazerAcao;
-use App\Actions\Jogo\EncerrarRebuys;
 use App\Actions\Jogo\FecharEntradas;
 use App\Actions\Jogo\FinalizarJogo;
 use App\Actions\Jogo\RegistrarEliminacao;
@@ -118,7 +118,7 @@ trait MontaNoite
         [$ana, $beto, $caio] = $jogadores;
         $this->pagar($ana, 10000);
 
-        app(EncerrarRebuys::class)($this->jogo, $this->admin);
+        app(AbrirIntervalo::class)($this->jogo, $this->admin);
         app(FecharEntradas::class)($this->jogo, $this->admin);
         $this->eliminar($caio);
         app(DefinirResultado::class)($this->jogo, [$ana->id => 1, $beto->id => 2], $this->admin);

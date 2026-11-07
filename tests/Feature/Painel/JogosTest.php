@@ -3,7 +3,6 @@
 namespace Tests\Feature\Painel;
 
 use App\Enums\CalculoTaxa;
-use App\Enums\DestinoItem;
 use App\Enums\MetodoPremiacao;
 use App\Enums\Modalidade;
 use App\Enums\StatusJogo;
@@ -53,12 +52,12 @@ class JogosTest extends TestCase
             'itens_buyin' => [['padrao' => true, 'nome' => 'Buy-in', 'valor' => '100', 'fichas' => 20000, 'limite_por_jogador' => 1, 'ativo' => true]],
             'itens_rebuy' => [
                 ['padrao' => true, 'nome' => 'Rebuy', 'valor' => '100', 'fichas' => 20000, 'limite_por_jogador' => null, 'ativo' => true],
-                ['padrao' => false, 'nome' => 'Rebuy duplo', 'valor' => '200', 'fichas' => 40000, 'limite_por_jogador' => null, 'ativo' => true],
+                ['padrao' => false, 'nome' => 'Rebuy duplo', 'valor' => '200', 'fichas' => 40000, 'premiacao' => 'outro', 'premiacao_outro' => '75', 'limite_por_jogador' => null, 'ativo' => true],
             ],
             'itens_addon' => [['padrao' => true, 'nome' => 'Add-on', 'valor' => '50', 'fichas' => 20000, 'limite_por_jogador' => 1, 'ativo' => true]],
             'opcionais' => [
-                ['nome' => 'Opcional', 'valor' => '10', 'fichas' => 20000, 'compravel_com' => 'entrada', 'destino' => 'metade', 'obrigatorio' => false, 'ativo' => true],
-                ['nome' => 'Churrasco', 'valor' => '30', 'fichas' => 20000, 'compravel_com' => 'jogador', 'destino' => 'fora', 'obrigatorio' => false, 'ativo' => true],
+                ['nome' => 'Opcional', 'valor' => '10', 'fichas' => 20000, 'compravel_com' => 'entrada', 'premiacao' => '50', 'obrigatorio' => false, 'ativo' => true],
+                ['nome' => 'Churrasco', 'valor' => '30', 'fichas' => 20000, 'compravel_com' => 'jogador', 'premiacao' => '0', 'obrigatorio' => false, 'ativo' => true],
             ],
             'taxas' => [
                 ['nome' => 'Casa', 'calculo' => 'fixo', 'valor' => '190', 'quantidade' => 1],
@@ -102,14 +101,15 @@ class JogosTest extends TestCase
         $entradas = $jogo->itensDeEntrada()->get();
         $this->assertSame(['Buy-in', 'Rebuy', 'Rebuy duplo', 'Add-on'], $entradas->sortBy(fn ($i) => [$i->tipo->value === 'buyin' ? 0 : ($i->tipo->value === 'rebuy' ? 1 : 2), $i->ordem])->pluck('nome')->values()->all());
         $this->assertSame(3, $entradas->where('padrao', true)->count());
-        $this->assertTrue($entradas->every(fn ($i) => $i->destino === DestinoItem::Premiacao));
+        // O rebuy duplo usou "Outro" com 75%; o resto ficou no padrão de 100%.
+        $this->assertSame(['Rebuy duplo' => '75.00'], $entradas->reject(fn ($i) => $i->percentual_premiacao === '100.00')->pluck('percentual_premiacao', 'nome')->all());
 
         $opcional = $jogo->opcionais()->where('nome', 'Opcional')->sole();
         $churrasco = $jogo->opcionais()->where('nome', 'Churrasco')->sole();
-        $this->assertSame(DestinoItem::Metade, $opcional->destino);
+        $this->assertSame('50.00', $opcional->percentual_premiacao);
         $this->assertTrue($opcional->compravelCom(TipoItem::Rebuy));
         $this->assertTrue($churrasco->porJogador());
-        $this->assertSame(DestinoItem::Fora, $churrasco->destino);
+        $this->assertSame('0.00', $churrasco->percentual_premiacao);
 
         $this->assertSame([CalculoTaxa::Fixo, CalculoTaxa::PorUnidade], $jogo->taxas->pluck('calculo')->all());
         $this->assertSame(2, $jogo->taxas[1]->quantidade);
@@ -279,6 +279,23 @@ class JogosTest extends TestCase
             ->assertHasNoFormErrors();
 
         $this->assertNull($jogo->fresh()->estrutura_blinds_id);
+    }
+
+    public function test_percentual_da_premiacao_volta_no_formulario_e_continua_ao_salvar(): void
+    {
+        $jogo = Jogo::factory()->comEntradasPadrao()->create();
+        $opcional = $jogo->itens()->create(['tipo' => TipoItem::Opcional, 'nome' => 'Opcional', 'valor' => 10, 'percentual_premiacao' => 75, 'compravel_com' => ['buyin']]);
+        $churrasco = $jogo->itens()->create(['tipo' => TipoItem::Opcional, 'nome' => 'Churrasco', 'valor' => 30, 'percentual_premiacao' => 0, 'compravel_com' => ['jogador']]);
+
+        // 75% abre como "Outro · 75"; 0% abre no atalho. Salvar sem mexer não muda nada.
+        $tela = Livewire::test(EditJogo::class, ['record' => $jogo->getRouteKey()]);
+        $linhas = collect($tela->get('data.opcionais'))->keyBy('nome');
+        $this->assertSame(['outro', '75'], [$linhas['Opcional']['premiacao'], (string) $linhas['Opcional']['premiacao_outro']]);
+        $this->assertSame('0', (string) $linhas['Churrasco']['premiacao']);
+
+        $tela->call('save')->assertHasNoFormErrors();
+
+        $this->assertSame(['75.00', '0.00'], [$opcional->fresh()->percentual_premiacao, $churrasco->fresh()->percentual_premiacao]);
     }
 
     public function test_jogo_novo_vem_com_os_padroes_das_configuracoes(): void

@@ -2,12 +2,14 @@
 
 namespace Tests\Feature\Jogo;
 
+use App\Actions\Jogo\AbrirIntervalo;
 use App\Actions\Jogo\DefinirResultado;
-use App\Actions\Jogo\EncerrarRebuys;
 use App\Actions\Jogo\FecharEntradas;
 use App\Actions\Jogo\FinalizarJogo;
 use App\Actions\Jogo\MarcarAcerto;
 use App\Actions\Jogo\RegistrarCashOut;
+use App\Actions\Jogo\RegistrarPagamento;
+use App\Enums\DirecaoPagamento;
 use App\Enums\FormaPagamento;
 use App\Enums\Periodicidade;
 use App\Enums\StatusJogo;
@@ -20,6 +22,7 @@ use App\Support\Dinheiro;
 use App\Support\EtapaDoJogo;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\Concerns\MontaNoite;
 use Tests\TestCase;
 
@@ -48,7 +51,7 @@ class FinalDaNoiteTest extends TestCase
 
     private function fecharEntradas(): void
     {
-        app(EncerrarRebuys::class)($this->jogo, $this->admin);
+        app(AbrirIntervalo::class)($this->jogo, $this->admin);
         app(FecharEntradas::class)($this->jogo, $this->admin);
     }
 
@@ -197,6 +200,71 @@ class FinalDaNoiteTest extends TestCase
         $this->assertSame(3, $ana->pagamentos()->count()); // o pix da noite e os recebimentos do Caio e do caixa
 
         $this->assertRegra('Esse acerto já foi marcado como feito.', fn () => app(MarcarAcerto::class)($this->jogo->acertos()->first(), FormaPagamento::Pix, $this->operador));
+    }
+
+    public function test_pendencia_paga_pelo_painel_refaz_os_acertos_e_nao_cobra_duas_vezes(): void
+    {
+        [$ana, $beto, $caio] = $this->comBuyin('Ana', 'Beto', 'Caio');
+        $this->pagar($ana, 10000);
+        $this->fecharEntradas();
+        $this->eliminar($caio);
+        $this->definir([$ana->id => 1, $beto->id => 2]);
+        $this->finalizar();
+
+        $doCaio = $this->jogo->acertos()->where('de_participante_id', $caio->id)->sole();
+        $this->assertSame(10000, Dinheiro::centavos($doCaio->valor));
+
+        // Caio acerta pelo painel dele (pix para o caixa), não pelo FEITO do acerto.
+        $this->pagar($caio, 10000);
+
+        $this->assertNull($doCaio->fresh(), 'o acerto antigo do Caio sai da lista');
+        $this->assertSame(0, $this->jogo->acertos()->where('de_participante_id', $caio->id)->count());
+        $this->assertSame(0, app(Saldos::class)->doParticipante($caio->fresh())->saldo);
+
+        // FEITO no acerto que estava na tela de outro aparelho: avisa e não lança nada.
+        $this->assertRegra(MarcarAcerto::MUDOU, fn () => app(MarcarAcerto::class)($doCaio, FormaPagamento::Pix, $this->operador));
+        $this->assertSame(1, $caio->pagamentos()->count());
+
+        // Os que sobraram fecham a conta: o caixa paga Ana e Beto.
+        foreach ($this->jogo->acertos()->where('pago', false)->get() as $acerto) {
+            $this->assertNull($acerto->de_participante_id);
+            app(MarcarAcerto::class)($acerto, FormaPagamento::Pix, $this->operador);
+        }
+
+        $this->assertTrue(app(Saldos::class)->doJogo($this->jogo)->every(fn ($s) => $s->quitado()));
+    }
+
+    public function test_acerto_que_nao_bate_com_os_saldos_e_refeito(): void
+    {
+        [$ana, $beto, $caio] = $this->comBuyin('Ana', 'Beto', 'Caio');
+        $this->fecharEntradas();
+        $this->eliminar($caio);
+        $this->definir([$ana->id => 1, $beto->id => 2]);
+        $this->finalizar();
+
+        // Um pagamento que não passou pela Action (não refez a lista): o acerto do Caio ficou velho.
+        $this->jogo->pagamentos()->create([
+            'uuid' => (string) Str::uuid(), 'participante_id' => $caio->id, 'direcao' => 'jogador_pagou',
+            'valor' => '100.00', 'forma' => 'pix', 'registrado_por' => $this->admin->id,
+        ]);
+        $velho = $this->jogo->acertos()->where('de_participante_id', $caio->id)->first();
+
+        $this->assertRegra(MarcarAcerto::MUDOU, fn () => app(MarcarAcerto::class)($velho, FormaPagamento::Pix, $this->operador));
+
+        $this->assertNull($velho->fresh());
+        $this->assertSame(1, $caio->pagamentos()->count());
+        $this->assertSame(0, $this->jogo->acertos()->where('de_participante_id', $caio->id)->count());
+    }
+
+    public function test_pagamento_e_acerto_so_em_pix_ou_dinheiro(): void
+    {
+        [$ana] = $this->comBuyin('Ana');
+
+        $this->assertSame([FormaPagamento::Pix, FormaPagamento::Dinheiro], FormaPagamento::disponiveis());
+        $this->assertRegra('Forma de pagamento não aceita: use Pix ou Dinheiro.', fn () => app(RegistrarPagamento::class)(
+            $ana, DirecaoPagamento::JogadorPagou, 10000, FormaPagamento::Cartao, $this->operador, (string) Str::uuid(),
+        ));
+        $this->assertSame(0, $ana->pagamentos()->count());
     }
 
     public function test_so_o_admin_finaliza(): void

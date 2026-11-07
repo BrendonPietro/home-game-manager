@@ -4,6 +4,7 @@ namespace Tests\Feature\Site;
 
 use App\Enums\StatusJogo;
 use App\Enums\StatusParticipante;
+use App\Enums\TipoItem;
 use App\Livewire\Jogo\AoVivo;
 use App\Models\Jogo;
 use App\Models\JogoMesa;
@@ -52,7 +53,7 @@ class AoVivoTest extends TestCase
             ->assertOk()
             ->assertSee('wire:poll.5s', false)
             // Faixa: nível, fase, jogando, entradas, arrecadação e prize pool.
-            ->assertSeeInOrder(['Nível 6', '100 / 200', 'Fase', 'Intervalo (add-on)', 'Jogando', '12', 'Entradas', '22', 'Arrecadação', 'R$ 2.100', 'Prize pool', 'R$ 1.890'])
+            ->assertSeeInOrder(['Nível 6', '100 / 200', 'Fase', 'Intervalo (rebuy e add-on)', 'Jogando', '12', 'Entradas', '22', 'Arrecadação', 'R$ 2.100', 'Prize pool', 'R$ 1.890'])
             ->assertSeeInOrder(['Mesa 01 · 7', 'Mesa 02 · 5'])
             ->assertSee('Blinds 100 / 200')
             // Assento do João (buy-in + add-on) e do Carlos (buy-in, rebuy e add-on).
@@ -109,9 +110,33 @@ class AoVivoTest extends TestCase
             ->assertSee('Nenhuma entrada ainda');
     }
 
+    public function test_quem_chega_atrasado_senta_e_ja_entra(): void
+    {
+        $admin = Usuario::factory()->foraDaNoite()->create();
+        $admin->assignRole('Admin');
+        $zeca = $this->noite->participantes()->create(['usuario_id' => Usuario::factory()->create(['nome' => 'Zeca', 'apelido' => null])->id]);
+        $vazio = collect(range(1, $this->mesa(1)->lugares))->diff($this->mesa(1)->participantes()->pluck('lugar'))->first();
+
+        // O Operador não senta ninguém: clicar no lugar vazio não abre nada.
+        Livewire::test(AoVivo::class, ['jogo' => $this->noite])
+            ->call('clicarAssento', $this->mesa(1)->id, $vazio)
+            ->assertSet('lugarVazio', null);
+
+        $this->actingAs($admin, 'web');
+        Livewire::test(AoVivo::class, ['jogo' => $this->noite])
+            ->call('clicarAssento', $this->mesa(1)->id, $vazio)
+            ->assertSee(['Quem senta aqui', 'Zeca', 'Sentar já lança o buy-in (Buy-in · R$ 100)'])
+            ->call('sentarNoLugar', $zeca->id)
+            ->assertSet('lugarVazio', null);
+
+        $this->assertSame(StatusParticipante::Jogando, $zeca->fresh()->status);
+        $this->assertSame(1, $zeca->entradas()->validas()->where('tipo', TipoItem::Buyin)->count());
+    }
+
     public function test_jogo_agendado_vai_para_a_conferencia(): void
     {
         $agendado = Jogo::factory()->agendado()->create();
+        $this->actingAs(Usuario::factory()->foraDaNoite()->create(), 'web');
 
         $this->get(route('jogos.ao-vivo', $agendado))->assertRedirect(route('jogos.conferencia', $agendado));
     }

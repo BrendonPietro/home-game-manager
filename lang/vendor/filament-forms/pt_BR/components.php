@@ -16,6 +16,10 @@ return [
         'placeholder' => 'Nenhum arquivo enviado',
     ],
 
+    'js_field' => [
+        'failed_to_load' => 'Não foi possível carregar este campo. Recarregue a página para tentar de novo.',
+    ],
+
     'key_value' => [
         'actions' => [
             'move_down' => ['label' => 'Mover para baixo'],

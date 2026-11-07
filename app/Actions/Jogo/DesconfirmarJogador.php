@@ -2,11 +2,12 @@
 
 namespace App\Actions\Jogo;
 
+use App\Actions\Jogo\Concerns\ChecaRegras;
 use App\Enums\StatusJogo;
 use App\Exceptions\RegraDoJogo;
 use App\Models\Jogo;
+use App\Models\Seguranca;
 use App\Models\Usuario;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -15,11 +16,11 @@ use Illuminate\Support\Facades\DB;
  */
 class DesconfirmarJogador
 {
-    public function __invoke(Jogo $jogo, Usuario $jogador, Usuario $quem): void
+    use ChecaRegras;
+
+    public function __invoke(Jogo $jogo, Usuario $jogador, Usuario|Seguranca $quem): void
     {
-        if (! $quem->can('jogadores.confirmar')) {
-            throw new AuthorizationException('Você não tem permissão para mudar a lista de jogadores.');
-        }
+        $this->permitirNosDois($quem, 'jogadores.confirmar', 'jogos.editar', 'Você não tem permissão para mudar a lista de jogadores.');
 
         DB::transaction(function () use ($jogo, $jogador) {
             $jogo = Jogo::query()->lockForUpdate()->findOrFail($jogo->id);

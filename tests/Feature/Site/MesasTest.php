@@ -34,9 +34,10 @@ class MesasTest extends TestCase
         $this->mesa1 = $this->jogo->mesas()->create(['mesa_id' => Mesa::factory()->create(['nome' => 'Mesa 01'])->id, 'lugares' => 9, 'ordem' => 1]);
     }
 
+    /** Com site.fora_da_noite: as mesas se montam antes do jogo começar. */
     private function entrarComo(string $grupo): void
     {
-        $usuario = Usuario::factory()->comAcesso()->create();
+        $usuario = Usuario::factory()->foraDaNoite()->create();
         $usuario->assignRole($grupo);
         $this->actingAs($usuario, 'web');
     }
@@ -95,6 +96,44 @@ class MesasTest extends TestCase
             ->assertSee('Tirar Zeca do lugar')
             ->call('semLugar');
         $this->assertNull($zeca->fresh()->lugar);
+    }
+
+    public function test_lugar_vazio_escolhe_quem_senta(): void
+    {
+        $ana = $this->jogador('Ana');
+        $this->jogador('Beto', 2);
+        $carla = Usuario::factory()->create(['nome' => 'Carla Fora', 'apelido' => null]);
+
+        // Confirmado sem lugar: quem já sentou (Beto) não aparece.
+        $tela = Livewire::test(Mesas::class, ['jogo' => $this->jogo])
+            ->call('clicarAssento', $this->mesa1->id, 1)
+            ->assertSet('lugarVazio', [$this->mesa1->id, 1])
+            ->assertSee(['Mesa 01 · Lugar 1', 'Confirmados sem lugar · 1', 'Ana'])
+            ->assertSee('O buy-in (Buy-in · R$ 100) entra quando o torneio começar')
+            ->call('sentarNoLugar', $ana->id)
+            ->assertSet('lugarVazio', null);
+
+        $this->assertSame([$this->mesa1->id, 1], [$ana->fresh()->jogo_mesa_id, $ana->fresh()->lugar]);
+
+        // Alguém do cadastro que não estava na lista: confirma e senta.
+        $tela->call('clicarAssento', $this->mesa1->id, 3)
+            ->assertSee('Todos os confirmados já têm lugar')
+            ->set('busca', 'carla')
+            ->assertSee(['No cadastro, fora da lista', 'Carla Fora'])
+            ->call('sentarDoCadastro', $carla->id)
+            ->assertSet('lugarVazio', null);
+
+        $this->assertSame(3, $this->jogo->participantes()->where('usuario_id', $carla->id)->sole()->lugar);
+
+        // Jogador novo: cadastra, confirma e senta; sem nome, avisa no modal.
+        $tela->call('clicarAssento', $this->mesa1->id, 4)
+            ->call('cadastrarNoLugar')
+            ->assertSee('Informe o nome do jogador.')
+            ->set('novoNome', 'Dudu Novo')
+            ->call('cadastrarNoLugar')
+            ->assertSet('lugarVazio', null);
+
+        $this->assertSame(4, Usuario::query()->where('nome', 'Dudu Novo')->sole()->participacoes()->sole()->lugar);
     }
 
     public function test_sortear_e_ajustar_pela_tela(): void

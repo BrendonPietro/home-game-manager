@@ -20,7 +20,7 @@ class SelecaoDeJogoTest extends TestCase
 
         $this->withoutVite();
         $this->travelTo('2026-10-11 15:00');
-        $this->actingAs(Usuario::factory()->comAcesso()->create(), 'web');
+        $this->actingAs(Usuario::factory()->foraDaNoite()->create(), 'web');
     }
 
     public function test_precisa_estar_logado(): void

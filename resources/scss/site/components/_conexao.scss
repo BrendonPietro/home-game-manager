@@ -1,0 +1,51 @@
+// ============================================================================
+// Conexão das telas da noite (resources/js/site/conexao.js): faixa fixa embaixo quando o
+// poll não chega ao servidor (some sozinha quando volta) ou quando um toque não foi gravado
+// (fica até fechar). Fundo neutro; a cor de estado fica no ponto.
+// ============================================================================
+
+@use "../vars" as *;
+
+.rh-conexao {
+	position: fixed;
+	left: 50%;
+	bottom: 16px;
+	z-index: 40;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	width: max-content;
+	max-width: calc(100% - 32px);
+	padding: 12px 16px;
+	border-radius: var(--radius-md);
+	background: var(--bg-300);
+	border: 1px solid var(--line-200);
+	box-shadow: var(--shadow-modal);
+	color: var(--ink-100);
+	font-size: 14px;
+	transform: translateX(-50%);
+
+	&[hidden] {
+		display: none;
+	}
+
+	&__ponto {
+		flex: none;
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		background: var(--amber-300);
+	}
+
+	&--acao &__ponto {
+		background: var(--red-300);
+	}
+
+	&__fechar {
+		flex: none;
+	}
+
+	@include ate(celular) {
+		bottom: 12px;
+	}
+}

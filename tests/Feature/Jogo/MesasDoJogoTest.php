@@ -2,8 +2,10 @@
 
 namespace Tests\Feature\Jogo;
 
+use App\Actions\Jogo\AbrirIntervalo;
 use App\Actions\Jogo\AdicionarMesa;
 use App\Actions\Jogo\AjustarMesa;
+use App\Actions\Jogo\FecharEntradas;
 use App\Actions\Jogo\IniciarJogo;
 use App\Actions\Jogo\RemoverMesa;
 use App\Actions\Jogo\SortearLugares;
@@ -11,14 +13,17 @@ use App\Actions\Jogo\TrocarLugar;
 use App\Enums\FaseTorneio;
 use App\Enums\StatusJogo;
 use App\Enums\StatusParticipante;
+use App\Enums\TipoItem;
 use App\Exceptions\RegraDoJogo;
 use App\Models\Jogo;
 use App\Models\JogoMesa;
 use App\Models\Mesa;
 use App\Models\Participante;
 use App\Models\Usuario;
+use App\Services\Jogo\Calculadora;
 use App\Services\Jogo\EventoDoJogo;
 use Database\Seeders\PermissoesSeeder;
+use Database\Seeders\RegrasPremiacaoSeeder;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -219,6 +224,46 @@ class MesasDoJogoTest extends TestCase
         $this->assertSame(StatusParticipante::Jogando, $joao->fresh()->status);
         $this->assertSame(StatusParticipante::Jogando, $lucas->fresh()->status);
         $this->assertSame(StatusParticipante::Confirmado, $zeca->fresh()->status);
+
+        // Sentar é entrar: cada sentado já tem o buy-in padrão; quem está sem lugar não.
+        $this->assertSame([TipoItem::Buyin], $joao->entradas()->validas()->pluck('tipo')->all());
+        $this->assertSame(1, $lucas->entradas()->validas()->count());
+        $this->assertSame(0, $zeca->entradas()->count());
+        $this->assertSame(20000, app(Calculadora::class)->doJogo($jogo)->arrecadacao);
+    }
+
+    public function test_quem_senta_com_o_torneio_em_andamento_ja_entra(): void
+    {
+        $this->confirmado($this->mesa1, 1);
+        $this->confirmado($this->mesa1, 2);
+        app(IniciarJogo::class)($this->jogo, $this->admin);
+
+        // Chegou atrasado: senta e já tem o buy-in (com o obrigatório, se tiver).
+        $zeca = $this->confirmado();
+        $this->trocar($zeca, $this->mesa2, 5);
+
+        $this->assertSame(StatusParticipante::Jogando, $zeca->fresh()->status);
+        $this->assertSame(1, $zeca->entradas()->validas()->where('tipo', TipoItem::Buyin)->count());
+
+        // Mudar de lugar (quebra de mesa) não lança de novo.
+        $this->trocar($zeca, $this->mesa1, 7);
+        $this->assertSame(1, $zeca->entradas()->count());
+
+        // Com as entradas fechadas, ninguém novo senta.
+        $this->seed(RegrasPremiacaoSeeder::class);
+        app(AbrirIntervalo::class)($this->jogo, $this->admin);
+        app(FecharEntradas::class)($this->jogo, $this->admin);
+        $tarde = $this->confirmado();
+
+        try {
+            $this->trocar($tarde, $this->mesa2, 1);
+            $this->fail('Sentou com as entradas fechadas');
+        } catch (RegraDoJogo $erro) {
+            $this->assertStringStartsWith('As entradas já foram fechadas', $erro->getMessage());
+        }
+
+        $this->assertSame([null, null], $this->lugarDe($tarde));
+        $this->assertSame(0, $tarde->entradas()->count());
     }
 
     public function test_cash_game_inicia_sem_fase_e_operador_nao_inicia(): void
@@ -242,5 +287,6 @@ class MesasDoJogoTest extends TestCase
         app(IniciarJogo::class)($cash, $this->admin);
         $this->assertSame(StatusJogo::EmAndamento, $cash->fresh()->status);
         $this->assertNull($cash->fresh()->fase);
+        $this->assertSame(0, $cash->entradas()->count(), 'no cash game cada buy-in é lançado à mão');
     }
 }

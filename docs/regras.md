@@ -15,6 +15,8 @@ Painel e site têm logins separados, cada um com seu guard:
 
 - **Painel** → guard `painel`, tabela `seguranca`, model `App\Models\Seguranca`. Filament: `->authGuard('painel')`.
 - **Site** → guard `web`, tabela `usuarios`, model `App\Models\Usuario`. Entra pelo e-mail e senha; só quem tem `acessa_site` e está ativo (excluído também não entra). 5 tentativas erradas por e-mail+IP bloqueiam por 1 minuto. Esqueceu a senha: o organizador troca no painel (sem recuperação por e-mail na v1).
+- **Sessão** de 12 h parada (`SESSION_LIFETIME=720`); cada toque e o poll da tela ao vivo renovam a contagem. Sessão vencida no meio de um clique recarrega a página (sem o aviso em inglês do Livewire).
+- **Continuar no site** (middleware `site.acesso`, `App\Http\Middleware\AcessoDoSite`, também em cada clique do Livewire): conta desativada no painel (`ativo` ou `acessa_site` desligado) sai na hora, mesmo com "Lembrar acesso". Sem a permissão `site.fora_da_noite` (o Operador), o site só existe com um jogo em andamento: o começo do site e outro jogo levam para a tela ao vivo; sem jogo em andamento (acabou o torneio), a sessão do site acaba e fica a página "Nenhum torneio em andamento" (`/sem-torneio`). Sair assim não tira o painel do mesmo navegador.
 
 Permissões dos dois lados com `spatie/laravel-permission` (v6), usando o `guard_name` para separar painel e site. Tabelas renomeadas em `config/permission.php`. Grupo = conjunto de permissões; cada conta pode ter grupos e permissões avulsas.
 
@@ -47,7 +49,7 @@ Ninguém dá o que não tem: na tela de contas do painel só aparecem os grupos 
 
 **Permissões do site** (`guard_name = web`):
 - Operador: `entradas.registrar`, `pagamentos.registrar`, `eliminacoes.registrar`, `jogadores.confirmar`, `usuarios.cadastro_rapido`.
-- Só Admin: `mesas.organizar`, `jogo.fases`, `relogio.controlar` (v2), `jogo.finalizar`, `acoes.desfazer`, `estrutura.editar` (entradas e opcionais), `taxas.editar`, `financeiro.ver`.
+- Só Admin: `mesas.organizar`, `jogo.fases`, `relogio.controlar` (v2), `jogo.finalizar`, `acoes.desfazer`, `jogo.corrigir` (voltar fase e desfazer pagamento/acerto depois de finalizar; dá para passar a outro grupo em Grupos), `estrutura.editar` (entradas e opcionais), `taxas.editar`, `financeiro.ver`, `site.fora_da_noite` (usar o site sem jogo em andamento).
 
 Checadas nas Actions (Gate) e com `@can` no Blade para esconder botões.
 
@@ -66,14 +68,14 @@ Checadas nas Actions (Gate) e com `@can` no Blade para esconder botões.
 
 | Tabela | Colunas principais | Observações |
 |---|---|---|
-| `jogos` | e_modelo, nome_modelo, modalidade, temporada_id, nome, data, horario, status, fase, floor_id, metodo_premiacao, lugares_por_mesa, tamanho_mesa_final, estrutura_blinds_id, nivel_atual, blinds_atual, relogio_nivel_id, relogio_segundos, relogio_desde, relogio_iniciado_em, valor_ficha, observacoes, iniciado_em, rebuys_encerrados_em, entradas_fechadas_em, finalizado_em | `e_modelo = true` = torneio modelo (só para copiar; fora do site e do calendário). `modalidade`: `torneio` / `cash_game`. `floor_id` → `usuarios` |
-| `jogo_itens` | jogo_id, tipo, nome, valor, fichas, destino, compravel_com (json), obrigatorio, limite_por_jogador, padrao, ativo, ordem | O que o jogador pode comprar. `tipo`: `buyin` / `rebuy` / `addon` / `opcional`. `padrao = true` no buy-in, rebuy e add-on que já vêm no cadastro (não se apagam, só se desativam); variações como "Rebuy duplo" são linhas extras do mesmo tipo. `destino`: `premiacao` / `fora` / `metade` (buy-in, rebuy e add-on sempre `premiacao`). Opcional: `compravel_com` = `[buyin, rebuy, addon]` (junto de cada entrada) ou `[jogador]` (1 por jogador) |
+| `jogos` | e_modelo, nome_modelo, modalidade, temporada_id, nome, data, horario, status, fase, floor_id, metodo_premiacao, lugares_por_mesa, tamanho_mesa_final, estrutura_blinds_id, nivel_atual, blinds_atual, relogio_nivel_id, relogio_segundos, relogio_desde, relogio_iniciado_em, valor_ficha, observacoes, iniciado_em, intervalo_aberto_em, entradas_fechadas_em, finalizado_em | `e_modelo = true` = torneio modelo (só para copiar; fora do site e do calendário). `modalidade`: `torneio` / `cash_game`. `floor_id` → `usuarios` |
+| `jogo_itens` | jogo_id, tipo, nome, valor, fichas, percentual_premiacao, compravel_com (json), obrigatorio, limite_por_jogador, padrao, ativo, ordem | O que o jogador pode comprar. `tipo`: `buyin` / `rebuy` / `addon` / `opcional`. `padrao = true` no buy-in, rebuy e add-on que já vêm no cadastro (não se apagam, só se desativam); variações como "Rebuy duplo" são linhas extras do mesmo tipo. `percentual_premiacao`: quanto do valor vai para a premiação, de 0 a 100 (entradas 100 por padrão, opcionais 0). Opcional: `compravel_com` = `[buyin, rebuy, addon]` (junto de cada entrada) ou `[jogador]` (1 por jogador) |
 | `jogo_taxas` | jogo_id, nome, calculo, valor, quantidade, ordem | Tiradas da premiação antes de dividir (dealers, casa…). `calculo`: `fixo` / `percentual` / `por_unidade` / `por_jogador` / `por_entrada` |
 | `jogo_premiacoes` | jogo_id, posicao, percentual, valor | Só torneio. `valor` gravado ao fechar entradas |
 | `jogo_mesas` | jogo_id, mesa_id, dealer_id, lugares, ordem | `dealer_id` → `usuarios` com `pode_ser_dealer` |
 | `jogo_ranking` | jogo_id, ranking_id | Rankings em que o jogo vale ponto (torneio ou cash game) |
 | `participantes` | jogo_id, usuario_id, jogo_mesa_id, lugar, status, posicao_final, premio, fichas_finais, cash_out | Únicos: (jogo_id, usuario_id) e (jogo_mesa_id, lugar). `status`: `confirmado` / `jogando` / `eliminado` / `saiu` |
-| `entradas` | uuid (único), jogo_id, participante_id, jogo_item_id, tipo, valor, fichas, destino, vinculada_a, registrado_por, cancelada_em, cancelada_por, motivo_cancelamento | Cada item comprado. `valor`, `fichas` e `destino` copiados do item no momento; `vinculada_a` liga o opcional à entrada com que foi comprado. Nunca apagada |
+| `entradas` | uuid (único), jogo_id, participante_id, jogo_item_id, tipo, valor, fichas, percentual_premiacao, vinculada_a, registrado_por, cancelada_em, cancelada_por, motivo_cancelamento | Cada item comprado. `valor`, `fichas` e `percentual_premiacao` copiados do item no momento; `vinculada_a` liga o opcional à entrada com que foi comprado. Nunca apagada |
 | `pagamentos` | uuid (único), jogo_id, participante_id, direcao, valor, forma, observacao, registrado_por, cancelado_em, cancelado_por, motivo_cancelamento | `direcao`: `jogador_pagou` / `jogador_recebeu`. `forma`: `pix` / `dinheiro` / `cartao` / `outro` |
 | `eliminacoes` | jogo_id, participante_id, nivel, definitiva, voltou_com, registrada_por, cancelada_em, cancelada_por, motivo_cancelamento | Um jogador pode cair, voltar com rebuy e cair de novo. `voltou_com` → `entradas`: o rebuy com que voltou de uma eliminação provisória (ela fica como histórico) |
 | `ranking_pontos` | ranking_id, jogo_id, usuario_id, posicao, pontos, detalhe (json) | Gravado ao finalizar; mudar a regra depois não altera pontos já dados |
@@ -98,30 +100,34 @@ Regras da agenda (`Actions\Agenda\SalvarEvento`, `Services\Agenda\Conflitos`):
 
 Durante `status = em_andamento`, o torneio passa por três fases (`jogos.fase`), cada uma aberta por um botão do operador:
 
-1. `rebuys` (início até o intervalo): buy-in e rebuy. Eliminação é **provisória**: o jogador pode voltar com rebuy (volta para o mesmo lugar).
-2. `intervalo` — botão **Encerrar rebuys**: rebuy fecha, add-on abre (até `limite_por_jogador`). Quem estava eliminado e não voltou vira eliminação definitiva, na ordem em que caiu.
-3. `sem_entradas` — botão **Fechar entradas**: add-on fecha, `jogo_premiacoes.valor` é gravado. Daqui em diante só eliminações definitivas, e cada uma dá a posição na hora (quem cai fica em último entre os que restam).
+1. `rebuys` (início até o intervalo): buy-in e rebuy. Eliminação é **provisória**: o jogador pode voltar com rebuy (volta para o mesmo lugar), na hora ou depois.
+2. `intervalo` — botão **ABRIR INTERVALO** (`Actions\Jogo\AbrirIntervalo`, `jogos.intervalo_aberto_em`): o add-on abre (até `limite_por_jogador`) e o **rebuy continua**: quem caiu e quis respirar volta no intervalo. A eliminação continua provisória.
+3. `sem_entradas` — botão **FECHAR ENTRADAS**, no fim do intervalo: buy-in, rebuy e add-on fecham; quem estava eliminado e não voltou vira eliminação definitiva, na ordem em que caiu; `jogo_premiacoes.valor` é gravado. Daqui em diante só eliminações definitivas, e cada uma dá a posição na hora (quem cai fica em último entre os que restam).
 
-Detalhes (`EncerrarRebuys`, `FecharEntradas`, `Services\Jogo\Posicoes`):
-- No intervalo a eliminação já é definitiva, mas a posição só sai ao fechar as entradas: buy-in atrasado ainda vale no intervalo e muda o número de jogadores.
-- Fechar entradas só a partir do intervalo (torneio sem add-on: Encerrar rebuys e depois Fechar entradas) e com pelo menos 2 jogadores com buy-in. Grava em `jogo_premiacoes` o percentual e o valor de cada posição pela `Calculadora` (faixa da regra do clube ou percentuais manuais); sem faixa para o número de jogadores, não fecha.
+Detalhes (`AbrirIntervalo`, `FecharEntradas`, `Services\Jogo\Posicoes`):
+- Com o relógio, a tela ao vivo sugere ABRIR INTERVALO quando ele chega ao nível de intervalo e FECHAR ENTRADAS quando o intervalo acaba (só sugere: quem aperta é o Admin).
+- Buy-in atrasado ainda vale no intervalo e muda o número de jogadores; por isso a posição só sai ao fechar as entradas.
+- Fechar entradas só a partir do intervalo (torneio sem add-on: ABRIR INTERVALO e depois FECHAR ENTRADAS) e com pelo menos 2 jogadores com buy-in. Grava em `jogo_premiacoes` o percentual e o valor de cada posição pela `Calculadora` (faixa da regra do clube ou percentuais manuais); sem faixa para o número de jogadores, não fecha.
 - Posição: N = jogadores com buy-in válido; a k-ésima eliminação definitiva, na ordem em que caíram (0, 1, 2…), fica em N − k. Quando sobra um só, ele é o 1º. `participantes.premio` = valor gravado da posição (vazio fora da premiação).
 - As posições são refeitas a cada eliminação e a cada eliminação desfeita (quem caiu depois sobe uma posição).
 
 ## Lista da noite (jogadores confirmados)
 
+- **Pré-torneio no painel** (aba **Confirmados** do jogo, `Filament\Resources\Jogos\RelationManagers\ConfirmadosRelationManager`, a partir de agendado): confirmar jogadores do cadastro, cadastrar um jogador novo (nome, apelido e telefone) e lançar o **pagamento antecipado** (buy-in, churrasco…, em Pix ou Dinheiro; o valor vem com o buy-in padrão e os obrigatórios). O pagamento abate do que o jogador vai dever. Quem pagou e não veio (não sentou) não entra no torneio: o pagamento vira crédito, a aba mostra "Não veio · devolver R$ X" e o fechamento sugere o caixa devolver. Permissões do painel: `jogos.editar` (lista), `usuarios.criar` (jogador novo) e `pagamentos.registrar` (pagamento; grava `pagamentos.registrado_no_painel_por`).
 - Confirmar põe o jogador em `participantes` com status `confirmado` e sem lugar; vale com o jogo agendado ou em andamento (quem chega atrasado). Confirmar de novo não duplica. Jogador inativo não entra.
 - Tirar da lista apaga a linha do participante, mas só enquanto ele não tem entrada, pagamento nem eliminação; depois disso ele fica (o caixa já o conhece).
 - Cadastro rápido (`usuarios.cadastro_rapido`) cria o jogador só com nome e apelido opcional e já confirma. Se o nome ou o apelido bater com o nome ou o apelido de alguém (sem diferença de maiúsculas), não cria: o aviso manda confirmar pela lista.
-- Confirmar e tirar pedem `jogadores.confirmar` (Operador e Admin do site).
+- Confirmar e tirar pedem `jogadores.confirmar` no site (Operador e Admin) ou `jogos.editar` no painel.
 
 ## Mesas e início do jogo
 
 - Montar as mesas pede `mesas.organizar` (Admin do site); o Operador só vê.
+- **Sentar é entrar** (torneio): quem senta na mesa já tem o buy-in padrão (a linha marcada como padrão, com os opcionais obrigatórios; `RegistrarEntrada::buyinPadrao`). Sentado antes de começar ganha o buy-in ao **Iniciar**; quem senta com o torneio em andamento, na hora (`TrocarLugar`). Mudar de lugar não lança de novo. Outra variação (buy-in duplo): desfaz o padrão e lança a certa. Com as entradas fechadas, ninguém novo senta. No cash game cada buy-in continua lançado à mão.
+- **Lugar vazio** (telas 06 e 07, quem tem `mesas.organizar`): clicar abre "Quem senta aqui" (`Livewire\Jogo\Concerns\EscolheQuemSenta`), com os confirmados que ainda não têm lugar (quem já sentou some), a busca no cadastro de quem não estava na lista (confirma e senta) e o jogador novo (cadastra, confirma e senta).
 - Trocar de lugar: clicar no jogador e depois num lugar. Lugar vazio = mover; ocupado = os dois trocam (quem estava vai para o lugar antigo, ou fica sem lugar). Vale com o jogo agendado ou em andamento (quebra de mesa). Eliminado ou quem saiu não senta.
 - Sortear lugares (só antes de começar) senta todos os confirmados: as mesas ficam equilibradas na proporção dos lugares e os lugares dentro de cada mesa são aleatórios. Sem lugar suficiente, avisa quantos faltam.
 - Lugares por mesa de 2 a 12, sem diminuir abaixo de quem está sentado. Dealer só quem tem "Pode ser dealer". Mesa só sai do jogo vazia. Adicionar ou tirar mesa atualiza a agenda.
-- **Iniciar** (`jogo.fases`, Admin do site): só agendado e com pelo menos 2 jogadores sentados. Torneio vai para a fase `rebuys`; cash game fica sem fase. Sentados passam a `jogando`; confirmado sem lugar continua esperando e senta depois.
+- **Iniciar** (`jogo.fases`, Admin do site): só agendado e com pelo menos 2 jogadores sentados. Torneio vai para a fase `rebuys` e cada sentado entra com o buy-in padrão; cash game fica sem fase. Sentados passam a `jogando`; confirmado sem lugar continua esperando e senta depois.
 
 ## Ações no jogador (clicar no assento)
 
@@ -140,17 +146,17 @@ Regras de cada ação (Actions em `app/Actions/Jogo`):
 
 - **Entrada** (`entradas.registrar`, Operador e Admin; `RegistrarEntrada`): só com o jogo em andamento e item ativo do jogo.
   - Buy-in: um por jogador, qualquer variação (simples, duplo…); para mais fichas, rebuy. Vale até Fechar entradas (atrasado entra no intervalo).
-  - Rebuy só na fase de rebuys; add-on só no intervalo. Os dois pedem buy-in.
+  - Rebuy até fechar as entradas (na fase de rebuys e no intervalo); add-on só no intervalo. Os dois pedem buy-in.
   - O limite por jogador conta as entradas válidas da mesma linha (ex.: add-on 1); vazio = sem limite.
   - Opcionais: os marcados e os obrigatórios vão junto da entrada (`vinculada_a`). O "1 por jogador" entra uma vez só e também pode ser comprado sozinho; obrigatório já comprado não repete; marcado já comprado é erro.
-  - Eliminado só volta com rebuy (fase de rebuys): a eliminação provisória ganha `voltou_com` e o jogador volta a jogar, no mesmo lugar.
+  - Eliminado só volta com rebuy, até fechar as entradas: no painel do jogador o botão do buy-in vira **VOLTAR** ("entra como rebuy"). A eliminação provisória ganha `voltou_com` e o jogador volta a jogar, no mesmo lugar.
   - Cash game: buy-in e recompra (rebuy) a qualquer hora em andamento; sem add-on.
-- **Pagamento** (`pagamentos.registrar`; `RegistrarPagamento`): valor maior que zero, jogador pagou ou recebeu, forma (pix, dinheiro, cartão, outro) e observação opcional. Com o jogo agendado (pagou antes), em andamento ou finalizado (pendências). Pode passar do que deve: o saldo fica negativo (o caixa devolve).
-- **Eliminação** (`eliminacoes.registrar`; `RegistrarEliminacao`): só torneio, jogador jogando e com buy-in, e nunca o último em jogo (quem está sentado sem buy-in não conta; o último é o campeão). Provisória na fase de rebuys; definitiva depois. Guarda o nível atual.
+- **Pagamento** (`pagamentos.registrar`; `RegistrarPagamento`): valor maior que zero, jogador pagou ou recebeu, forma (Pix ou Dinheiro; Cartão e Outro ficam no enum só para o que já foi gravado, `FormaPagamento::disponiveis()`) e observação opcional. Com o jogo agendado (pagou antes), em andamento ou finalizado (pendências). Pode passar do que deve: o saldo fica negativo (o caixa devolve).
+- **Eliminação** (`eliminacoes.registrar`; `RegistrarEliminacao`): só torneio, jogador jogando e com buy-in, e nunca o último em jogo (quem está sentado sem buy-in não conta; o último é o campeão). Provisória com as entradas abertas (rebuys e intervalo); definitiva depois. Guarda o nível atual.
 - **Cash-out** (`eliminacoes.registrar`; `RegistrarCashOut`): só cash game, jogador com buy-in e valor da ficha no jogo. O jogador sai (`saiu`); registrar de novo corrige o valor.
 - **Lugar de quem saiu**: eliminado e quem fez cash-out continuam no lugar (a mesa mostra apagado) até alguém sentar ali, e aí ficam sem lugar em vez de trocar. Diminuir a mesa tira do lugar quem já saiu; tirar a mesa ainda pede que ninguém esteja jogando nela. Quem chega atrasado e senta com o jogo em andamento passa a jogando.
 - **Desfazer** (`acoes.desfazer`, só Admin; `DesfazerAcao`): com motivo, só em andamento, sempre a última ação do jogador (a mais recente entre entrada, eliminação e pagamento; opcional junto de outra entrada vai com ela; no mesmo segundo vale a ordem entrada → eliminação → pagamento).
-  - Entrada leva junto os opcionais comprados com ela e só se desfaz até Fechar entradas. Rebuy que trouxe o jogador de volta devolve a eliminação (definitiva, se os rebuys já acabaram).
+  - Entrada leva junto os opcionais comprados com ela e só se desfaz até Fechar entradas. Rebuy que trouxe o jogador de volta devolve a eliminação (provisória: as entradas ainda estão abertas).
   - Eliminação desfeita: o jogador volta a jogar e as posições são refeitas.
   - Cash-out não se desfaz: registrar de novo corrige.
 
@@ -165,17 +171,13 @@ Sem eliminação, posição ou premiação. Ações: entrada (buy-in/recompra), 
 
 ## Dinheiro do jogo: entradas, opcionais e taxas
 
-Tudo definido no cadastro do jogo (ou no modelo), em três blocos. Durante o jogo, só o Admin do site (`estrutura.editar`, `taxas.editar`) muda algo, até **Fechar entradas**. O que já foi lançado mantém o valor, as fichas e o destino da hora.
+Tudo definido no cadastro do jogo (ou no modelo), em três blocos. Durante o jogo, só o Admin do site (`estrutura.editar`, `taxas.editar`) muda algo, até **Fechar entradas**. O que já foi lançado mantém o valor, as fichas e o percentual da hora.
 
-**1. Entradas** — buy-in, rebuy e add-on já vêm no cadastro, um de cada, com valor (R$) e fichas. O **+** de cada um adiciona uma variação do mesmo tipo (buy-in duplo, rebuy duplo…), com nome, valor e fichas próprios. Cada linha tem limite por jogador opcional (ex.: buy-in 1, add-on 1, rebuy sem limite). Torneio sem rebuy ou sem add-on: desativa a linha padrão. Entradas vão sempre 100% para a premiação.
+**1. Entradas** — buy-in, rebuy e add-on já vêm no cadastro, um de cada, com valor (R$) e fichas. O **+** de cada um adiciona uma variação do mesmo tipo (buy-in duplo, rebuy duplo…), com nome, valor e fichas próprios. Cada linha tem limite por jogador opcional (ex.: buy-in 1, add-on 1, rebuy sem limite). Torneio sem rebuy ou sem add-on: desativa a linha padrão. Cada linha diz quanto vai para a premiação (100% por padrão).
 
-**2. Opcionais** — o que mais o jogador pode comprar: opcional de fichas, churrasco… Cada um tem nome, valor, fichas (pode ser 0), se é comprado junto de cada buy-in/rebuy/add-on ou 1 por jogador, se é obrigatório, e o destino:
+**2. Opcionais** — o que mais o jogador pode comprar: opcional de fichas, churrasco… Cada um tem nome, valor, fichas (pode ser 0), se é comprado junto de cada buy-in/rebuy/add-on ou 1 por jogador, se é obrigatório, e quanto vai para a premiação (0% por padrão).
 
-| `destino` | Vai para a premiação |
-|---|---|
-| `premiacao` | 100% |
-| `metade` | 50% (50/50) |
-| `fora` | 0% |
+**Premiação de cada item** (`percentual_premiacao`, entradas e opcionais): no painel, os atalhos **100%**, **50%** e **0%**, e **Outro** para digitar qualquer percentual de 0 a 100 (ex.: 75%). O que não vai para a premiação fica com a casa ("fora da premiação"). A Conferência mostra o percentual de cada opcional e das entradas que não vão 100%.
 
 Ao lançar uma entrada, os opcionais compráveis com ela aparecem como checkbox.
 
@@ -193,7 +195,7 @@ O cadastro mostra ao lado uma simulação (arrecadação, premiação bruta, tax
 
 ### Exemplo: torneio de sábado
 
-Entradas: 1 buy-in, rebuys ilimitados, 1 add-on. Opcionais: "Opcional" R$ 10 · 20k junto de cada entrada, destino `metade`; "Churrasco" R$ 30 · 20k, 1 por jogador, destino `fora`. Taxas: casa R$ 190 (fixo), dealers R$ 430.
+Entradas: 1 buy-in, rebuys ilimitados, 1 add-on. Opcionais: "Opcional" R$ 10 · 20k junto de cada entrada, 50% na premiação; "Churrasco" R$ 30 · 20k, 1 por jogador, 0%. Taxas: casa R$ 190 (fixo), dealers R$ 430.
 
 | Linha | Valor |
 |---|---|
@@ -226,22 +228,31 @@ Detalhes da `Pontuacao`: vale nos rankings **ativos** ligados ao jogo; entra que
 ## Cálculos
 
 - **Arrecadação** = soma de `entradas.valor` não canceladas.
-- **Premiação bruta** = soma de `entradas.valor` não canceladas × fração do destino (`premiacao` 1, `metade` 0,5, `fora` 0).
+- **Premiação bruta** = soma de `entradas.valor` não canceladas × `percentual_premiacao` de cada uma. No torneio, desce para o real inteiro (os centavos ficam fora da premiação, com a casa).
 - **Taxas** = soma de `jogo_taxas` calculadas (percentual sobre a premiação bruta).
 - **Prize pool** = premiação bruta − taxas.
 - **Fora da premiação** = arrecadação − premiação bruta.
-- **Prêmio da posição** = prize pool × percentual. Com "Arredondar prêmios para R$ 5" (Configurações, ligado por padrão), do 2º para baixo o prêmio desce para o múltiplo de R$ 5; a sobra vai para o 1º.
+- **Prêmio da posição** = prize pool × percentual. Do 2º para baixo o prêmio desce para o múltiplo de R$ 5 com "Arredondar prêmios para R$ 5" (Configurações, ligado por padrão), senão para o real; a sobra vai para o 1º. Torneio não tem centavos: nem na premiação bruta, nem na taxa em %, nem nos prêmios.
 - **Saldo do jogador** = investido − prêmio − pago + recebido. Positivo: deve ao caixa. Negativo: o caixa deve a ele. No cash game o prêmio é o cash-out. `Services\Jogo\Saldos` soma em centavos a partir das entradas e pagamentos válidos; sem pagamentos, a soma dos saldos é o que fica com a casa (taxas + fora da premiação).
 
 Referência (Poker Night #18): 22 entradas, premiação bruta R$ 2.100; taxa "casa" 10% = R$ 210; prize pool R$ 1.890 → 950 / 565 / 375 (arredondado para R$ 5; sem arredondar, 945 / 567 / 378).
 
 Detalhes da `Calculadora` (tudo em centavos inteiros):
-- A fração do destino vale sobre a soma de cada destino, não lançamento a lançamento.
+- O percentual vale sobre a soma dos lançamentos com o mesmo percentual, não lançamento a lançamento (3 opcionais de R$ 10 a 75% = R$ 22,50 → R$ 22 no torneio).
 - **Jogadores** (taxa por jogador e regra de premiação) = quem tem pelo menos um buy-in válido. **Entradas** (taxa por entrada) = buy-ins, rebuys e add-ons; opcionais não contam.
-- Taxa percentual arredonda meio centavo para cima (7,5% de R$ 606 = R$ 45,45). Taxa por unidade usa quantidade mínima 1.
+- Taxa percentual: no torneio, arredonda para o real (meio real para cima: 7,5% de R$ 606 = 45,45 → R$ 45; de R$ 610 = 45,75 → R$ 46); no cash game, meio centavo para cima. Taxa por unidade usa quantidade mínima 1.
 - Prize pool não fica negativo: se as taxas passarem da premiação bruta, ele é zero.
-- Prêmios: cada posição leva prize pool × percentual, para baixo; a sobra (centavos) vai para o 1º, quando os percentuais somam 100%. Arredondando para R$ 5 (`App\Support\ArredondarPremios`, chave `premios.arredondar`), do 2º para baixo desce para o múltiplo de R$ 5 e o 1º fecha a conta: ele só sai redondo se o prize pool for múltiplo de R$ 5. Prêmio menor que R$ 5 fica como está (não vira zero); premiação manual que não soma 100% arredonda o 1º também. Vale ao fechar as entradas, quando os prêmios são gravados. Premiação pela regra usa a faixa do número de jogadores; manual usa os percentuais do jogo. Cash game não tem prêmios.
+- Prêmios: cada posição leva prize pool × percentual, para baixo; a sobra vai para o 1º, quando os percentuais somam 100%. Do 2º para baixo desce para o múltiplo de R$ 5 (`App\Support\ArredondarPremios`, chave `premios.arredondar`) ou, desligado, para o real, e o 1º fecha a conta: ele só sai múltiplo de R$ 5 se o prize pool for. Prêmio que viraria zero desce para o real (R$ 4,50 → R$ 4); premiação manual que não soma 100% arredonda o 1º também. Vale ao fechar as entradas, quando os prêmios são gravados. Premiação pela regra usa a faixa do número de jogadores; manual usa os percentuais do jogo. Cash game não tem prêmios.
 - **Simulação** (prize pool estimado): N jogadores com o buy-in padrão, N rebuys e N add-ons padrão, mais os opcionais obrigatórios (por jogador ou junto de cada entrada).
+
+## Correções e histórico
+
+Mexida errada se corrige, mas fica registrada. Tudo pede **motivo** e entra no **histórico do jogo** (tabela `alteracoes`, `Services\Jogo\Historico`; aba **Histórico** do jogo no painel e, para quem corrige, o fim do Fechamento no site). Permissão do site `jogo.corrigir` (o Admin tem; pode ir para outro grupo).
+
+- **Voltar a fase** (`Actions\Jogo\VoltarFase`, tela ao vivo): do intervalo para os rebuys (o add-on fecha; os já lançados continuam) e **REABRIR ENTRADAS** (sem entradas → intervalo: buy-in, rebuy e add-on valem de novo, quem caiu e não voltou volta a poder voltar, as posições e os prêmios gravados saem e são refeitos no próximo FECHAR ENTRADAS; o histórico guarda os que estavam). Só em andamento.
+- **Desfazer pagamento** (`Actions\Jogo\DesfazerPagamento`): qualquer pagamento lançado à mão, não só o último, também depois de finalizar (no painel do jogador, botão Desfazer na linha) e no pré-torneio do painel (aba Confirmados, `pagamentos.registrar`). Depois de finalizar, os acertos em aberto são refeitos. Pagamento de um acerto feito (`pagamentos.acerto_id`) não sai sozinho.
+- **Desfazer acerto** (`Actions\Jogo\DesfazerAcerto`, fechamento): FEITO marcado errado; os pagamentos do acerto ficam cancelados, ele volta a estar em aberto e a lista é refeita.
+- Também ficam no histórico, sem motivo: início, abrir o intervalo, fechar as entradas, resultado, acerto feito e finalizar; e todo desfazer da noite (`DesfazerAcao`), com o motivo. Quem fez pelo site fica em `usuario_id`; pelo painel, em `seguranca_id` ("dev (painel)").
 
 ## Fechamento e acertos
 
@@ -264,6 +275,8 @@ Detalhes (`Services\Jogo\Acertos`, em centavos):
 Premiação, resultado e fechamento abrem no site com as entradas fechadas (no cash game, a qualquer hora em andamento) e continuam abertos depois de finalizar; o **Finalizar** fica no fechamento.
 
 **Acerto feito** (`Actions\Jogo\MarcarAcerto`, `pagamentos.registrar`, só depois de finalizar): vira pagamentos para os saldos fecharem. Quem paga ganha um "jogador pagou" e quem recebe um "jogador recebeu", na forma escolhida, com a observação "Acerto: pagou a …" / "recebeu de …"; o caixa não tem linha (o dinheiro dele muda só quando ele é uma das pontas). Marcar de novo não vale.
+
+Depois de finalizar, os acertos ainda não feitos acompanham os saldos (`Acertos::refazerEmAberto`): um pagamento lançado pelo painel do jogador (pendência acertada por fora) refaz a lista, e o FEITO confere se o acerto ainda bate com os saldos (quem paga ainda deve o valor, quem recebe ainda tem a receber). Se não bate, a lista é refeita e nada é lançado: o mesmo dinheiro nunca entra duas vezes. Os acertos feitos ficam como histórico.
 
 O jogo pode ser finalizado com saldos em aberto: viram pendências do jogador, aparecem em "Valores pendentes" no painel e são pagas depois pela ação de pagamento.
 
@@ -296,7 +309,7 @@ O jogo pode ser finalizado com saldos em aberto: viram pendências do jogador, a
 | `Services\Ranking\Pontuacao` | Pontos por ranking e classificação |
 | `Actions\Jogo\RegistrarEntrada`, `RegistrarPagamento`, `RegistrarEliminacao`, `RegistrarCashOut`, `TrocarLugar` | Ações no jogador |
 | `Actions\Jogo\DesfazerAcao` | Cancela a última ação com motivo |
-| `Actions\Jogo\EncerrarRebuys`, `FecharEntradas`, `FinalizarJogo` | Fases e status |
+| `Actions\Jogo\AbrirIntervalo`, `FecharEntradas`, `FinalizarJogo` | Fases e status |
 | `Services\Jogo\Relogio`, `Actions\Jogo\ControlarRelogio` | v2: relógio do torneio com estrutura de blinds |
 | `Actions\Jogo\CriarDeModelo` | Novo jogo a partir de um modelo |
 
@@ -349,7 +362,7 @@ Na v1 (e na v2, para jogo sem estrutura) o Admin do site (`jogo.fases`) digita n
 - A faixa mostra o nível e os blinds do relógio e a célula **Relógio** com o tempo contando no navegador (v3: pelo motor, que passa de nível sozinho; a tela então pede ao servidor o nível e os blinds novos). Pausado fica em âmbar ("Relógio · pausado"; antes do primeiro INICIAR, "Não iniciado"), o último minuto em vermelho.
 - No intervalo, a célula do relógio leva o nome dele ("Intervalo") e a do nível mostra o que vem depois ("A seguir · nível 7", "150 / 300"); a mesa mostra "Intervalo".
 - Quem tem `relogio.controlar` pausa e inicia no botão ao lado do tempo e, clicando no tempo, abre o modal **Relógio**: o tempo grande, o nível e o que vem depois ("Depois: Intervalo · 15 min", "intervalo em 45 min"), ANTERIOR, INICIAR/CONTINUAR/PAUSAR, PRÓXIMO e −5, −1, +1 e +5 min. Recusa aparece no modal. Os outros só veem o relógio.
-- **Sugestão de encerrar rebuys:** quando o relógio está num intervalo e o torneio ainda está nos rebuys, quem muda a fase (`jogo.fases`) vê acima da mesa "Intervalo: hora de encerrar os rebuys e abrir o add-on." com ENCERRAR REBUYS (abre o mesmo modal da fase). Só sugere: nada encerra sozinho, e a sugestão some quando o intervalo acaba.
+- **Sugestões da fase:** quando o relógio está num intervalo e o torneio ainda está nos rebuys, quem muda a fase (`jogo.fases`) vê acima da mesa "Intervalo: hora de abrir o intervalo (add-on, e quem caiu pode voltar)" com ABRIR INTERVALO; com o intervalo aberto e o relógio já depois dele, "O intervalo acabou: hora de fechar as entradas" com FECHAR ENTRADAS. Os dois abrem o mesmo modal da fase. Só sugerem: nada muda sozinho.
 - Celular: a barra de baixo ganha o relógio na frente (nível e tempo; Admin abre o modal por ela) e fica com quatro células (relógio, blinds sem o ante, entradas e prize pool).
 
 **Link do relógio (v3, etapa 3, feita; no lugar da tela da TV da v2):** cada jogo tem um código (`jogos.relogio_codigo`, 8 letras e números sem os que confundem, como `k7m2q9xp`), criado junto com o jogo; cópia e modelo ganham um novo. O link `/relogio/{codigo}` (`RelogioPublicoController`) abre **sem login** e só para ver, na TV, no tablet, em outro celular ou no notebook.

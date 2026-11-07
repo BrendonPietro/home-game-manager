@@ -1,5 +1,9 @@
 <?php
 
+use App\Models\Grupo;
+use App\Models\Permissao;
+use Spatie\Permission\DefaultTeamResolver;
+
 /*
 | spatie/laravel-permission v6 com tabelas em português.
 | Grupo = role, Permissão = permission. Sem teams.
@@ -8,8 +12,8 @@
 return [
 
     'models' => [
-        'permission' => App\Models\Permissao::class,
-        'role' => App\Models\Grupo::class,
+        'permission' => Permissao::class,
+        'role' => Grupo::class,
     ],
 
     'table_names' => [
@@ -35,7 +39,7 @@ return [
 
     'teams' => false,
 
-    'team_resolver' => \Spatie\Permission\DefaultTeamResolver::class,
+    'team_resolver' => DefaultTeamResolver::class,
 
     'use_passport_client_credentials' => false,
 
@@ -46,7 +50,7 @@ return [
     'enable_wildcard_permission' => false,
 
     'cache' => [
-        'expiration_time' => \DateInterval::createFromDateString('24 hours'),
+        'expiration_time' => DateInterval::createFromDateString('24 hours'),
         'key' => 'spatie.permission.cache',
         'store' => 'default',
     ],

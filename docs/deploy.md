@@ -71,6 +71,21 @@ php artisan view:cache
 
 ## Produção
 
-- `APP_URL` com `https://`, `APP_ENV=production`, `APP_DEBUG=false`.
+- `APP_URL` com `https://`, `APP_ENV=production`, `APP_DEBUG=false`, `SESSION_LIFETIME=720` (12 h: a noite inteira sem cair).
+- Permissão nova do site em uma versão (ex.: `site.fora_da_noite`): `php artisan db:seed --class=PermissoesSeeder --force` (volta os grupos padrão às permissões do seed).
 - PHP 8.5 (Laravel 13 recebe correções de segurança até 17/03/2028). Conferir a versão do PHP antes de contratar a hospedagem.
+
+## Backup
+
+O banco é o caixa do clube (entradas, pagamentos, acertos e o histórico de quem mexeu em quê). Antes do piloto:
+
+- Ligar o backup diário do MySQL da hospedagem (a maioria tem no painel) e conferir que dá para baixar um arquivo de lá.
+- Antes de cada atualização do sistema, um dump na mão:
+
+```bash
+mysqldump --single-transaction --no-tablespaces -u USUARIO -p NOME_DO_BANCO > backup-$(date +%F).sql
+```
+
+- Uma vez por mês, restaurar um dump num banco local e abrir o painel nele, para saber que o backup volta de verdade.
+- `storage/app/public` (fotos dos jogadores e o logo) entra no backup de arquivos da hospedagem.
 - Nunca versionar `.env` com senhas e chaves reais.

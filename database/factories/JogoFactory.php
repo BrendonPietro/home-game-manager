@@ -18,7 +18,9 @@ class JogoFactory extends Factory
     {
         return [
             'modalidade' => Modalidade::Torneio,
-            'nome' => 'Poker Night #'.fake()->unique()->numberBetween(1, 999),
+            // A partir do 19: "Poker Night #18" é a noite de referência, e o PokerNight18Seeder não a cria
+            // de novo se achar um jogo com esse nome (o teste pegava o jogo da factory, 1 vez em 999).
+            'nome' => 'Poker Night #'.fake()->unique()->numberBetween(19, 999),
             'data' => fake()->dateTimeBetween('now', '+1 month'),
             'horario' => '20:00',
         ];

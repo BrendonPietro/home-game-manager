@@ -21,7 +21,8 @@ class LoginSiteTest extends TestCase
 
     private function operador(array $dados = []): Usuario
     {
-        return Usuario::factory()->comAcesso()->create(['email' => 'operador@exemplo.com', ...$dados]);
+        // Com site.fora_da_noite, para entrar no dashboard sem jogo em andamento (o Operador sem ela: Site\AcessoDoSiteTest).
+        return Usuario::factory()->foraDaNoite()->create(['email' => 'operador@exemplo.com', ...$dados]);
     }
 
     public function test_visitante_vai_para_o_login(): void

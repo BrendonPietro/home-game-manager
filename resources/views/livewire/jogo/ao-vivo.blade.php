@@ -42,12 +42,25 @@
 	$podeFases = auth('web')->user()->can('jogo.fases');
 	$digitaNivel = $podeFases && ! $jogo->temRelogio(); // com estrutura de blinds, o nível segue o relógio
 	$botaoFase = $torneio && $podeFases ? match ($jogo->fase) {
-		FaseTorneio::Rebuys => 'ENCERRAR REBUYS',
+		FaseTorneio::Rebuys => 'ABRIR INTERVALO',
 		FaseTorneio::Intervalo => 'FECHAR ENTRADAS',
 		default => null,
 	} : null;
-	// O relógio chegou ao intervalo com os rebuys abertos: sugere encerrar (não encerra sozinho).
-	$sugereEncerrar = $relogio?->noIntervalo() && $botaoFase && $jogo->fase === FaseTorneio::Rebuys;
+	// Correção (jogo.corrigir): voltar a fase apertada antes da hora, com motivo.
+	$voltarFase = $torneio && auth('web')->user()->can('jogo.corrigir') ? match ($jogo->fase) {
+		FaseTorneio::Intervalo => 'Voltar aos rebuys',
+		FaseTorneio::SemEntradas => 'Reabrir entradas',
+		default => null,
+	} : null;
+	// O relógio chegou ao intervalo e ele não foi aberto: sugere abrir (não abre sozinho). Passou do
+	// intervalo com ele aberto: sugere fechar as entradas.
+	$passouDoIntervalo = $relogio && ! $relogio->noIntervalo() && $relogio->niveis->take($relogio->indice)->contains('e_intervalo', true);
+	$sugestao = match (true) {
+		! $botaoFase || ! $relogio => null,
+		$relogio->noIntervalo() && $jogo->fase === FaseTorneio::Rebuys => $relogio->titulo().': hora de abrir o intervalo (add-on, e quem caiu pode voltar)',
+		$passouDoIntervalo && $jogo->fase === FaseTorneio::Intervalo => 'O intervalo acabou: hora de fechar as entradas',
+		default => null,
+	};
 	$quantos = fn (int $n, string $coisa): string => $n.' '.$coisa.($n === 1 ? '' : 's');
 @endphp
 
@@ -129,8 +142,11 @@
 				<button type="button" class="rh-btn rh-aovivo__tv" wire:click="abrirLink" title="Link do relógio para a TV e outras telas">@svg('rh-tv') TV</button>
 
 				{{-- Tablet e celular: a lateral some, o botão da fase vem para cá (ou fica na sugestão do intervalo). --}}
-				@if ($botaoFase && ! $sugereEncerrar)
+				@if ($botaoFase && ! $sugestao)
 					<button type="button" class="rh-btn rh-btn--danger rh-aovivo__fase-curta" wire:click="abrirFase">@svg('rh-lock') {{ $botaoFase }}</button>
+				@endif
+				@if ($voltarFase)
+					<button type="button" class="rh-btn rh-btn--ghost rh-btn--sm rh-aovivo__fase-curta" wire:click="abrirVoltarFase">@svg('rh-undo') {{ $voltarFase }}</button>
 				@endif
 			</div>
 
@@ -149,15 +165,15 @@
 				<div class="rh-warn rh-warn--ok" role="status" wire:key="aviso-{{ md5($aviso) }}" x-data="{ ver: true }" x-init="setTimeout(() => ver = false, 6000)" x-show="ver" x-transition.opacity>@svg('rh-check')<div>{{ $aviso }}</div></div>
 			@endif
 
-			@if ($erro && ! $modal)
+			@if ($erro && ! $modal && ! $quemSenta)
 				<div class="rh-warn" role="alert">@svg('rh-alert')<div>{{ $erro }}</div></div>
 			@endif
 
-			@if ($sugereEncerrar)
+			@if ($sugestao)
 				<div class="rh-warn rh-aovivo__sugestao" role="status">
 					@svg('rh-clock')
-					<div><b>{{ $relogio->titulo() }}:</b> hora de encerrar os rebuys e abrir o add-on</div>
-					<button type="button" class="rh-btn rh-btn--danger rh-btn--sm" wire:click="abrirFase">@svg('rh-lock') ENCERRAR REBUYS</button>
+					<div>{{ $sugestao }}</div>
+					<button type="button" class="rh-btn rh-btn--danger rh-btn--sm" wire:click="abrirFase">@svg('rh-lock') {{ $botaoFase }}</button>
 				</div>
 			@endif
 
@@ -250,13 +266,21 @@
 				@endforelse
 			</div>
 
-			@if ($botaoFase)
-				<div class="rh-aovivo__sec rh-aovivo__acao">
-					<button type="button" class="rh-btn rh-btn--danger rh-btn--block" wire:click="abrirFase">@svg('rh-lock') {{ $botaoFase }}</button>
+			@if ($botaoFase || $voltarFase)
+				<div class="rh-aovivo__sec rh-aovivo__acao rh-col" style="gap:8px">
+					@if ($botaoFase)
+						<button type="button" class="rh-btn rh-btn--danger rh-btn--block" wire:click="abrirFase">@svg('rh-lock') {{ $botaoFase }}</button>
+					@endif
+					@if ($voltarFase)
+						<button type="button" class="rh-btn rh-btn--ghost rh-btn--sm rh-btn--block" wire:click="abrirVoltarFase" title="Correção: fica no histórico, com o motivo">@svg('rh-undo') {{ $voltarFase }}</button>
+					@endif
 				</div>
 			@endif
 		</aside>
 	</div>
+
+	{{-- Lugar vazio clicado: quem senta ali (confirmado, do cadastro ou novo). --}}
+	@include('livewire.jogo.partials.quem-senta')
 
 	{{-- Telas 08–09: painel do jogador clicado (fica de pé entre um poll e outro). --}}
 	@if ($selecionado)
@@ -382,10 +406,10 @@
 						<button type="button" class="rh-btn rh-btn--lg" wire:click="fecharModal">FECHAR</button>
 					</div>
 				</div>
-			@elseif ($modal === 'encerrar')
-				<form class="rh-modal" style="max-width:460px" wire:submit="encerrarRebuys" role="dialog" aria-modal="true" aria-labelledby="encerrar-titulo">
+			@elseif ($modal === 'intervalo')
+				<form class="rh-modal" style="max-width:460px" wire:submit="abrirIntervalo" role="dialog" aria-modal="true" aria-labelledby="intervalo-titulo">
 					<div class="rh-modal__hd">
-						<h2 class="rh-heading" id="encerrar-titulo" style="font-size:26px">Encerrar rebuys</h2>
+						<h2 class="rh-heading" id="intervalo-titulo" style="font-size:26px">Abrir intervalo</h2>
 						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharModal" aria-label="Fechar">@svg('rh-x')</button>
 					</div>
 					<div class="rh-modal__bd rh-col" style="gap:16px">
@@ -395,26 +419,63 @@
 						<div class="rh-warn">
 							@svg('rh-alert')
 							<div>
-								<b>Ao encerrar os rebuys:</b>
+								<b>No intervalo:</b>
 								<ul>
-									<li>novos rebuys não poderão ser registrados;</li>
 									@if ($addon)
 										<li>o add-on abre ({{ Dinheiro::brl($addon->valor) }}{{ $addon->limite_por_jogador ? ', '.$addon->limite_por_jogador.' por jogador' : '' }});</li>
 									@endif
-									<li>buy-in atrasado ainda entra até fechar as entradas;</li>
-									@if ($foraDeVez->isNotEmpty())
-										<li>{{ $foraDeVez->join(', ', ' e ') }} {{ $foraDeVez->count() > 1 ? 'ficam eliminados' : 'fica eliminado' }} de vez.</li>
-									@else
-										<li>ninguém está fora agora.</li>
-									@endif
+									<li>o rebuy continua: quem caiu ainda volta;</li>
+									<li>buy-in atrasado ainda entra;</li>
+									<li>tudo fecha no FECHAR ENTRADAS, no fim do intervalo.</li>
 								</ul>
 							</div>
 						</div>
+						@if ($foraAgora->isNotEmpty())
+							<div class="rh-small"><b>Fora agora:</b> {{ $foraAgora->join(', ', ' e ') }} (ainda {{ $foraAgora->count() > 1 ? 'podem' : 'pode' }} voltar)</div>
+						@endif
 						<div class="rh-small rh-muted">{{ $quantos($contagem['rebuys'], 'rebuy') }} até agora · prize pool {{ $prizePool }}</div>
 					</div>
 					<div class="rh-modal__ft">
 						<button type="button" class="rh-btn rh-btn--lg" wire:click="fecharModal">VOLTAR</button>
-						<button type="submit" class="rh-btn rh-btn--danger rh-btn--lg" wire:loading.attr="disabled">@svg('rh-lock') ENCERRAR REBUYS</button>
+						<button type="submit" class="rh-btn rh-btn--danger rh-btn--lg" wire:loading.attr="disabled">@svg('rh-clock') ABRIR INTERVALO</button>
+					</div>
+				</form>
+			@elseif ($modal === 'voltar' && $voltarFase)
+				@php $reabrir = $jogo->fase === FaseTorneio::SemEntradas; @endphp
+				<form class="rh-modal" style="max-width:460px" wire:submit="voltarFase" role="dialog" aria-modal="true" aria-labelledby="voltar-titulo">
+					<div class="rh-modal__hd">
+						<h2 class="rh-heading" id="voltar-titulo" style="font-size:26px">{{ $voltarFase }}</h2>
+						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharModal" aria-label="Fechar">@svg('rh-x')</button>
+					</div>
+					<div class="rh-modal__bd rh-col" style="gap:16px">
+						@if ($erro)
+							<div class="rh-warn" role="alert">@svg('rh-alert')<div>{{ $erro }}</div></div>
+						@endif
+						<div class="rh-warn">
+							@svg('rh-alert')
+							<div>
+								<b>{{ $reabrir ? 'Ao reabrir as entradas:' : 'Ao voltar aos rebuys:' }}</b>
+								<ul>
+									@if ($reabrir)
+										<li>buy-in, rebuy e add-on valem de novo;</li>
+										<li>quem caiu e não voltou pode voltar com rebuy;</li>
+										<li>as posições e os prêmios gravados saem e são refeitos no próximo FECHAR ENTRADAS;</li>
+									@else
+										<li>o add-on fecha até abrir o intervalo de novo (os já lançados continuam);</li>
+										<li>o rebuy continua aberto;</li>
+									@endif
+									<li>fica no histórico do jogo, com quem fez e o motivo.</li>
+								</ul>
+							</div>
+						</div>
+						<label class="rh-field">
+							<span class="rh-field__label">Motivo</span>
+							<input class="rh-input" wire:model="motivoCorrecao" maxlength="255" autocomplete="off" placeholder="{{ $reabrir ? 'Chegou um atrasado' : 'Abri o intervalo antes da hora' }}" x-init="$nextTick(() => $el.focus())">
+						</label>
+					</div>
+					<div class="rh-modal__ft">
+						<button type="button" class="rh-btn rh-btn--lg" wire:click="fecharModal">VOLTAR</button>
+						<button type="submit" class="rh-btn rh-btn--danger rh-btn--lg" wire:loading.attr="disabled">@svg('rh-undo') {{ mb_strtoupper($voltarFase) }}</button>
 					</div>
 				</form>
 			@elseif ($modal === 'fechar')
@@ -436,6 +497,9 @@
 									<li>novos buy-ins não poderão ser registrados;</li>
 									<li>novos rebuys não poderão ser registrados;</li>
 									<li>novos add-ons não poderão ser registrados;</li>
+									@if ($foraAgora->isNotEmpty())
+										<li>{{ $foraAgora->join(', ', ' e ') }} {{ $foraAgora->count() > 1 ? 'ficam eliminados' : 'fica eliminado' }} de vez, na ordem em que {{ $foraAgora->count() > 1 ? 'caíram' : 'caiu' }};</li>
+									@endif
 									<li>o prêmio de cada posição fica gravado.</li>
 								</ul>
 							</div>

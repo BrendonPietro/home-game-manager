@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Jogo;
 
+use App\Actions\Jogo\DesfazerAcerto;
 use App\Actions\Jogo\FinalizarJogo;
 use App\Actions\Jogo\MarcarAcerto;
 use App\Enums\FormaPagamento;
@@ -42,6 +43,11 @@ class Fechamento extends Component
     /** Forma do pagamento ao marcar um acerto como feito. */
     public string $forma = 'pix';
 
+    /** Acerto feito que vai ser desfeito (correção, jogo.corrigir) e o motivo. */
+    public ?int $desfazendo = null;
+
+    public string $motivo = '';
+
     public ?string $erro = null;
 
     public ?string $aviso = null;
@@ -77,11 +83,46 @@ class Fechamento extends Component
 
     public function marcarAcerto(int $acertoId): void
     {
-        $acerto = $this->jogo->acertos()->findOrFail($acertoId);
+        $acerto = $this->jogo->acertos()->find($acertoId);
         $forma = FormaPagamento::tryFrom($this->forma) ?? FormaPagamento::Pix;
+
+        if ($acerto === null) {
+            $this->erro = MarcarAcerto::MUDOU; // refeitos por um pagamento lançado em outro aparelho
+
+            return;
+        }
 
         if ($this->executar(fn () => app(MarcarAcerto::class)($acerto, $forma, $this->quem()))) {
             $this->aviso = 'Acerto marcado como feito.';
+        }
+    }
+
+    public function abrirDesfazerAcerto(int $acertoId): void
+    {
+        $this->desfazendo = $this->jogo->acertos()->where('pago', true)->findOrFail($acertoId)->id;
+        $this->motivo = '';
+        $this->erro = null;
+    }
+
+    public function fecharDesfazerAcerto(): void
+    {
+        $this->desfazendo = null;
+        $this->erro = null;
+    }
+
+    public function desfazerAcerto(): void
+    {
+        $acerto = $this->jogo->acertos()->find($this->desfazendo);
+
+        if ($acerto === null) {
+            $this->erro = MarcarAcerto::MUDOU;
+
+            return;
+        }
+
+        if ($this->executar(fn () => app(DesfazerAcerto::class)($acerto, $this->motivo, $this->quem()))) {
+            $this->desfazendo = null;
+            $this->aviso = 'Acerto desfeito: os acertos em aberto foram refeitos.';
         }
     }
 
@@ -143,6 +184,10 @@ class Fechamento extends Component
                 ->values(),
             'acertos' => $this->acertos($acertos, $participantes),
             'faltam' => $this->faltam($participantes),
+            // Quem corrige vê o histórico do jogo (quem mudou o quê e quando).
+            'historico' => auth('web')->user()->can('jogo.corrigir')
+                ? $this->jogo->alteracoes()->with(['usuario', 'conta'])->limit(30)->get()
+                : collect(),
         ]);
     }
 

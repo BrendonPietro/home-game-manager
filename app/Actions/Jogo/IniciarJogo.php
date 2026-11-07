@@ -6,28 +6,36 @@ use App\Actions\Jogo\Concerns\ChecaRegras;
 use App\Enums\FaseTorneio;
 use App\Enums\StatusJogo;
 use App\Enums\StatusParticipante;
+use App\Enums\TipoAlteracao;
 use App\Enums\TipoItem;
 use App\Exceptions\RegraDoJogo;
 use App\Models\Jogo;
 use App\Models\Usuario;
+use App\Services\Jogo\Historico;
 use App\Services\Jogo\Relogio;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Agendado → em andamento (botão Iniciar na tela de mesas). Torneio começa na fase de rebuys.
- * Quem está sentado passa a "jogando"; confirmado sem lugar continua esperando e senta depois.
+ * Quem está sentado passa a "jogando" e, no torneio, já entra com o buy-in padrão (sentar é entrar);
+ * confirmado sem lugar continua esperando e, quando senta, ganha o buy-in na hora (TrocarLugar).
+ * Quem pagou antes e não veio não senta: não entra no torneio e o pagamento vira crédito dele.
  */
 class IniciarJogo
 {
     use ChecaRegras;
 
-    public function __construct(private Relogio $relogio) {}
+    public function __construct(
+        private Relogio $relogio,
+        private RegistrarEntrada $entrada,
+        private Historico $historico,
+    ) {}
 
     public function __invoke(Jogo $jogo, Usuario $quem): Jogo
     {
         $this->permitir($quem, 'jogo.fases', 'Só o Admin do site inicia o jogo.');
 
-        return DB::transaction(function () use ($jogo) {
+        return DB::transaction(function () use ($jogo, $quem) {
             $jogo = Jogo::query()->lockForUpdate()->findOrFail($jogo->id);
             $this->exigirStatus($jogo, [StatusJogo::Agendado], 'Só jogo agendado pode ser iniciado.');
 
@@ -41,6 +49,7 @@ class IniciarJogo
                 throw new RegraDoJogo('O jogo não tem buy-in ativo: ajuste no painel.');
             }
 
+            $ids = $sentados->pluck('id');
             $sentados->update(['status' => StatusParticipante::Jogando]);
 
             $jogo->forceFill([
@@ -51,7 +60,15 @@ class IniciarJogo
 
             $this->relogio->preparar($jogo); // com estrutura: nível 1 parado, até apertar INICIAR
 
-            return $jogo;
+            if ($jogo->eTorneio()) {
+                foreach ($jogo->participantes()->whereKey($ids)->orderBy('id')->get() as $sentado) {
+                    $this->entrada->buyinPadrao($sentado, $quem);
+                }
+            }
+
+            $this->historico->registrar($jogo, $quem, TipoAlteracao::Iniciou, ($jogo->eTorneio() ? 'Iniciou o torneio' : 'Iniciou o jogo').' com '.$ids->count().' sentados');
+
+            return $jogo->refresh();
         });
     }
 }

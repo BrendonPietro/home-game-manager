@@ -109,6 +109,49 @@ class FechamentoTest extends TestCase
         $this->assertSame('dinheiro', $this->noite->pagamentos()->latest('id')->value('forma')->value);
     }
 
+    public function test_desfazer_acerto_feito_e_o_historico(): void
+    {
+        $this->eliminar18();
+        Livewire::test(Fechamento::class, ['jogo' => $this->noite])->call('finalizar');
+        $primeiro = $this->noite->acertos()->orderBy('id')->first();
+
+        $tela = Livewire::test(Fechamento::class, ['jogo' => $this->noite->fresh()])
+            ->call('marcarAcerto', $primeiro->id)
+            ->call('abrirDesfazerAcerto', $primeiro->id)
+            ->assertSee('Correção · acerto feito')
+            ->call('desfazerAcerto')
+            ->assertSee('Diga o motivo para desfazer.')
+            ->set('motivo', 'Marcado sem ter pago')
+            ->call('desfazerAcerto')
+            ->assertSee('Acerto desfeito: os acertos em aberto foram refeitos.');
+
+        $this->assertSame(0, $this->noite->acertos()->where('pago', true)->count());
+
+        // Quem corrige vê o histórico, com a correção e o motivo.
+        $tela->assertSee(['Histórico', 'Correção', 'Desfez o acerto', 'Marcado sem ter pago', 'Acerto feito', 'Finalizou o jogo']);
+
+        $this->actingAs($this->operador, 'web');
+        Livewire::test(Fechamento::class, ['jogo' => $this->noite->fresh()])->assertDontSee('quem mudou o quê e quando');
+    }
+
+    public function test_depois_de_finalizar_quem_corrige_desfaz_um_pagamento(): void
+    {
+        $this->eliminar18();
+        Livewire::test(Fechamento::class, ['jogo' => $this->noite])->call('finalizar');
+        $marcos = $this->da18('Marcos');
+        $this->pagar($marcos, 5000);
+
+        Livewire::test(AcoesJogador::class, ['jogo' => $this->noite->fresh(), 'participanteId' => $marcos->id, 'mudaLugar' => false])
+            ->assertSee('Desfazer')
+            ->call('abrirDesfazerPagamento', $marcos->pagamentos()->sole()->id)
+            ->assertSee('O jogo já foi finalizado')
+            ->set('motivo', 'Lançado no jogador errado')
+            ->call('confirmarDesfazerPagamento')
+            ->assertSet('aviso', 'Pagamento desfeito: Pagou R$ 50 (pix).');
+
+        $this->assertSame(0, $marcos->pagamentos()->validas()->count());
+    }
+
     public function test_depois_de_finalizar_o_painel_so_paga(): void
     {
         $this->eliminar18();

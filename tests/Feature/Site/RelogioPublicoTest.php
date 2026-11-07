@@ -125,7 +125,7 @@ class RelogioPublicoTest extends TestCase
 
     public function test_tv_antiga_leva_para_o_link(): void
     {
-        $this->actingAs($this->operador, 'web');
+        $this->actingAs($this->admin, 'web');
 
         $this->get(route('jogos.tv', $this->jogo))->assertRedirect($this->jogo->linkDoRelogio());
 

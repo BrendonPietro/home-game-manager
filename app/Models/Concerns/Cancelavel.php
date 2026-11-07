@@ -2,6 +2,7 @@
 
 namespace App\Models\Concerns;
 
+use App\Models\Seguranca;
 use App\Models\Usuario;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -32,14 +33,17 @@ trait Cancelavel
         return $this->getAttribute(static::colunaCancelamento()) !== null;
     }
 
-    /** Desfaz: marca quando, quem (`cancelada_por` / `cancelado_por`) e o motivo. Só pelo DesfazerAcao. */
-    public function cancelar(Usuario $quem, string $motivo): void
+    /**
+     * Desfaz: marca quando, quem (`cancelada_por` / `cancelado_por`, do site) e o motivo. Só pelas Actions
+     * de desfazer; pelo painel, quem fez fica no histórico do jogo (`alteracoes`).
+     */
+    public function cancelar(Usuario|Seguranca $quem, string $motivo): void
     {
         $coluna = static::colunaCancelamento();
 
         $this->forceFill([
             $coluna => now(),
-            str_replace('_em', '_por', $coluna) => $quem->id,
+            str_replace('_em', '_por', $coluna) => $quem instanceof Usuario ? $quem->id : null,
             'motivo_cancelamento' => $motivo,
         ])->save();
     }

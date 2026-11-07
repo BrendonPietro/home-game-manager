@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Site;
 
-use App\Enums\DestinoItem;
 use App\Enums\StatusJogo;
 use App\Enums\TipoItem;
 use App\Models\Jogo;
@@ -22,14 +21,14 @@ class ConferenciaTest extends TestCase
 
         $this->withoutVite();
         $this->seed([RegrasPremiacaoSeeder::class, PokerNight18Seeder::class]);
-        $this->actingAs(Usuario::factory()->comAcesso()->create(), 'web');
+        $this->actingAs(Usuario::factory()->foraDaNoite()->create(), 'web');
     }
 
     /** A noite #18 com o cadastro completo, mas ainda agendada (antes de começar). */
     private function noiteAgendada(): Jogo
     {
         $noite = Jogo::query()->where('nome', PokerNight18Seeder::NOME)->sole();
-        $noite->forceFill(['status' => StatusJogo::Agendado, 'fase' => null, 'iniciado_em' => null, 'rebuys_encerrados_em' => null])->save();
+        $noite->forceFill(['status' => StatusJogo::Agendado, 'fase' => null, 'iniciado_em' => null, 'intervalo_aberto_em' => null])->save();
         $noite->entradas()->delete();
 
         return $noite;
@@ -46,7 +45,7 @@ class ConferenciaTest extends TestCase
             // buy-ins: padrão B, duplo 2, triplo 3
             ->assertSeeInOrder(['Buy-in', 'Entrada padrão · 1 por jogador', '10.000 fichas', 'R$ 100'])
             ->assertSeeInOrder(['>2<', 'Buy-in duplo', 'Conta como 1 entrada', '20.000 fichas', 'R$ 200'], false)
-            ->assertSee('sem limite, até encerrar rebuys')
+            ->assertSee('sem limite, até fechar as entradas (também no intervalo)')
             ->assertSee('1 por jogador, no intervalo')
             // financeiro e mesas
             ->assertSeeInOrder(['Casa', '10%'])
@@ -90,7 +89,7 @@ class ConferenciaTest extends TestCase
         $jogo->itens()->where('tipo', TipoItem::Addon)->delete();
         $jogo->itens()->create([
             'tipo' => TipoItem::Opcional, 'nome' => 'Churrasco', 'valor' => 30,
-            'destino' => DestinoItem::Fora, 'compravel_com' => ['jogador'], 'obrigatorio' => true,
+            'percentual_premiacao' => 0, 'compravel_com' => ['jogador'], 'obrigatorio' => true,
         ]);
 
         $this->get(route('jogos.conferencia', $jogo))

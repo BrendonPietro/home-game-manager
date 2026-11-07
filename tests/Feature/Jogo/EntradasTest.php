@@ -2,10 +2,9 @@
 
 namespace Tests\Feature\Jogo;
 
-use App\Actions\Jogo\EncerrarRebuys;
+use App\Actions\Jogo\AbrirIntervalo;
 use App\Actions\Jogo\FecharEntradas;
 use App\Actions\Jogo\RegistrarEntrada;
-use App\Enums\DestinoItem;
 use App\Enums\TipoItem;
 use App\Models\Item;
 use App\Models\Jogo;
@@ -28,7 +27,7 @@ class EntradasTest extends TestCase
         $this->montarNoite();
     }
 
-    private function opcional(string $nome, int $valor, array $compravelCom, DestinoItem $destino, bool $obrigatorio = false): Item
+    private function opcional(string $nome, int $valor, array $compravelCom, int $percentual, bool $obrigatorio = false): Item
     {
         return $this->jogo->itens()->create([
             'tipo' => TipoItem::Opcional,
@@ -36,7 +35,7 @@ class EntradasTest extends TestCase
             'valor' => $valor,
             'fichas' => 20000,
             'compravel_com' => $compravelCom,
-            'destino' => $destino,
+            'percentual_premiacao' => $percentual,
             'obrigatorio' => $obrigatorio,
         ]);
     }
@@ -51,7 +50,7 @@ class EntradasTest extends TestCase
 
         $this->assertTrue($repetida->is($buyin));
         $this->assertSame(1, $this->jogo->entradas()->count());
-        $this->assertSame(['100.00', 20000, DestinoItem::Premiacao, $this->operador->id], [$buyin->valor, $buyin->fichas, $buyin->destino, $buyin->registrado_por]);
+        $this->assertSame(['100.00', 20000, '100.00', $this->operador->id], [$buyin->valor, $buyin->fichas, $buyin->percentual_premiacao, $buyin->registrado_por]);
 
         // O valor fica o da hora do lançamento.
         $this->item(TipoItem::Buyin)->update(['valor' => 150]);
@@ -80,14 +79,14 @@ class EntradasTest extends TestCase
         $this->entrar($joao, TipoItem::Buyin);
         $this->entrar($lucas, TipoItem::Buyin);
 
-        $this->assertRegra('Add-on só no intervalo, depois de encerrar os rebuys.', fn () => $this->entrar($joao, TipoItem::Addon));
+        $this->assertRegra('Add-on só no intervalo: aperte ABRIR INTERVALO.', fn () => $this->entrar($joao, TipoItem::Addon));
 
         $this->entrar($joao, TipoItem::Rebuy);
         $this->entrar($joao, TipoItem::Rebuy); // rebuy sem limite
 
-        app(EncerrarRebuys::class)($this->jogo, $this->admin);
+        app(AbrirIntervalo::class)($this->jogo, $this->admin);
 
-        $this->assertRegra('Os rebuys já foram encerrados.', fn () => $this->entrar($joao, TipoItem::Rebuy));
+        $this->entrar($lucas, TipoItem::Rebuy); // o rebuy continua no intervalo
         $this->entrar($joao, TipoItem::Addon);
         $this->assertRegra('João já comprou Add-on (1× no máximo).', fn () => $this->entrar($joao, TipoItem::Addon));
         $this->entrar($this->jogador('Zeca'), TipoItem::Buyin); // buy-in atrasado ainda vale no intervalo
@@ -95,22 +94,23 @@ class EntradasTest extends TestCase
         app(FecharEntradas::class)($this->jogo, $this->admin);
 
         $this->assertRegra('As entradas já foram fechadas.', fn () => $this->entrar($lucas, TipoItem::Addon));
-        $this->assertSame(6, $this->jogo->entradas()->count());
+        $this->assertRegra('As entradas já foram fechadas.', fn () => $this->entrar($lucas, TipoItem::Rebuy));
+        $this->assertSame(7, $this->jogo->entradas()->count());
     }
 
     public function test_opcionais_junto_da_entrada_e_por_jogador(): void
     {
-        $opcional = $this->opcional('Opcional', 10, ['buyin', 'rebuy', 'addon'], DestinoItem::Metade);
-        $churrasco = $this->opcional('Churrasco', 30, ['jogador'], DestinoItem::Fora);
-        $caixinha = $this->opcional('Caixinha', 5, ['buyin', 'rebuy'], DestinoItem::Fora, obrigatorio: true);
-        $soAddon = $this->opcional('Fichas do add-on', 10, ['addon'], DestinoItem::Premiacao);
+        $opcional = $this->opcional('Opcional', 10, ['buyin', 'rebuy', 'addon'], 50);
+        $churrasco = $this->opcional('Churrasco', 30, ['jogador'], 0);
+        $caixinha = $this->opcional('Caixinha', 5, ['buyin', 'rebuy'], 0, obrigatorio: true);
+        $soAddon = $this->opcional('Fichas do add-on', 10, ['addon'], 100);
         $nomes = fn ($entrada) => $entrada->opcionais()->with('item')->get()->pluck('item.nome')->sort()->values()->all();
 
         $joao = $this->jogador('João');
         $buyin = $this->entrar($joao, TipoItem::Buyin, [$opcional->id, $churrasco->id]);
 
         $this->assertSame(['Caixinha', 'Churrasco', 'Opcional'], $nomes($buyin));
-        $this->assertSame(DestinoItem::Metade, $buyin->opcionais()->where('jogo_item_id', $opcional->id)->sole()->destino);
+        $this->assertSame('50.00', $buyin->opcionais()->where('jogo_item_id', $opcional->id)->sole()->percentual_premiacao);
 
         // Caixinha obrigatória vem de novo; churrasco é 1 por jogador.
         $rebuy = $this->entrar($joao, TipoItem::Rebuy);

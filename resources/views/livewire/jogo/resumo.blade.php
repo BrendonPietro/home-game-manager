@@ -5,7 +5,6 @@
 
 	$torneio = $jogo->eTorneio();
 	$taxa = $jogo->taxas->count() === 1 ? $jogo->taxas->first() : null;
-	$fichas = fn (int $n): string => number_format($n, 0, ',', '.');
 	$numeros = array_filter([
 		'Jogando' => $contagem['jogando'],
 		'Buy-ins' => $contagem['jogadores'],
@@ -67,7 +66,6 @@
 						@if ($torneio)
 							<th class="n">Add-on</th>
 						@endif
-						<th class="n">Fichas</th>
 						<th class="n">Total</th>
 						@if ($mostraPremio)
 							<th class="n">{{ $torneio ? 'Prêmio' : 'Cash-out' }}</th>
@@ -109,7 +107,6 @@
 							@if ($torneio)
 								<td class="n">{!! $compras?->addons ? e($compras->addons) : '<span class="rh-faint">—</span>' !!}</td>
 							@endif
-							<td class="n rh-muted">{{ $compras ? $fichas($compras->fichas) : '—' }}</td>
 							<td class="n">{{ Dinheiro::brlCentavos($conta->investido) }}</td>
 							@if ($mostraPremio)
 								<td class="n">{{ $conta->premio ? Dinheiro::brlCentavos($conta->premio) : '—' }}</td>
@@ -125,7 +122,7 @@
 							</td>
 						</tr>
 					@empty
-						<tr><td colspan="11" class="rh-muted">{{ $soPendentes ? 'Ninguém com pendência' : 'Nenhum jogador nesta mesa' }}</td></tr>
+						<tr><td colspan="10" class="rh-muted">{{ $soPendentes ? 'Ninguém com pendência' : 'Nenhum jogador nesta mesa' }}</td></tr>
 					@endforelse
 				</tbody>
 				<tfoot>
@@ -137,7 +134,6 @@
 						@if ($torneio)
 							<td class="n">{{ $linhas->sum(fn ($l) => $l['entradas']?->addons ?? 0) }}</td>
 						@endif
-						<td class="n">{{ $fichas($linhas->sum(fn ($l) => $l['entradas']?->fichas ?? 0)) }}</td>
 						<td class="n">{{ Dinheiro::brlCentavos($linhas->sum(fn ($l) => $l['conta']->investido)) }}</td>
 						@if ($mostraPremio)
 							<td class="n">{{ Dinheiro::brlCentavos($linhas->sum(fn ($l) => $l['conta']->premio)) }}</td>

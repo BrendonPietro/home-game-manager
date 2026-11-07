@@ -1,7 +1,6 @@
 {{-- Telas 08, 08b e 09: painel do jogador na tela ao vivo (docs/prototipo, playerDrawer, buyinPicker, confirmModal). --}}
 @php
 	use App\Enums\DirecaoPagamento;
-	use App\Enums\FaseTorneio;
 	use App\Enums\FormaPagamento;
 	use App\Enums\StatusParticipante;
 	use App\Enums\TipoItem;
@@ -18,7 +17,9 @@
 	$rebuys = $doTipo(TipoItem::Rebuy);
 	$addons = $doTipo(TipoItem::Addon);
 	$opcionaisComprados = $doTipo(TipoItem::Opcional);
+	// Fichas são só a referência do cadastro (quanto cada entrada dá): aparecem na escolha da entrada, nunca somadas por jogador.
 	$fichas = fn (int $n): string => number_format($n, 0, ',', '.').' fichas';
+	$hora = fn ($linhas): string => $linhas->count() > 1 ? 'Última às '.$linhas->last()->created_at->format('H:i') : 'Às '.$linhas->first()->created_at->format('H:i');
 	$fichaDa = fn (Entrada $e): array => match ($e->tipo) {
 		TipoItem::Buyin => [$jogo->fichaDoBuyin($e->item), null],
 		TipoItem::Rebuy => ['R', 'r'],
@@ -37,6 +38,8 @@
 	$emAndamento = $jogo->status === \App\Enums\StatusJogo::EmAndamento;
 	$podeDesfazer = $emAndamento && $quem->can('acoes.desfazer') && $ultima
 		&& (! $ultima instanceof Entrada || $jogo->entradasAbertas());
+	// Finalizado: quem corrige (jogo.corrigir) desfaz qualquer pagamento lançado à mão; o de acerto sai pelo fechamento.
+	$corrigePagamento = $jogo->estaFinalizado() && $quem->can('jogo.corrigir');
 @endphp
 
 <div x-on:keydown.escape.window="$wire.modal ? $wire.fecharModal() : $dispatch('fechar-jogador')">
@@ -62,9 +65,12 @@
 				@if ($botoes)
 					<div class="rh-jogador__acoes">
 						@foreach ($botoes as $botao)
-							@php $ficha = match ($botao['tipo']) { TipoItem::Buyin => ['B', null], TipoItem::Rebuy => ['R', 'r'], default => ['A', 'a'] }; @endphp
-							<button type="button" class="rh-action" wire:click="abrirEntrada('{{ $botao['tipo']->value }}')" @disabled(! $botao['ok']) aria-label="{{ $rotulo($botao['tipo']) }}: {{ $botao['meta'] }}">
-								<span class="rh-action__top"><span @class(['rh-chip', 'rh-chip--'.$ficha[1] => $ficha[1]])>{{ $ficha[0] }}</span>{{ $rotulo($botao['tipo']) }}</span>
+							@php
+								$ficha = match ($botao['tipo']) { TipoItem::Buyin => ['B', null], TipoItem::Rebuy => ['R', 'r'], default => ['A', 'a'] };
+								$textoDoBotao = $botao['rotulo'] ?? $rotulo($botao['tipo']); // VOLTAR: quem caiu entra de novo como rebuy
+							@endphp
+							<button type="button" class="rh-action" wire:click="abrirEntrada('{{ $botao['tipo']->value }}')" @disabled(! $botao['ok']) aria-label="{{ $textoDoBotao }}: {{ $botao['meta'] }}">
+								<span class="rh-action__top"><span @class(['rh-chip', 'rh-chip--'.$ficha[1] => $ficha[1]])>{{ $ficha[0] }}</span>{{ $textoDoBotao }}</span>
 								<span class="rh-action__meta">{{ $botao['meta'] }}</span>
 							</button>
 						@endforeach
@@ -86,16 +92,16 @@
 					<span class="rh-chip rh-chip--lg">{{ $buyin ? $jogo->fichaDoBuyin($buyin->item) : 'B' }}</span>
 					<div class="rh-jogador__bloco-t">
 						<div class="rh-label">{{ $buyin ? $buyin->item->nome : 'Buy-in' }}</div>
-						<div class="rh-small rh-muted">{{ $buyin ? $fichas($buyin->fichas) : 'Nenhum' }}</div>
+						<div class="rh-small rh-muted">{{ $buyin ? $hora(collect([$buyin])) : 'Nenhum' }}</div>
 					</div>
 					<div class="rh-jogador__bloco-v">{{ $buyin ? Dinheiro::brl($buyin->valor) : '—' }}</div>
 				</div>
-				@if ($rebuys->isNotEmpty() || isset($botoes['rebuy']))
+				@if ($rebuys->isNotEmpty() || isset($botoes['rebuy']) || ($botoes['buyin']['tipo'] ?? null) === TipoItem::Rebuy)
 					<div class="rh-jogador__bloco">
 						<span class="rh-chip rh-chip--r rh-chip--lg">R</span>
 						<div class="rh-jogador__bloco-t">
 							<div class="rh-label">{{ $torneio ? 'Rebuys' : 'Recompras' }} · {{ $rebuys->count() }}</div>
-							<div class="rh-small rh-muted">{{ $rebuys->isNotEmpty() ? $fichas($rebuys->sum('fichas')) : 'Nenhum' }}</div>
+							<div class="rh-small rh-muted">{{ $rebuys->isNotEmpty() ? $hora($rebuys) : 'Nenhum' }}</div>
 						</div>
 						<div class="rh-jogador__bloco-v">{{ $rebuys->isNotEmpty() ? Dinheiro::brlCentavos($centavos($rebuys)) : '—' }}</div>
 					</div>
@@ -105,7 +111,7 @@
 						<span class="rh-chip rh-chip--a rh-chip--lg">A</span>
 						<div class="rh-jogador__bloco-t">
 							<div class="rh-label">Add-on{{ $addons->count() > 1 ? ' · '.$addons->count() : '' }}</div>
-							<div class="rh-small rh-muted">{{ $addons->isNotEmpty() ? $fichas($addons->sum('fichas')) : 'Nenhum' }}</div>
+							<div class="rh-small rh-muted">{{ $addons->isNotEmpty() ? $hora($addons) : 'Nenhum' }}</div>
 						</div>
 						<div class="rh-jogador__bloco-v">{{ $addons->isNotEmpty() ? Dinheiro::brlCentavos($centavos($addons)) : '—' }}</div>
 					</div>
@@ -172,6 +178,8 @@
 
 							@if ($podeDesfazer && $acao->is($ultima))
 								<button type="button" class="rh-btn rh-btn--ghost rh-btn--sm" wire:click="abrirDesfazer">@svg('rh-undo') Desfazer</button>
+							@elseif ($corrigePagamento && $acao instanceof Pagamento && $acao->acerto_id === null)
+								<button type="button" class="rh-btn rh-btn--ghost rh-btn--sm" wire:click="abrirDesfazerPagamento({{ $acao->id }})">@svg('rh-undo') Desfazer</button>
 							@endif
 						</div>
 					@empty
@@ -221,7 +229,7 @@
 				<form class="rh-modal" style="max-width:460px" wire:submit="confirmarEntrada" role="dialog" aria-modal="true" aria-labelledby="entrada-titulo">
 					<div class="rh-modal__hd">
 						<div>
-							<div class="rh-label">{{ $tipoAtual === TipoItem::Buyin ? 'Novo buy-in' : 'Registrar '.mb_strtolower($nomeDaEntrada) }} · {{ $nome }}</div>
+							<div class="rh-label">{{ match (true) { $tipoAtual === TipoItem::Buyin => 'Novo buy-in', $participante->status === StatusParticipante::Eliminado => 'Volta ao jogo', default => 'Registrar '.mb_strtolower($nomeDaEntrada) } }} · {{ $nome }}</div>
 							<h2 class="rh-heading" id="entrada-titulo" style="font-size:24px">{{ $opcoes->count() > 1 ? 'Escolha o tipo' : $nomeDaEntrada }}</h2>
 						</div>
 						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharModal" aria-label="Fechar">@svg('rh-x')</button>
@@ -304,7 +312,7 @@
 						<div class="rh-field">
 							<span class="rh-field__label">Forma</span>
 							<div class="rh-seg rh-jogador__seg" role="group" aria-label="Forma de pagamento">
-								@foreach (FormaPagamento::cases() as $opcao)
+								@foreach (FormaPagamento::disponiveis() as $opcao)
 									<button type="button" wire:click="$set('forma', '{{ $opcao->value }}')" aria-pressed="{{ $forma === $opcao->value ? 'true' : 'false' }}">{{ $opcao->label() }}</button>
 								@endforeach
 							</div>
@@ -324,9 +332,9 @@
 				@php
 					$premioDaPosicao = $previsaoPosicao ? $jogo->premiacoes()->where('posicao', $previsaoPosicao)->value('valor') : null;
 					$explicacao = match (true) {
-						$jogo->fase === FaseTorneio::Rebuys => "Provisória: {$nome} pode voltar com rebuy até encerrar os rebuys.",
+						$jogo->entradasAbertas() => "Provisória: {$nome} pode voltar com rebuy, agora ou no intervalo, até fechar as entradas.",
 						$previsaoPosicao !== null => "Definitiva: {$nome} fica em {$previsaoPosicao}º".($premioDaPosicao ? ' e leva '.Dinheiro::brl($premioDaPosicao) : '').'.',
-						default => 'Definitiva: a posição sai ao fechar as entradas',
+						default => 'Definitiva',
 					};
 				@endphp
 				<form class="rh-modal" style="max-width:400px" wire:submit="confirmarEliminacao" role="dialog" aria-modal="true" aria-labelledby="eliminacao-titulo">
@@ -414,10 +422,36 @@
 					</div>
 					<div class="rh-modal__ft">
 						<button type="button" class="rh-btn rh-btn--lg" wire:click="fecharModal">VOLTAR</button>
-						<button type="submit" class="rh-btn rh-btn--danger rh-btn--lg" wire:loading.attr="disabled">@svg('rh-undo') DESFAZER</button>
-					</div>
-				</form>
-			@endif
+							<button type="submit" class="rh-btn rh-btn--danger rh-btn--lg" wire:loading.attr="disabled">@svg('rh-undo') DESFAZER</button>
+						</div>
+					</form>
+				@elseif ($modal === 'desfazerPagamento' && ($desfazendo = $historico->first(fn ($a) => $a instanceof Pagamento && $a->id === $pagamentoId)))
+					<form class="rh-modal" style="max-width:420px" wire:submit="confirmarDesfazerPagamento" role="dialog" aria-modal="true" aria-labelledby="desfazer-pagamento-titulo">
+						<div class="rh-modal__hd">
+							<div>
+								<div class="rh-label">Correção · {{ $nome }}</div>
+								<h2 class="rh-heading" id="desfazer-pagamento-titulo" style="font-size:24px">{{ $this->descrever($desfazendo) }}</h2>
+							</div>
+							<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharModal" aria-label="Fechar">@svg('rh-x')</button>
+						</div>
+						<div class="rh-modal__bd rh-col" style="gap:12px">
+							@if ($erro)
+								<div class="rh-warn" role="alert">@svg('rh-alert')<div>{{ $erro }}</div></div>
+							@endif
+							<div class="rh-small rh-muted">
+								Lançado em {{ $desfazendo->created_at->format('d/m H:i') }}. O jogo já foi finalizado: o pagamento fica cancelado, os acertos em aberto são refeitos e a correção fica no histórico, com o motivo.
+							</div>
+							<label class="rh-field">
+								<span class="rh-field__label">Motivo</span>
+								<input class="rh-input" wire:model="motivo" maxlength="255" autocomplete="off" placeholder="Ex.: lançado em dobro" x-init="$nextTick(() => $el.focus())">
+							</label>
+						</div>
+						<div class="rh-modal__ft">
+							<button type="button" class="rh-btn rh-btn--lg" wire:click="fecharModal">VOLTAR</button>
+							<button type="submit" class="rh-btn rh-btn--danger rh-btn--lg" wire:loading.attr="disabled">@svg('rh-undo') DESFAZER</button>
+						</div>
+					</form>
+				@endif
 		</div>
 	@endif
 </div>

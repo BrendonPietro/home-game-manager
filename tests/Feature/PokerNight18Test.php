@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Enums\DestinoItem;
 use App\Enums\FaseTorneio;
 use App\Enums\StatusJogo;
 use App\Enums\StatusParticipante;
@@ -68,13 +67,13 @@ class PokerNight18Test extends TestCase
         $this->assertSame(4, $entradas->where('tipo', TipoItem::Addon)->count());
 
         $arrecadacao = $entradas->sum(fn (Entrada $e) => Dinheiro::centavos($e->valor));
-        $premiacaoBruta = $entradas->sum(fn (Entrada $e) => intdiv(Dinheiro::centavos($e->valor) * $e->destino->percentual(), 100));
+        $premiacaoBruta = $entradas->sum(fn (Entrada $e) => intdiv(Dinheiro::centavos($e->valor) * Dinheiro::centavos($e->percentual_premiacao), 10000));
         $taxas = intdiv($premiacaoBruta * 10, 100); // "Casa" 10%
         $prizePool = $premiacaoBruta - $taxas;
 
         $this->assertSame(210000, $arrecadacao);
         $this->assertSame(210000, $premiacaoBruta);
-        $this->assertTrue($entradas->every(fn (Entrada $e) => $e->destino === DestinoItem::Premiacao));
+        $this->assertTrue($entradas->every(fn (Entrada $e) => $e->percentual_premiacao === '100.00'));
         $this->assertSame(21000, $taxas);
         $this->assertSame(189000, $prizePool);
 

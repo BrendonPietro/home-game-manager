@@ -34,34 +34,45 @@ Nenhuma das duas portas grava entradas, pagamentos ou muda status direto no mode
 ```
 app/
 ├── Actions/Agenda/             # SalvarEvento (aluguel, reserva, bloqueio)
-├── Actions/Jogo/               # RegistrarEntrada, RegistrarPagamento, RegistrarEliminacao, RegistrarCashOut,
-│                               # TrocarLugar, DesfazerAcao, EncerrarRebuys, FecharEntradas, FinalizarJogo, CriarDeModelo,
-│                               # ControlarRelogio (v2)
-├── Enums/                      # Modalidade, StatusJogo, FaseTorneio, TipoItem, DestinoItem, CalculoTaxa, MetodoPremiacao, Periodicidade,
-│                               # DirecaoPagamento, FormaPagamento, StatusParticipante, TipoEvento, StatusAluguel, ComandoRelogio
+├── Actions/Jogo/               # Lista e mesas: ConfirmarJogador, DesconfirmarJogador, CadastrarJogadorRapido, SortearLugares,
+│                               #   AjustarMesa, AdicionarMesa, RemoverMesa, TrocarLugar (sentar é entrar no torneio)
+│                               # Status e fases: AgendarJogo, CancelarJogo, IniciarJogo, AbrirIntervalo, FecharEntradas,
+│                               #   DefinirResultado, FinalizarJogo, CriarDeModelo
+│                               # Caixa: RegistrarEntrada, RegistrarPagamento, RegistrarEliminacao, RegistrarCashOut, MarcarAcerto
+│                               # Correções (com motivo e histórico): DesfazerAcao, VoltarFase, DesfazerPagamento, DesfazerAcerto
+│                               # Relógio: AtualizarNivel, ControlarRelogio, DispararAviso, TrocarLinkDoRelogio
+│                               # Concerns/ChecaRegras (permitir, permitirNosDois, exigirStatus)
+├── Enums/                      # Modalidade, StatusJogo, FaseTorneio, TipoItem, CalculoTaxa, MetodoPremiacao, Periodicidade,
+│                               # DirecaoPagamento, FormaPagamento, StatusParticipante, TipoEvento, StatusAluguel, ComandoRelogio,
+│                               # TipoAlteracao (histórico)
 ├── Filament/
 │   ├── Pages/                  # Dashboard (tela 16), Calendario, Relatorios, Configuracoes
 │   ├── Schemas/                # EventoForm (calendário e aluguéis)
-│   ├── Resources/              # Jogo, Modelo, EstruturaBlinds, Ranking, Usuario, Seguranca, Grupo, Mesa, Aluguel, Temporada
+│   ├── Resources/              # Jogo (abas Confirmados e Histórico), Modelo, EstruturaBlinds, Ranking, Usuario, Seguranca,
+│   │                           # Grupo, Mesa, Aluguel, Temporada
 │   └── Widgets/                # VisaoGeral, Proximos, GraficoDeBarras (Arrecadacao/PrizePool/JogadoresPorJogo, JogosPorMes)
-├── Helpers/                    # DateHelper, ViewHelper
 ├── Http/
-│   ├── Controllers/            # AuthController, HomeController, JogoController; Painel/ImprimirRelatorio (PDF)
-│   └── Middleware/             # GlobalConfig, JogoEtapa
-├── Livewire/Jogo/              # Jogadores, Mesas, AoVivo, AcoesJogador, Resumo, Resultado, Fechamento, Tv (v2)
+│   ├── Controllers/            # AuthController, HomeController, JogoController, RelogioPublicoController (link do relógio);
+│   │                           # Painel/ImprimirRelatorio (PDF)
+│   └── Middleware/             # JogoEtapa, AcessoDoSite (site.acesso)
+├── Livewire/Jogo/              # Jogadores, Mesas, AoVivo, AcoesJogador, Resumo, Resultado, Fechamento, ControleDoRelogio
+│                               # Concerns/EscolheQuemSenta (lugar vazio: quem senta, telas 06 e 07)
 ├── Models/                     # Seguranca, Usuario, Grupo, Permissao, Mesa, Temporada, Ranking, RankingPontuacao, RankingPonto,
 │                               # Configuracao, RegraPremiacao, Jogo, Item, Taxa, Premiacao, JogoMesa,
-│                               # Participante, Entrada, Pagamento, Eliminacao, Acerto, Evento, Aluguel, EstruturaBlinds, EstruturaNivel
+│                               # Participante, Entrada, Pagamento, Eliminacao, Acerto, Alteracao (histórico), Evento, Aluguel,
+│                               # EstruturaBlinds, EstruturaNivel
 │                               # Concerns/Cancelavel (scopes validas/canceladas)
 ├── Policies/                   # uma por model, consultando as permissões
 ├── Providers/Filament/PainelPanelProvider.php
 ├── Services/
 │   ├── Agenda/                 # Conflitos (mesa ocupada no horário)
-│   ├── Jogo/                   # Calculadora, Saldos, Posicoes, Acertos, EventoDoJogo, CopiaDoJogo, Relogio + EstadoDoRelogio (v2)
+│   ├── Jogo/                   # Calculadora, Saldos, Posicoes, Acertos, Historico, Entradas, EventoDoJogo, CopiaDoJogo,
+│   │                           # Relogio + EstadoDoRelogio
 │   ├── Painel/                 # Indicadores (números do dashboard)
 │   ├── Relatorios/             # Relatorios, Filtro, Relatorio, Coluna, Exportacao (CSV e Excel)
 │   └── Ranking/                # Pontuacao
-├── Support/                    # Dinheiro, Datas, EtapaDoJogo, PadroesDoJogo (padrões das Configurações), Permissoes (nomes e "não dá o que não tem")
+├── Support/                    # Dinheiro, Datas, EtapaDoJogo, PadroesDoJogo (padrões das Configurações), Permissoes (nomes e
+│                               # "não dá o que não tem"), ArredondarPremios, GeradorDeNiveis, PosicoesDaMesa
 └── View/Components/Site/       # App, Operacao
 
 resources/
@@ -92,6 +103,7 @@ Tudo atrás de `auth` (guard `web`, tabela `usuarios`) e das permissões do site
 | Tela | Rota | Nome | Implementação |
 |---|---|---|---|
 | 01 Login | `GET/POST /login`, `POST /logout` | `login`, `logout` | `AuthController` (e-mail e senha; `guest:web` / `auth:web`) |
+| Sem torneio | `GET /sem-torneio` | `sem-torneio` | Página sem login para onde vai quem não tem `site.fora_da_noite` quando não há jogo em andamento |
 | 02 Dashboard | `GET /` | `home` | `HomeController@index` (jogo ao vivo ou próximo agendado com prize pool real/estimado, números, últimos finalizados, agenda, última noite) |
 | 03 Seleção do jogo | `GET /jogos` | `jogos.index` | `JogoController@index` (abas Próximos / Em andamento / Finalizados, busca `?busca=`, destaque do jogo ao vivo ou de hoje) |
 | 04 Conferência | `GET /jogos/{jogo}/conferencia` | `jogos.conferencia` | `JogoController@conferencia` |

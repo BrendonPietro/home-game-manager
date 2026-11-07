@@ -48,8 +48,9 @@ class ResumoTest extends TestCase
             ->assertSeeInOrder(['Jogadores devem ao caixa', 'R$ 2.100', 'Caixa deve aos jogadores', 'R$ 0', 'Entrou no caixa', 'R$ 0'])
             // Maior total primeiro; no empate, pelo nome.
             ->assertSeeInOrder(['Brendon', 'Carlos', 'Marcão', 'André', 'Lucas', 'Pedro', 'Rafael', 'João', 'Bruno', 'Diego', 'Felipe', 'Thiago'])
-            ->assertSeeInOrder(['Rafael', 'Mesa 01 · 5', 'Buy-in duplo', '20.000', 'R$ 200', 'deve R$ 200'])
-            ->assertSeeInOrder(['12 jogadores', '6', '4', '230.000', 'R$ 2.100']);
+            ->assertSeeInOrder(['Rafael', 'Mesa 01 · 5', 'Buy-in duplo', 'R$ 200', 'deve R$ 200'])
+            ->assertSeeInOrder(['12 jogadores', '6', '4', 'R$ 2.100'])
+            ->assertDontSee('230.000'); // fichas não se somam por jogador
     }
 
     public function test_filtra_por_mesa_e_por_pendencia(): void
@@ -101,6 +102,7 @@ class ResumoTest extends TestCase
     public function test_jogo_agendado_vai_para_a_conferencia(): void
     {
         $agendado = Jogo::factory()->agendado()->create();
+        $this->actingAs($this->admin, 'web');
 
         $this->get(route('jogos.resumo', $agendado))->assertRedirect(route('jogos.conferencia', $agendado));
     }

@@ -22,12 +22,12 @@ Menu (via `navigationSort`): Dashboard, Calendário, Jogos, Modelos, Blinds (45)
 
 | Resource | Destaques |
 |---|---|
-| `JogoResource` | Modalidade (torneio / cash game) no topo. Abas: Informações · Blinds (só torneio: estrutura de blinds e os níveis dela) · Dinheiro (Entradas: buy-in, rebuy e add-on padrão com **+** para variações; Opcionais com destino Não vai / Vai / 50-50; Taxas; simulação do prize pool ao lado) · Premiação (só torneio; valida soma 100%) · Rankings (select múltiplo) · Mesas (dealer por mesa, floor do jogo). Ações: Abrir (site), Duplicar, Salvar como modelo, Ver. Somente leitura quando `finalizado` |
+| `JogoResource` | Modalidade (torneio / cash game) no topo. Abas: Informações · Blinds (só torneio: estrutura de blinds e os níveis dela) · Dinheiro (Entradas: buy-in, rebuy e add-on padrão com **+** para variações; Opcionais; em cada linha, quanto vai para a premiação (100 / 50 / 0 % ou Outro, digitado); Taxas; simulação do prize pool ao lado) · Premiação (só torneio; valida soma 100%) · Rankings (select múltiplo) · Mesas (dealer por mesa, floor do jogo). Ações: Abrir (site), Duplicar, Salvar como modelo, Ver. Somente leitura quando `finalizado` |
 
 **Jogos, como está (fase 1):**
 - Lista só com jogos reais (modelos ficam no `ModeloResource`), com data, modalidade, status, jogadores e arrecadação.
 - Entradas em três tabelas (Buy-in, Rebuy, Add-on). A linha padrão de cada uma não se apaga, só se desativa; linha desativada não precisa de valor. Cash game não tem add-on e pede o valor da ficha.
-- Opcionais com compra "junto de cada entrada" ou "1 por jogador" e destino Não vai / Vai / 50-50. Taxas com os cinco cálculos (valor fixo, %, valor × quantidade, por jogador, por entrada).
+- Opcionais com compra "junto de cada entrada" ou "1 por jogador" e quanto vai para a premiação: atalhos 100 / 50 / 0 % e Outro (ex.: 75%), também nas entradas (`JogoForm::camposDaPremiacao`, gravado em `percentual_premiacao`). Taxas com os cinco cálculos (valor fixo, %, valor × quantidade, por jogador, por entrada).
 - Premiação: "pela regra do clube" (percentuais definidos ao fechar entradas, pelo número de jogadores) ou manual (percentuais na ordem das posições, somando 100%).
 - Mesas: mesa ativa, dealer e lugares; mesa com jogador sentado não sai da lista.
 - Blinds (v2): a estrutura de blinds do torneio, com a descrição e a tabela dos níveis logo abaixo do select. Sem estrutura, nível e blinds são digitados na noite. A aba some no cash game (e o `Jogo` limpa a estrutura ao salvar).

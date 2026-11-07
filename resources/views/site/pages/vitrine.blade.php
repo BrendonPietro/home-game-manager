@@ -127,7 +127,7 @@
 			</div>
 			<div class="rh-row">
 				<button class="rh-btn rh-btn--primary rh-btn--lg">Iniciar jogo</button>
-				<button class="rh-btn rh-btn--lg">Encerrar rebuys</button>
+				<button class="rh-btn rh-btn--lg">Abrir intervalo</button>
 			</div>
 			<div class="rh-grid rh-grid--3">
 				<button class="rh-action">

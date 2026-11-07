@@ -17,7 +17,7 @@ class Permissoes
         'jogos' => 'Jogos', 'modelos' => 'Modelos', 'estruturas' => 'Blinds', 'rankings' => 'Rankings', 'usuarios' => 'Usuários',
         'seguranca' => 'Contas do painel', 'grupos' => 'Grupos', 'mesas' => 'Mesas', 'eventos' => 'Agenda',
         'alugueis' => 'Aluguéis', 'temporadas' => 'Temporadas', 'relatorios' => 'Relatórios',
-        'financeiro' => 'Financeiro', 'configuracoes' => 'Configurações',
+        'financeiro' => 'Financeiro', 'configuracoes' => 'Configurações', 'pagamentos' => 'Pagamentos',
     ];
 
     private const SITE = [
@@ -31,9 +31,11 @@ class Permissoes
         'relogio.controlar' => 'Controlar o relógio',
         'jogo.finalizar' => 'Finalizar o jogo',
         'acoes.desfazer' => 'Desfazer ações',
+        'jogo.corrigir' => 'Corrigir a noite (voltar fase, desfazer depois de finalizar)',
         'estrutura.editar' => 'Alterar entradas e opcionais no jogo',
         'taxas.editar' => 'Alterar taxas no jogo',
         'financeiro.ver' => 'Ver o financeiro',
+        'site.fora_da_noite' => 'Usar o site sem jogo em andamento',
     ];
 
     /** "Jogos · ver", "Lançar entradas" */

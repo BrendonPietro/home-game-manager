@@ -2,25 +2,27 @@
 
 namespace App\Actions\Jogo;
 
+use App\Actions\Jogo\Concerns\ChecaRegras;
 use App\Enums\StatusJogo;
 use App\Exceptions\RegraDoJogo;
 use App\Models\Jogo;
 use App\Models\Participante;
+use App\Models\Seguranca;
 use App\Models\Usuario;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Põe um jogador na lista da noite (participante "confirmado", ainda sem lugar).
  * Vale antes de começar e durante o jogo (quem chega atrasado). Confirmar de novo não duplica.
+ * No site pede `jogadores.confirmar`; no painel (pré-torneio), `jogos.editar`.
  */
 class ConfirmarJogador
 {
-    public function __invoke(Jogo $jogo, Usuario $jogador, Usuario $quem): Participante
+    use ChecaRegras;
+
+    public function __invoke(Jogo $jogo, Usuario $jogador, Usuario|Seguranca $quem): Participante
     {
-        if (! $quem->can('jogadores.confirmar')) {
-            throw new AuthorizationException('Você não tem permissão para confirmar jogadores.');
-        }
+        $this->permitirNosDois($quem, 'jogadores.confirmar', 'jogos.editar', 'Você não tem permissão para confirmar jogadores.');
 
         return DB::transaction(function () use ($jogo, $jogador) {
             $jogo = Jogo::query()->lockForUpdate()->findOrFail($jogo->id);

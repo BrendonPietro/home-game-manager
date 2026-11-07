@@ -21,11 +21,13 @@ class Pagamento extends Model
         'uuid',
         'jogo_id',
         'participante_id',
+        'acerto_id', // pagamento gerado por um acerto feito (desfaz junto com ele)
         'direcao',
         'valor',
         'forma',
         'observacao',
         'registrado_por',
+        'registrado_no_painel_por', // pagamento lançado pelo painel (pré-torneio)
     ];
 
     protected function casts(): array
@@ -51,6 +53,12 @@ class Pagamento extends Model
     public function registradoPor(): BelongsTo
     {
         return $this->belongsTo(Usuario::class, 'registrado_por')->withTrashed();
+    }
+
+    /** Acerto feito que gerou este pagamento (nulo nos lançados à mão). */
+    public function acerto(): BelongsTo
+    {
+        return $this->belongsTo(Acerto::class);
     }
 
     public function canceladoPor(): BelongsTo

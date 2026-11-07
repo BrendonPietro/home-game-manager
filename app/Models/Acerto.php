@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /** "Quem paga quem" sugerido no fechamento. Participante nulo = o caixa. */
 class Acerto extends Model
@@ -41,5 +42,11 @@ class Acerto extends Model
     public function para(): BelongsTo
     {
         return $this->belongsTo(Participante::class, 'para_participante_id');
+    }
+
+    /** Os pagamentos que o FEITO gerou (quem pagou e quem recebeu). */
+    public function pagamentos(): HasMany
+    {
+        return $this->hasMany(Pagamento::class);
     }
 }

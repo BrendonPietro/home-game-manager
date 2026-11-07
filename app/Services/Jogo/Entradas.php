@@ -22,7 +22,6 @@ class Entradas
                 rebuys: $doJogador->filter(fn (Entrada $e) => $e->tipo === TipoItem::Rebuy)->count(),
                 addons: $doJogador->filter(fn (Entrada $e) => $e->tipo === TipoItem::Addon)->count(),
                 opcionais: $doJogador->filter(fn (Entrada $e) => $e->tipo === TipoItem::Opcional)->count(),
-                fichas: $doJogador->sum('fichas'),
                 total: $doJogador->sum(fn (Entrada $e) => Dinheiro::centavos($e->valor)),
             ));
     }

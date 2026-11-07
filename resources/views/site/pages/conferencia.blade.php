@@ -1,6 +1,5 @@
 {{-- Tela 04: conferência da estrutura (docs/prototipo, tela 04). Tudo vem do cadastro no painel. --}}
 @php
-	use App\Enums\DestinoItem;
 	use App\Enums\MetodoPremiacao;
 	use App\Enums\TipoItem;
 	use App\Models\EstruturaBlinds;
@@ -47,7 +46,7 @@
 				</div>
 				@forelse ($doTipo(TipoItem::Buyin)->where('ativo', true) as $item)
 					<x-site.props.linha-item :ficha="$jogo->fichaDoBuyin($item)" :titulo="$item->nome" :fichas="$item->fichas" :valor="$item->valor">
-						{{ $item->is($padrao) ? 'Entrada padrão' : 'Conta como 1 entrada' }} · {{ $limite($item) }}
+						{{ $item->is($padrao) ? 'Entrada padrão' : 'Conta como 1 entrada' }} · {{ $limite($item) }}{{ Dinheiro::centavos($item->percentual_premiacao) < 10000 ? ' · '.$item->textoDaPremiacao() : '' }}
 					</x-site.props.linha-item>
 				@empty
 					<div class="rh-panel__bd rh-neg">Nenhum buy-in ativo: ajuste no painel antes de começar</div>
@@ -59,7 +58,7 @@
 				@foreach ($doTipo(TipoItem::Rebuy) as $item)
 					<x-site.props.linha-item ficha="R" cor="r" :titulo="$item->nome" :fichas="$item->fichas" :valor="$item->valor" :desativado="! $item->ativo">
 						@if ($item->ativo)
-							<span class="rh-pos" style="font-weight:500">Disponível</span> · {{ $limite($item) }}{{ $torneio ? ', até encerrar rebuys' : '' }}
+							<span class="rh-pos" style="font-weight:500">Disponível</span> · {{ $limite($item) }}{{ $torneio ? ', até fechar as entradas (também no intervalo)' : '' }}
 						@else
 							Não tem {{ $torneio ? 'rebuy' : 'recompra' }} neste jogo
 						@endif
@@ -87,7 +86,7 @@
 					@foreach ($doTipo(TipoItem::Opcional)->where('ativo', true) as $item)
 						<x-site.props.linha-item :titulo="$item->nome" :fichas="$item->fichas" :valor="$item->valor">
 							{{ $item->porJogador() ? '1 por jogador' : 'Junto de cada entrada' }}
-							· {{ match ($item->destino) { DestinoItem::Premiacao => 'vai para a premiação', DestinoItem::Metade => '50/50 na premiação', DestinoItem::Fora => 'não vai para a premiação' } }}
+							· {{ $item->textoDaPremiacao() }}
 							@if ($item->obrigatorio) · <b>obrigatório</b>@endif
 						</x-site.props.linha-item>
 					@endforeach

@@ -92,7 +92,7 @@ class ListaDeJogadoresTest extends TestCase
         $buyin = $this->jogo->itens()->where('tipo', TipoItem::Buyin)->first();
         $this->jogo->entradas()->create([
             'uuid' => (string) Str::uuid(), 'participante_id' => $this->jogo->participantes()->sole()->id,
-            'jogo_item_id' => $buyin->id, 'tipo' => TipoItem::Buyin, 'valor' => 100, 'destino' => 'premiacao',
+            'jogo_item_id' => $buyin->id, 'tipo' => TipoItem::Buyin, 'valor' => 100, 'percentual_premiacao' => 100,
         ]);
 
         $this->expectException(RegraDoJogo::class);

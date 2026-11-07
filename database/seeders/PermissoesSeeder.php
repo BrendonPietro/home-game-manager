@@ -22,6 +22,7 @@ class PermissoesSeeder extends Seeder
 
     public const EXTRAS_PAINEL = [
         'relatorios.ver', 'relatorios.exportar', 'financeiro.ver', 'configuracoes.editar',
+        'pagamentos.registrar', // pagamento antecipado no pré-torneio (lista de confirmados do jogo)
     ];
 
     public const SITE_OPERADOR = [
@@ -38,9 +39,11 @@ class PermissoesSeeder extends Seeder
         'relogio.controlar', // v2: relógio do torneio com estrutura de blinds
         'jogo.finalizar',
         'acoes.desfazer',
+        'jogo.corrigir', // voltar fase e desfazer pagamento/acerto depois de finalizar (fica no histórico)
         'estrutura.editar', // entradas e opcionais durante o jogo
         'taxas.editar',
         'financeiro.ver',
+        'site.fora_da_noite', // sem ela (Operador), o site só abre com um jogo em andamento
     ];
 
     public function run(): void

@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Enums\DestinoItem;
 use App\Enums\DirecaoPagamento;
 use App\Enums\FormaPagamento;
 use App\Enums\StatusJogo;
@@ -79,11 +78,11 @@ class ModeloDeDadosTest extends TestCase
         $jogo->itens()->create(['tipo' => TipoItem::Rebuy, 'nome' => 'Rebuy duplo', 'valor' => 200, 'fichas' => 40000]);
         $opcional = $jogo->itens()->create([
             'tipo' => TipoItem::Opcional, 'nome' => 'Opcional', 'valor' => 10, 'fichas' => 20000,
-            'destino' => DestinoItem::Metade, 'compravel_com' => ['buyin', 'rebuy', 'addon'],
+            'percentual_premiacao' => 50, 'compravel_com' => ['buyin', 'rebuy', 'addon'],
         ]);
         $churrasco = $jogo->itens()->create([
             'tipo' => TipoItem::Opcional, 'nome' => 'Churrasco', 'valor' => 30, 'fichas' => 20000,
-            'destino' => DestinoItem::Fora, 'compravel_com' => [Item::COMPRAVEL_POR_JOGADOR],
+            'percentual_premiacao' => 0, 'compravel_com' => [Item::COMPRAVEL_POR_JOGADOR],
         ]);
         $jogo->taxas()->createMany([
             ['nome' => 'Casa', 'calculo' => 'fixo', 'valor' => 190],
@@ -94,11 +93,13 @@ class ModeloDeDadosTest extends TestCase
         $this->assertCount(2, $jogo->opcionais()->get());
         $this->assertTrue($opcional->compravelCom(TipoItem::Rebuy));
         $this->assertTrue($churrasco->porJogador());
-        $this->assertSame(50, $opcional->destino->percentual());
+        $this->assertSame('50.00', $opcional->percentual_premiacao);
+        $this->assertSame('50% na premiação', $opcional->textoDaPremiacao());
 
-        // Entrada nunca muda de destino, mesmo que alguém tente.
-        $rebuy = $jogo->itens()->create(['tipo' => TipoItem::Rebuy, 'nome' => 'X', 'valor' => 1, 'destino' => DestinoItem::Fora]);
-        $this->assertSame(DestinoItem::Premiacao, $rebuy->fresh()->destino);
+        // Entrada também escolhe o percentual (100% quando não diz), e nunca é obrigatória nem vai junto.
+        $rebuy = $jogo->itens()->create(['tipo' => TipoItem::Rebuy, 'nome' => 'X', 'valor' => 1, 'percentual_premiacao' => 75, 'obrigatorio' => true]);
+        $this->assertSame(['75.00', false], [$rebuy->fresh()->percentual_premiacao, $rebuy->fresh()->obrigatorio]);
+        $this->assertSame('100.00', $jogo->itens()->create(['tipo' => TipoItem::Buyin, 'nome' => 'Y', 'valor' => 1])->fresh()->percentual_premiacao);
 
         // Mesa, participante, entrada com opcional vinculado, pagamento.
         $jogoMesa = $jogo->mesas()->create(['mesa_id' => Mesa::factory()->create()->id, 'lugares' => 9]);
@@ -165,7 +166,7 @@ class ModeloDeDadosTest extends TestCase
             'tipo' => $item->tipo,
             'valor' => $item->valor,
             'fichas' => $item->fichas,
-            'destino' => $item->destino,
+            'percentual_premiacao' => $item->percentual_premiacao,
             'vinculada_a' => $vinculadaA?->id,
         ]);
     }

@@ -5,14 +5,15 @@ namespace App\Actions\Jogo;
 use App\Actions\Jogo\Concerns\ChecaRegras;
 use App\Enums\FaseTorneio;
 use App\Enums\StatusJogo;
+use App\Enums\TipoAlteracao;
 use App\Enums\TipoItem;
 use App\Exceptions\RegraDoJogo;
 use App\Models\Jogo;
 use App\Models\Participante;
 use App\Models\Usuario;
 use App\Services\Jogo\Acertos;
+use App\Services\Jogo\Historico;
 use App\Services\Ranking\Pontuacao;
-use App\Support\Dinheiro;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -27,13 +28,14 @@ class FinalizarJogo
     public function __construct(
         private Acertos $acertos,
         private Pontuacao $pontuacao,
+        private Historico $historico,
     ) {}
 
     public function __invoke(Jogo $jogo, Usuario $quem): Jogo
     {
         $this->permitir($quem, 'jogo.finalizar', 'Só o Admin do site finaliza o jogo.');
 
-        return DB::transaction(function () use ($jogo) {
+        return DB::transaction(function () use ($jogo, $quem) {
             $jogo = Jogo::query()->lockForUpdate()->findOrFail($jogo->id);
             $this->exigirStatus($jogo, [StatusJogo::EmAndamento], 'Só jogo em andamento pode ser finalizado.');
 
@@ -64,17 +66,10 @@ class FinalizarJogo
 
             $jogo->forceFill(['status' => StatusJogo::Finalizado, 'finalizado_em' => now()])->save();
 
-            $jogo->acertos()->delete();
-
-            foreach ($this->acertos->sugerir($jogo) as $transferencia) {
-                $jogo->acertos()->create([
-                    'de_participante_id' => $transferencia->de,
-                    'para_participante_id' => $transferencia->para,
-                    'valor' => Dinheiro::decimal($transferencia->valor),
-                ]);
-            }
-
+            $this->acertos->refazerEmAberto($jogo);
             $this->pontuacao->gravar($jogo);
+
+            $this->historico->registrar($jogo, $quem, TipoAlteracao::Finalizou, 'Finalizou o jogo ('.$jogaram->count().' jogadores, '.$jogo->acertos()->count().' acertos)');
 
             return $jogo;
         });

@@ -3,6 +3,7 @@
 namespace App\Services\Jogo;
 
 use App\Models\Jogo;
+use App\Support\Dinheiro;
 
 /**
  * Sugestão de "quem paga quem" no fechamento (docs/regras.md, "Fechamento e acertos").
@@ -13,12 +14,32 @@ use App\Models\Jogo;
  *
  * 1. Primeiro, um devedor (ou dois, ou três) que fecha exatamente o saldo de um credor.
  * 2. Depois, guloso: o maior devedor paga o maior credor até zerar um dos dois.
+ *
+ * Depois de finalizar, os acertos ainda não feitos acompanham os saldos (`refazerEmAberto`): um
+ * pagamento lançado pelo painel do jogador refaz a lista, e o mesmo dinheiro não é cobrado duas vezes.
  */
 class Acertos
 {
     private const CASA = 'casa';
 
     public function __construct(private Saldos $saldos) {}
+
+    /**
+     * Troca os acertos não feitos pela sugestão sobre os saldos de agora (os feitos ficam como
+     * histórico: já viraram pagamentos). Chame com a linha do jogo travada.
+     */
+    public function refazerEmAberto(Jogo $jogo): void
+    {
+        $jogo->acertos()->where('pago', false)->delete();
+
+        foreach ($this->sugerir($jogo) as $transferencia) {
+            $jogo->acertos()->create([
+                'de_participante_id' => $transferencia->de,
+                'para_participante_id' => $transferencia->para,
+                'valor' => Dinheiro::decimal($transferencia->valor),
+            ]);
+        }
+    }
 
     /** @return list<Transferencia> */
     public function sugerir(Jogo $jogo): array

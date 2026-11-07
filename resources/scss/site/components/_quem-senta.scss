@@ -1,0 +1,14 @@
+// ============================================================================
+// Quem senta no lugar vazio (telas 06 e 07): lista de confirmados, cadastro e jogador novo.
+// A lista pode ser longa: o modal rola dentro da janela.
+// ============================================================================
+
+.rh-quem-senta {
+	max-height: calc(100dvh - 32px);
+	overflow: auto;
+
+	&__novo {
+		padding-top: 16px;
+		border-top: 1px solid var(--line-100);
+	}
+}

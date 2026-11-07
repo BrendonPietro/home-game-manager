@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Site;
 
+use App\Actions\Jogo\AbrirIntervalo;
 use App\Enums\FaseTorneio;
 use App\Enums\TipoItem;
 use App\Livewire\Jogo\AoVivo;
@@ -50,7 +51,7 @@ class FasesAoVivoTest extends TestCase
         $this->assertSame(FaseTorneio::SemEntradas, $noite->fresh()->fase);
     }
 
-    public function test_encerrar_rebuys_avisa_quem_fica_fora_e_o_addon(): void
+    public function test_abrir_intervalo_mostra_o_addon_e_quem_ainda_pode_voltar(): void
     {
         $joao = $this->jogador('João');
         $lucas = $this->jogador('Lucas');
@@ -60,23 +61,51 @@ class FasesAoVivoTest extends TestCase
         $this->eliminar($joao);
 
         $tela = Livewire::test(AoVivo::class, ['jogo' => $this->jogo])
-            ->assertSee('ENCERRAR REBUYS')
+            ->assertSee('ABRIR INTERVALO')
             ->call('abrirFase')
-            ->assertSet('modal', 'encerrar')
+            ->assertSet('modal', 'intervalo')
             ->assertSee('o add-on abre (R$ 100, 1 por jogador);')
-            ->assertSee('João fica eliminado de vez.')
-            ->call('encerrarRebuys')
-            ->assertSee('Rebuys encerrados: o add-on está aberto.')
-            ->assertSeeInOrder(['Fase', 'Intervalo (add-on)'])
+            ->assertSee('o rebuy continua: quem caiu ainda volta;')
+            ->assertSee('(ainda pode voltar)')
+            ->call('abrirIntervalo')
+            ->assertSee('Intervalo aberto: add-on liberado, e quem caiu ainda volta com rebuy até fechar as entradas.')
+            ->assertSeeInOrder(['Fase', 'Intervalo (rebuy e add-on)'])
             ->assertSee('FECHAR ENTRADAS');
 
         $this->assertSame(FaseTorneio::Intervalo, $this->jogo->fresh()->fase);
 
-        // Fechar entradas avisa quem está jogando sem buy-in.
+        // Fechar entradas avisa quem fica fora de vez e quem está jogando sem buy-in.
         $tela->call('abrirFase')
             ->assertSet('modal', 'fechar')
+            ->assertSee('João fica eliminado de vez, na ordem em que caiu;')
             ->assertSee('Sem buy-in:')
             ->assertSee('Zeca. Lance antes de fechar ou fica fora da premiação.');
+    }
+
+    public function test_voltar_a_fase_pela_tela_com_motivo(): void
+    {
+        $this->entrar($this->jogador('João'), TipoItem::Buyin);
+        app(AbrirIntervalo::class)($this->jogo, $this->admin);
+
+        Livewire::test(AoVivo::class, ['jogo' => $this->jogo->fresh()])
+            ->assertSee('Voltar aos rebuys')
+            ->call('abrirVoltarFase')
+            ->assertSet('modal', 'voltar')
+            ->assertSee('o add-on fecha até abrir o intervalo de novo (os já lançados continuam);')
+            ->call('voltarFase')
+            ->assertSee('Diga o motivo para voltar a fase.')
+            ->set('motivoCorrecao', 'Abri cedo')
+            ->call('voltarFase')
+            ->assertSet('modal', null)
+            ->assertSee('De volta à fase de rebuys: o add-on fecha até abrir o intervalo de novo.')
+            ->assertSee('ABRIR INTERVALO');
+
+        $this->assertSame(FaseTorneio::Rebuys, $this->jogo->fresh()->fase);
+
+        // O Operador não vê a correção.
+        app(AbrirIntervalo::class)($this->jogo, $this->admin);
+        $this->actingAs($this->operador, 'web');
+        Livewire::test(AoVivo::class, ['jogo' => $this->jogo->fresh()])->assertDontSee('Voltar aos rebuys');
     }
 
     public function test_nivel_e_blinds_pela_faixa(): void
@@ -110,9 +139,9 @@ class FasesAoVivoTest extends TestCase
         $this->actingAs($this->operador, 'web');
 
         Livewire::test(AoVivo::class, ['jogo' => $this->jogo])
-            ->assertDontSee('ENCERRAR REBUYS')
+            ->assertDontSee('ABRIR INTERVALO')
             ->assertDontSeeHtml('wire:click="abrirNivel"')
-            ->call('encerrarRebuys')
+            ->call('abrirIntervalo')
             ->assertSee('Só o Admin do site muda a fase do torneio.');
 
         $this->assertSame(FaseTorneio::Rebuys, $this->jogo->fresh()->fase);

@@ -18,7 +18,7 @@ class CopiaDoJogo
     private const NAO_COPIA = [
         'nome', 'data', 'horario', 'e_modelo', 'nome_modelo', 'status', 'fase', 'nivel_atual', 'blinds_atual',
         'relogio_nivel_id', 'relogio_segundos', 'relogio_desde', 'relogio_iniciado_em', 'relogio_codigo', 'avisos', 'aviso_em',
-        'iniciado_em', 'rebuys_encerrados_em', 'entradas_fechadas_em', 'finalizado_em',
+        'iniciado_em', 'intervalo_aberto_em', 'entradas_fechadas_em', 'finalizado_em',
     ];
 
     public function __construct(private EventoDoJogo $evento) {}

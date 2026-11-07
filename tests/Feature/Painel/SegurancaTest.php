@@ -87,7 +87,7 @@ class SegurancaTest extends TestCase
 
         $painel = Permissoes::opcoes('painel');
         $this->assertSame(['jogos.ver', 'jogos.criar', 'jogos.editar', 'jogos.excluir', 'modelos.ver'], array_slice(array_keys($painel), 0, 5));
-        $this->assertSame(['relatorios.ver', 'relatorios.exportar', 'financeiro.ver', 'configuracoes.editar'], array_slice(array_keys($painel), -4));
+        $this->assertSame(['relatorios.ver', 'relatorios.exportar', 'financeiro.ver', 'configuracoes.editar', 'pagamentos.registrar'], array_slice(array_keys($painel), -5));
         $this->assertSame(['Jogos · ver', 'Agenda · editar'], [$painel['jogos.ver'], $painel['eventos.editar']]);
         $this->assertSame('Lançar entradas', Permissoes::opcoes('web')['entradas.registrar']);
     }

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\Middleware\AcessoDoSite;
 use App\Models\Seguranca;
 use App\Support\Dinheiro;
 use BladeUI\Icons\Factory;
@@ -9,6 +10,7 @@ use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -35,6 +37,9 @@ class AppServiceProvider extends ServiceProvider
     {
         // @brl($valor) → R$ 1.890 · @brl($valor, true) → +R$ 795 / −R$ 200
         Blade::directive('brl', fn (string $expressao) => '<?php echo e(\\'.Dinheiro::class."::brl({$expressao})); ?>");
+
+        // Cada clique do Livewire passa de novo pela regra de acesso do site (conta ativa, Operador só na noite).
+        Livewire::addPersistentMiddleware([AcessoDoSite::class]);
 
         // Contas do painel: registra o último acesso (inclusive login por "lembrar acesso"),
         // sem mexer no updated_at da conta.

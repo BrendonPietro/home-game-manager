@@ -6,6 +6,7 @@ use App\Actions\Jogo\Concerns\ChecaRegras;
 use App\Enums\FaseTorneio;
 use App\Enums\StatusJogo;
 use App\Enums\StatusParticipante;
+use App\Enums\TipoAlteracao;
 use App\Exceptions\RegraDoJogo;
 use App\Models\Eliminacao;
 use App\Models\Entrada;
@@ -13,6 +14,7 @@ use App\Models\Jogo;
 use App\Models\Pagamento;
 use App\Models\Participante;
 use App\Models\Usuario;
+use App\Services\Jogo\Historico;
 use App\Services\Jogo\Posicoes;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -21,7 +23,7 @@ use Illuminate\Support\Str;
  * Cancela a última ação do jogador (entrada, pagamento ou eliminação), com motivo. Nada é apagado.
  *
  * - Entrada leva junto os opcionais comprados com ela; só até Fechar entradas. Rebuy que trouxe o
- *   jogador de volta devolve a eliminação (definitiva, se os rebuys já acabaram).
+ *   jogador de volta devolve a eliminação (provisória: as entradas ainda estão abertas).
  * - Eliminação: o jogador volta a jogar; com as entradas fechadas, as posições são refeitas.
  * - Cash-out não entra aqui: registrar de novo corrige.
  */
@@ -29,7 +31,7 @@ class DesfazerAcao
 {
     use ChecaRegras;
 
-    public function __construct(private Posicoes $posicoes) {}
+    public function __construct(private Posicoes $posicoes, private Historico $historico) {}
 
     /** @return string o que foi desfeito, para mostrar na tela */
     public function __invoke(Participante $participante, string $motivo, Usuario $quem): string
@@ -50,11 +52,18 @@ class DesfazerAcao
             $acao = $this->ultimaAcao($participante)
                 ?? throw new RegraDoJogo("{$participante->nome()} não tem nada para desfazer.");
 
-            return match (true) {
+            $feito = match (true) {
                 $acao instanceof Entrada => $this->entrada($jogo, $participante, $acao, $quem, $motivo),
                 $acao instanceof Eliminacao => $this->eliminacao($jogo, $participante, $acao, $quem, $motivo),
                 $acao instanceof Pagamento => $this->pagamento($participante, $acao, $quem, $motivo),
             };
+
+            $this->historico->registrar($jogo, $quem, TipoAlteracao::Desfez, rtrim($feito, '.'), $motivo, [
+                'tipo' => class_basename($acao),
+                'id' => $acao->id,
+            ]);
+
+            return $feito;
         });
     }
 
@@ -97,7 +106,7 @@ class DesfazerAcao
         $volta = $participante->eliminacoes()->validas()->where('voltou_com', $entrada->id)->first();
 
         if ($volta) {
-            $volta->forceFill(['voltou_com' => null, 'definitiva' => $jogo->fase !== FaseTorneio::Rebuys])->save();
+            $volta->forceFill(['voltou_com' => null, 'definitiva' => false])->save();
             $participante->forceFill(['status' => StatusParticipante::Eliminado])->save();
         }
 

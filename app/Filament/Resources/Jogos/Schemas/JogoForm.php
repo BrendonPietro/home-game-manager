@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\Jogos\Schemas;
 
 use App\Enums\CalculoTaxa;
-use App\Enums\DestinoItem;
 use App\Enums\MetodoPremiacao;
 use App\Enums\Modalidade;
 use App\Enums\StatusJogo;
@@ -52,6 +51,9 @@ use Illuminate\Support\Str;
  */
 class JogoForm
 {
+    /** Atalhos do percentual da premiação de cada item (o resto se digita em "Outro"). */
+    private const ATALHOS_DA_PREMIACAO = ['100' => '100%', '50' => '50%', '0' => '0%'];
+
     /** @param  bool  $modelo  torneio modelo (ModeloResource): nome do modelo no lugar de nome e data, sem status */
     public static function configure(Schema $schema, bool $modelo = false): Schema
     {
@@ -203,7 +205,7 @@ class JogoForm
             ->disabled(fn (?Jogo $record): bool => ! self::estruturaAberta($record))
             ->schema([
                 Section::make('Entradas')
-                    ->description('Vão 100% para a premiação. O + adiciona uma variação (ex.: rebuy duplo). Jogo sem rebuy ou sem add-on: desative a linha padrão.')
+                    ->description('Premiação diz quanto de cada entrada vai para o prize pool (100% é o normal; Outro deixa digitar, ex.: 75%). O + adiciona uma variação (ex.: rebuy duplo). Jogo sem rebuy ou sem add-on: desative a linha padrão.')
                     ->schema([
                         self::entradas(TipoItem::Buyin, 'Buy-in', limite: 1),
                         self::entradas(TipoItem::Rebuy, 'Rebuy', limite: null),
@@ -211,7 +213,7 @@ class JogoForm
                             ->visible(fn (Get $get): bool => self::eTorneio($get)),
                     ]),
                 Section::make('Opcionais')
-                    ->description('Opcional de fichas, churrasco… O destino diz quanto do valor vai para a premiação.')
+                    ->description('Opcional de fichas, churrasco… Premiação diz quanto do valor vai para o prize pool (0% fica todo com a casa).')
                     ->schema([self::opcionais()]),
                 Section::make('Taxas')
                     ->description('Saem da premiação antes de dividir (dealers, casa…).')
@@ -265,12 +267,12 @@ class JogoForm
                 'valor' => $numero($linha['valor'] ?? null),
                 'padrao' => (bool) ($linha['padrao'] ?? false),
                 'ativo' => (bool) ($linha['ativo'] ?? true),
-                'destino' => DestinoItem::Premiacao,
+                'percentual_premiacao' => self::percentualDaPremiacao($linha, 100),
             ]), array_values($get('itens_'.$tipo->value) ?? [])))
             ->merge(array_map(fn (array $linha): Item => new Item([
                 'tipo' => TipoItem::Opcional,
                 'valor' => $numero($linha['valor'] ?? null),
-                'destino' => $linha['destino'] ?? DestinoItem::Fora->value,
+                'percentual_premiacao' => self::percentualDaPremiacao($linha, 0),
                 'obrigatorio' => (bool) ($linha['obrigatorio'] ?? false),
                 'ativo' => (bool) ($linha['ativo'] ?? true),
                 'compravel_com' => ($linha['compravel_com'] ?? 'entrada') === 'jogador'
@@ -298,11 +300,15 @@ class JogoForm
         return Repeater::make('itens_'.$tipo->value)
             ->label($rotulo)
             ->relationship('itens', fn (Builder $query) => $query->where('tipo', $tipo))
-            ->mutateRelationshipDataBeforeCreateUsing(fn (array $data): array => [...$data, 'tipo' => $tipo])
+            ->mutateRelationshipDataBeforeFillUsing(fn (array $data): array => self::separarPremiacao($data))
+            ->mutateRelationshipDataBeforeCreateUsing(fn (array $data): array => [...self::juntarPremiacao($data, 100), 'tipo' => $tipo])
+            ->mutateRelationshipDataBeforeSaveUsing(fn (array $data): array => self::juntarPremiacao($data, 100))
             ->table([
                 TableColumn::make('Nome')->markAsRequired(),
                 TableColumn::make('Valor')->markAsRequired(),
                 TableColumn::make('Fichas'),
+                TableColumn::make('Premiação'),
+                TableColumn::make('%'),
                 TableColumn::make('Limite por jogador'),
                 TableColumn::make('Ativo'),
             ])
@@ -319,6 +325,7 @@ class JogoForm
                     ->live(onBlur: true) // atualiza a simulação do prize pool
                     ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : 0),
                 TextInput::make('fichas')->integer()->minValue(0)->default(0),
+                ...self::camposDaPremiacao(100),
                 TextInput::make('limite_por_jogador')->integer()->minValue(1)->placeholder('Sem limite'),
                 Toggle::make('ativo')->default(true)->live(),
             ])
@@ -328,6 +335,7 @@ class JogoForm
                 'nome' => $rotulo,
                 'valor' => PadroesDoJogo::valor($tipo->value.'_valor'),
                 'fichas' => (int) PadroesDoJogo::valor($tipo->value.'_fichas'),
+                'premiacao' => '100',
                 'limite_por_jogador' => $limite,
                 'ativo' => true,
             ]])
@@ -346,13 +354,16 @@ class JogoForm
         return Repeater::make('opcionais')
             ->hiddenLabel()
             ->relationship('itens', fn (Builder $query) => $query->where('tipo', TipoItem::Opcional))
-            ->mutateRelationshipDataBeforeCreateUsing(fn (array $data): array => [...$data, 'tipo' => TipoItem::Opcional])
+            ->mutateRelationshipDataBeforeFillUsing(fn (array $data): array => self::separarPremiacao($data))
+            ->mutateRelationshipDataBeforeCreateUsing(fn (array $data): array => [...self::juntarPremiacao($data, 0), 'tipo' => TipoItem::Opcional])
+            ->mutateRelationshipDataBeforeSaveUsing(fn (array $data): array => self::juntarPremiacao($data, 0))
             ->table([
                 TableColumn::make('Nome')->markAsRequired(),
                 TableColumn::make('Valor')->markAsRequired(),
                 TableColumn::make('Fichas'),
                 TableColumn::make('Compra'),
-                TableColumn::make('Destino'),
+                TableColumn::make('Premiação'),
+                TableColumn::make('%'),
                 TableColumn::make('Obrigatório'),
                 TableColumn::make('Ativo'),
             ])
@@ -367,22 +378,74 @@ class JogoForm
                     ->live()
                     ->formatStateUsing(fn ($state): string => is_array($state) && in_array('jogador', $state, true) ? 'jogador' : 'entrada')
                     ->dehydrateStateUsing(fn (?string $state): array => $state === 'jogador' ? ['jogador'] : $porEntrada),
-                Select::make('destino')
-                    ->options([
-                        DestinoItem::Fora->value => 'Não vai',
-                        DestinoItem::Premiacao->value => 'Vai',
-                        DestinoItem::Metade->value => '50/50',
-                    ])
-                    ->default(DestinoItem::Fora->value)
-                    ->selectablePlaceholder(false)
-                    ->required()
-                    ->live(),
+                ...self::camposDaPremiacao(0),
                 Toggle::make('obrigatorio')->live(),
                 Toggle::make('ativo')->default(true)->live(),
             ])
             ->defaultItems(0)
             ->orderColumn('ordem')
             ->addActionLabel('Opcional');
+    }
+
+    /**
+     * Quanto do item vai para a premiação: 100 / 50 / 0 % prontos e "Outro" para digitar (ex.: 75%).
+     * Os dois campos viram a coluna `percentual_premiacao` (juntarPremiacao / separarPremiacao).
+     *
+     * @return list<Select|TextInput>
+     */
+    private static function camposDaPremiacao(int $padrao): array
+    {
+        return [
+            Select::make('premiacao')
+                ->options(self::ATALHOS_DA_PREMIACAO + ['outro' => 'Outro'])
+                ->default((string) $padrao)
+                ->selectablePlaceholder(false)
+                ->required()
+                ->live(),
+            TextInput::make('premiacao_outro')
+                ->numeric()
+                ->minValue(0)
+                ->maxValue(100)
+                ->step(0.01)
+                ->suffix('%')
+                ->placeholder('75')
+                ->required(fn (Get $get): bool => $get('premiacao') === 'outro')
+                ->visible(fn (Get $get): bool => $get('premiacao') === 'outro')
+                ->live(onBlur: true),
+        ];
+    }
+
+    /** O percentual da linha do formulário (atalho ou o digitado), entre 0 e 100, como o banco guarda ('75.00'). */
+    public static function percentualDaPremiacao(array $linha, int $padrao): string
+    {
+        $atalho = (string) ($linha['premiacao'] ?? $padrao);
+        $valor = $atalho === 'outro' ? ($linha['premiacao_outro'] ?? null) : $atalho;
+        $valor = is_numeric($valor) ? max(0, min(100, (float) $valor)) : $padrao;
+
+        return number_format($valor, 2, '.', '');
+    }
+
+    /** Do formulário para o banco. */
+    private static function juntarPremiacao(array $data, int $padrao): array
+    {
+        $data['percentual_premiacao'] = self::percentualDaPremiacao($data, $padrao);
+        unset($data['premiacao'], $data['premiacao_outro']);
+
+        return $data;
+    }
+
+    /** Do banco para os dois campos: 100 / 50 / 0 viram o atalho; o resto, "Outro" com o número. */
+    private static function separarPremiacao(array $data): array
+    {
+        $percentual = number_format((float) ($data['percentual_premiacao'] ?? 100), 2, '.', '');
+        $atalho = (string) (int) $percentual;
+        $eAtalho = isset(self::ATALHOS_DA_PREMIACAO[$atalho]) && $percentual === $atalho.'.00';
+
+        return [
+            ...$data,
+            'premiacao' => $eAtalho ? $atalho : 'outro',
+            'premiacao_outro' => $eAtalho ? null : rtrim(rtrim($percentual, '0'), '.'),
+        ];
     }
 
     private static function taxas(): Repeater

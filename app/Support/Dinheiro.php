@@ -14,6 +14,15 @@ use InvalidArgumentException;
  */
 class Dinheiro
 {
+    /** R$ 1 em centavos. */
+    public const REAL = 100;
+
+    /** Centavos → real inteiro mais próximo (meio real para cima): 12350 → 12400, 12349 → 12300. */
+    public static function arredondarParaReal(int $centavos): int
+    {
+        return intdiv($centavos + ($centavos >= 0 ? 50 : -50), self::REAL) * self::REAL;
+    }
+
     /** Valor em reais (decimal do banco, string do formulário ou int) → centavos. */
     public static function centavos(string|int|float|null $reais): int
     {

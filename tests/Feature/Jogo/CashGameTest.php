@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Jogo;
 
-use App\Actions\Jogo\EncerrarRebuys;
+use App\Actions\Jogo\AbrirIntervalo;
 use App\Actions\Jogo\RegistrarCashOut;
 use App\Enums\StatusParticipante;
 use App\Enums\TipoItem;
@@ -41,7 +41,7 @@ class CashGameTest extends TestCase
         $this->assertRegra('João já tem buy-in. Para mais fichas, recompra.', fn () => $this->entrar($joao, TipoItem::Buyin));
         $this->assertRegra('Cash game não tem add-on.', fn () => $this->entrar($joao, TipoItem::Addon));
         $this->assertRegra('Cash game não tem eliminação: registre o cash-out.', fn () => $this->eliminar($joao));
-        $this->assertRegra('Cash game não tem fases.', fn () => app(EncerrarRebuys::class)($this->jogo, $this->admin));
+        $this->assertRegra('Cash game não tem fases.', fn () => app(AbrirIntervalo::class)($this->jogo, $this->admin));
     }
 
     public function test_cash_out_e_saldo(): void

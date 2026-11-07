@@ -10,6 +10,93 @@ Registro das atualizações do sistema do Rodrigues Home Game, organizadas por:
 - Docs: documentação;
 - Chore: manutenção.
 
+## 0.15.0
+
+Revisão geral, etapa 5: manutenção e otimizações.
+
+### Chore
+- Dependências atualizadas dentro das versões (Laravel 13.40, Filament 5.11.1, Symfony 8.1.11 e outras): os 11 avisos de segurança do Symfony sumiram (`composer audit` limpo) e o `npm audit fix` resolveu os 2 críticos do `shell-quote` (só desenvolvimento).
+- Traduções pt_BR das três mensagens novas do Filament 5.11 (campo, bloco e quadro que não carregaram).
+- Pint no projeto inteiro (`bootstrap/providers.php` e `config/permission.php` eram os que faltavam).
+- **Testes em paralelo** com o `brianium/paratest`: `php artisan test --parallel` (e `composer test`) roda a suíte em ~1,5 min, contra ~4,5 min antes.
+
+### Perf
+- "Valores pendentes" do dashboard do painel: o saldo de todos os jogadores de jogos finalizados sai do banco numa consulta só (`Participante::scopeComSaldo`), em vez de duas consultas por jogo; o `PendenciasTest` confere que bate com o `Saldos` no torneio e no cash game.
+- A `Calculadora` lê as regras de premiação do clube uma vez por instância (os relatórios somam muitos jogos).
+- O histórico do painel do jogador carrega os opcionais de cada entrada junto, sem uma consulta por linha.
+
+### Docs
+- README próprio do projeto (no lugar do padrão do Laravel), `docs/arquitetura.md` com as pastas e classes de hoje (saíram `Helpers/`, `Jogo\Tv` e o `DestinoItem`) e uma seção de **Backup** no `docs/deploy.md`.
+
+## 0.14.0
+
+Revisão geral, etapa 4: quanto de cada item vai para a premiação, sem centavos no torneio.
+
+### Feat
+- **Percentual livre por item** (`percentual_premiacao` em `jogo_itens` e `entradas`, no lugar do `destino` vai / 50-50 / não vai): entradas e opcionais escolhem no painel 100%, 50%, 0% ou **Outro** para digitar (ex.: 75%). O que já existia passou para 100 / 50 / 0. A entrada copia o percentual do item na hora; a Conferência mostra o dos opcionais e o das entradas que não vão 100%.
+- **Torneio sem centavos**: a premiação bruta desce para o real (os centavos ficam com a casa), a taxa em % arredonda para o real (meio real para cima) e os prêmios saem em R$ 5 com o arredondamento das Configurações ou em R$ 1 sem ele, com a sobra para o 1º. Prêmio que viraria zero desce para o real. Cash game continua até o centavo (é o que está nas fichas).
+
+### Refactor
+- Saiu o enum `DestinoItem`; `Item::textoDaPremiacao()` dá o texto ("75% na premiação"). `Dinheiro::REAL` e `Dinheiro::arredondarParaReal()`.
+
+### Test
+- `CalculadoraTest` (percentual livre, soma por percentual, prize pool e taxa em reais, prêmios em reais sem o R$ 5, cash game no centavo) e `Painel\JogosTest` (Outro com 75% no cadastro e de volta no formulário). A Poker Night #18 continua em R$ 2.100 / 210 / 1.890 → 950 / 565 / 375.
+
+## 0.13.0
+
+Revisão geral, etapa 3: corrigir o que foi apertado errado, com registro de quem, o quê e quando.
+
+### Feat
+- **Histórico do jogo** (tabela `alteracoes`, model `Alteracao`, enum `TipoAlteracao`, `Services\Jogo\Historico`): início, abrir o intervalo, fechar as entradas, resultado, acerto feito, finalizar, todo desfazer e as correções, com quem fez (site ou painel), quando e o motivo. Aba **Histórico** do jogo no painel (com filtro) e, para quem corrige, no fim do Fechamento.
+- **Voltar a fase** (`Actions\Jogo\VoltarFase`, tela ao vivo): **Voltar aos rebuys** (o add-on fecha até abrir o intervalo de novo) e **Reabrir entradas** (buy-in, rebuy e add-on voltam, quem caiu e não voltou pode voltar, posições e prêmios gravados saem e se refazem no próximo FECHAR ENTRADAS). Com motivo.
+- **Desfazer pagamento** (`Actions\Jogo\DesfazerPagamento`): qualquer pagamento lançado à mão, também depois de finalizar (botão Desfazer na linha do painel do jogador) e no pré-torneio do painel (aba Confirmados). Depois de finalizar, os acertos em aberto se refazem.
+- **Desfazer acerto** (`Actions\Jogo\DesfazerAcerto`, fechamento): FEITO marcado errado volta a estar em aberto; os pagamentos dele ficam cancelados (`pagamentos.acerto_id` liga os dois).
+- Permissão nova do site `jogo.corrigir` (só o Admin no seed; dá para passar a outro grupo em Grupos). O cancelamento pelo painel guarda a conta no histórico.
+
+### Test
+- `Jogo\CorrecoesTest` (voltar aos rebuys, reabrir entradas e fechar de novo, desfazer pagamento e acerto depois de finalizar, histórico da noite, pelo painel) e as telas (`Site\FasesAoVivoTest`, `Site\FechamentoTest`, `Painel\ConfirmadosTest`).
+
+### Chore
+- Pint nos três models que estavam fora do padrão (`Mesa`, `Permissao`, `Seguranca`).
+
+## 0.12.0
+
+Revisão geral, etapa 2: o fluxo da noite do jeito que o clube joga.
+
+### Feat
+- **Sentar é entrar** (torneio): quem senta na mesa já tem o buy-in padrão, com os opcionais obrigatórios (`RegistrarEntrada::buyinPadrao`). Sentado antes de começar entra ao **Iniciar**; quem chega com o torneio em andamento, na hora em que senta. Mudar de lugar não lança de novo; com as entradas fechadas ninguém novo senta. Outra variação (buy-in duplo) se troca desfazendo. Cash game continua com o buy-in lançado à mão.
+- **Quem senta aqui**: clicar num lugar vazio (telas 06 e 07) abre a escolha de quem senta, com os confirmados sem lugar (quem já sentou some), a busca no cadastro de quem não estava na lista e o jogador novo (trait `Livewire\Jogo\Concerns\EscolheQuemSenta`).
+- **ABRIR INTERVALO** no lugar de ENCERRAR REBUYS (`Actions\Jogo\AbrirIntervalo`, coluna `jogos.intervalo_aberto_em`): o add-on abre e o rebuy continua, para quem caiu e quer voltar só no intervalo. As eliminações ficam provisórias até **FECHAR ENTRADAS**, que fecha tudo e deixa de vez quem não voltou, na ordem em que caiu. Com o relógio, a tela sugere abrir o intervalo quando ele chega e fechar as entradas quando ele acaba.
+- **VOLTAR** no painel do jogador eliminado: o botão do buy-in vira VOLTAR e lança um rebuy.
+- **Pré-torneio no painel** (aba **Confirmados** do jogo, `ConfirmadosRelationManager`): confirmar jogadores, cadastrar um novo (com telefone), tirar da lista e lançar o **pagamento antecipado** em Pix ou Dinheiro, com o valor do buy-in já preenchido. Quem pagou e não veio aparece como "Não veio · devolver R$ X". Permissão nova do painel `pagamentos.registrar`; o pagamento grava `registrado_no_painel_por`.
+- As Actions da lista e do pagamento aceitam conta do site ou do painel (`ChecaRegras::permitirNosDois`).
+
+### Style
+- Fichas só como referência do cadastro: saíram do painel do jogador (no lugar, a hora da entrada) e da coluna Fichas do Resumo; continuam na escolha da entrada e na Conferência.
+
+### Test
+- Sentar é entrar (`Jogo\MesasDoJogoTest`), quem senta pela tela (`Site\MesasTest`, `Site\AoVivoTest`), o VOLTAR no intervalo (`Site\AcoesJogadorTest`), as fases novas (`Jogo\EliminacoesTest`, `Site\FasesAoVivoTest`, `Site\RelogioAoVivoTest`) e o pré-torneio (`Painel\ConfirmadosTest`). A noite de referência pelas Actions continua em R$ 2.100 / 210 / 1.890 com o buy-in entrando ao sentar.
+
+## 0.11.0
+
+Revisão geral, etapa 1: o que podia dar errado numa noite real.
+
+### Feat
+- **Sessão de 12 h** parada (`SESSION_LIFETIME=720`); cada toque e o poll renovam a contagem.
+- **Operador só com jogo em andamento** (middleware `site.acesso`, também em cada clique do Livewire): sem a permissão nova `site.fora_da_noite` (só o Admin do site tem), o começo do site e os outros jogos levam para a tela ao vivo; acabou o torneio, a sessão acaba e fica a página **Nenhum torneio em andamento** (`/sem-torneio`). O painel no mesmo navegador continua logado.
+- **Aviso de conexão nas telas da noite** (`resources/js/site/conexao.js`): poll sem rede mostra "Sem conexão com o servidor" (some quando volta) e um toque que não chegou ao servidor mostra que não foi gravado (fica até fechar). Sessão vencida recarrega a página em vez do aviso em inglês do Livewire.
+- Pagamentos e acertos só em **Pix ou Dinheiro** (`FormaPagamento::disponiveis()`; Cartão comentado).
+
+### Fix
+- **Conta desativada saía só no próximo login**: desligar `ativo` ou `acessa_site` no painel agora tira a pessoa do site na hora, mesmo com "Lembrar acesso".
+- **Acerto pago duas vezes**: depois de finalizar, um pagamento lançado pelo painel do jogador refaz os acertos em aberto, e o FEITO confere os saldos antes de lançar (se não bater, refaz a lista e avisa).
+- **TV presa depois de uma queda de rede**: a busca do link do relógio desiste em 6 s e tenta de novo; quando a internet volta (ou a tela acende), busca na hora e acerta pausa, próximo e anterior feitos nesse meio tempo. O relógio continua contando sem rede.
+
+### Test
+- `Site\AcessoDoSiteTest` (sessão, Operador sem jogo, Operador na noite, fim do jogo, Admin, conta desativada) e, no `Jogo\FinalDaNoiteTest`, a pendência paga pelo painel, o acerto que não bate e as formas de pagamento.
+- Factory `foraDaNoite()` para os testes que navegam sem jogo em andamento.
+- Teste instável: a factory de jogo sorteava "Poker Night #18" uma vez em 999 e o seeder da noite de referência não a criava; agora sorteia do 19 em diante.
+
 ## 0.10.0
 
 v3, etapa 4: tela do relógio do gerenciador e o AVISO. Com ela, a v3 (o relógio no estilo do Poker Depot) está completa.

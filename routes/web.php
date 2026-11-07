@@ -17,7 +17,11 @@ Route::middleware('guest:web')->group(function () {
     Route::post('/login', [AuthController::class, 'store']);
 });
 
-Route::middleware('auth:web')->group(function () {
+// Fim da noite para quem só opera (sem `site.fora_da_noite`): o site volta a abrir com o próximo jogo.
+Route::view('/sem-torneio', 'site.pages.sem-torneio')->name('sem-torneio');
+
+// site.acesso: conta desativada sai na hora; o Operador só fica no site com um jogo em andamento.
+Route::middleware(['auth:web', 'site.acesso'])->group(function () {
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
 
     // Tela 02: dashboard

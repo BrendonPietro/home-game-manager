@@ -20,10 +20,10 @@ use InvalidArgumentException;
 
 /**
  * Lança buy-in, rebuy ou add-on com os opcionais marcados, ou um opcional "1 por jogador" sozinho.
- * Valor, fichas e destino são copiados do item; os opcionais obrigatórios entram sem marcar.
+ * Valor, fichas e o percentual da premiação são copiados do item; os opcionais obrigatórios entram sem marcar.
  *
  * - Buy-in: um por jogador (qualquer variação); rebuy e add-on pedem buy-in.
- * - Torneio: buy-in até Fechar entradas, rebuy só na fase de rebuys, add-on só no intervalo.
+ * - Torneio: buy-in e rebuy até Fechar entradas (o rebuy também no intervalo), add-on só no intervalo.
  *   Cash game: buy-in e recompra (rebuy) enquanto estiver em andamento; sem add-on.
  * - Rebuy de quem caiu desfaz a eliminação provisória: ele volta para o lugar.
  * - O uuid vem do clique: repetido devolve a entrada que já existe (toque duplo).
@@ -80,6 +80,19 @@ class RegistrarEntrada
         });
     }
 
+    /**
+     * Torneio: sentar na mesa já é entrar. Lança o buy-in padrão (a linha marcada como padrão, senão a
+     * primeira ativa) com os opcionais obrigatórios; outra variação (buy-in duplo) se troca desfazendo.
+     */
+    public function buyinPadrao(Participante $participante, Usuario $quem): Entrada
+    {
+        $buyins = $participante->jogo->itens()->ativos()->where('tipo', TipoItem::Buyin)->get();
+        $item = $buyins->firstWhere('padrao', true) ?? $buyins->first()
+            ?? throw new RegraDoJogo('O jogo não tem buy-in ativo: ajuste no painel.');
+
+        return ($this)($participante, $item, $quem, (string) Str::uuid());
+    }
+
     private function checarFase(Jogo $jogo, TipoItem $tipo): void
     {
         if (! $jogo->entradasAbertas()) {
@@ -94,12 +107,9 @@ class RegistrarEntrada
             return;
         }
 
-        if ($tipo === TipoItem::Rebuy && $jogo->fase !== FaseTorneio::Rebuys) {
-            throw new RegraDoJogo('Os rebuys já foram encerrados.');
-        }
-
+        // Rebuy vale até fechar as entradas (as fases rebuys e intervalo); add-on só no intervalo.
         if ($tipo === TipoItem::Addon && $jogo->fase !== FaseTorneio::Intervalo) {
-            throw new RegraDoJogo('Add-on só no intervalo, depois de encerrar os rebuys.');
+            throw new RegraDoJogo('Add-on só no intervalo: aperte ABRIR INTERVALO.');
         }
     }
 
@@ -112,7 +122,7 @@ class RegistrarEntrada
         }
 
         if ($participante->status === StatusParticipante::Eliminado && $item->tipo !== TipoItem::Rebuy) {
-            throw new RegraDoJogo($jogo->fase === FaseTorneio::Rebuys ? "{$nome} está fora: só volta com rebuy." : "{$nome} foi eliminado.");
+            throw new RegraDoJogo("{$nome} está fora: só volta com rebuy.");
         }
 
         $temBuyin = $participante->entradas()->validas()->where('tipo', TipoItem::Buyin)->exists();
@@ -184,7 +194,7 @@ class RegistrarEntrada
             'tipo' => $item->tipo,
             'valor' => $item->valor,
             'fichas' => $item->fichas,
-            'destino' => $item->destino,
+            'percentual_premiacao' => $item->percentual_premiacao,
             'vinculada_a' => $junto?->id,
             'registrado_por' => $quem->id,
         ]);

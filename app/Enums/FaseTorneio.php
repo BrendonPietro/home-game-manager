@@ -4,7 +4,7 @@ namespace App\Enums;
 
 use App\Enums\Concerns\TemOpcoes;
 
-/** Fases do torneio durante em_andamento: rebuys → intervalo (Encerrar rebuys) → sem_entradas (Fechar entradas). */
+/** Fases do torneio durante em_andamento: rebuys → intervalo (Abrir intervalo: add-on e rebuy) → sem_entradas (Fechar entradas). */
 enum FaseTorneio: string
 {
     use TemOpcoes;
@@ -17,7 +17,7 @@ enum FaseTorneio: string
     {
         return match ($this) {
             self::Rebuys => 'Rebuys abertos',
-            self::Intervalo => 'Intervalo (add-on)',
+            self::Intervalo => 'Intervalo (rebuy e add-on)',
             self::SemEntradas => 'Entradas fechadas',
         };
     }

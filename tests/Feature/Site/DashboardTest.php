@@ -24,7 +24,7 @@ class DashboardTest extends TestCase
         $this->withoutVite();
         $this->seed(RegrasPremiacaoSeeder::class);
         $this->travelTo('2026-10-07 15:00');
-        $this->actingAs(Usuario::factory()->comAcesso()->create(['nome' => 'Operador']), 'web');
+        $this->actingAs(Usuario::factory()->foraDaNoite()->create(['nome' => 'Operador']), 'web');
     }
 
     private function confirmar(Jogo $jogo, int $quantos): void
@@ -95,7 +95,7 @@ class DashboardTest extends TestCase
         $campeao->forceFill(['posicao_final' => 1])->save();
         $noite->entradas()->create([
             'uuid' => (string) Str::uuid(), 'participante_id' => $campeao->id, 'jogo_item_id' => $buyin->id,
-            'tipo' => TipoItem::Buyin, 'valor' => 100, 'destino' => 'premiacao',
+            'tipo' => TipoItem::Buyin, 'valor' => 100, 'percentual_premiacao' => 100,
         ]);
 
         $this->get('/')

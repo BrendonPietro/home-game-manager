@@ -2,10 +2,9 @@
 
 namespace Tests\Feature\Jogo;
 
+use App\Actions\Jogo\AbrirIntervalo;
 use App\Actions\Jogo\DesfazerAcao;
-use App\Actions\Jogo\EncerrarRebuys;
 use App\Actions\Jogo\FecharEntradas;
-use App\Enums\DestinoItem;
 use App\Enums\StatusParticipante;
 use App\Enums\TipoItem;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -46,7 +45,7 @@ class DesfazerAcaoTest extends TestCase
     {
         $this->jogo->itens()->create([
             'tipo' => TipoItem::Opcional, 'nome' => 'Caixinha', 'valor' => 5, 'compravel_com' => ['buyin'],
-            'destino' => DestinoItem::Fora, 'obrigatorio' => true,
+            'percentual_premiacao' => 0, 'obrigatorio' => true,
         ]);
         $joao = $this->jogador('João');
         $this->entrar($joao, TipoItem::Buyin);
@@ -68,12 +67,12 @@ class DesfazerAcaoTest extends TestCase
         $this->assertSame(StatusParticipante::Eliminado, $joao->fresh()->status);
         $this->assertSame([null, false], [$eliminacao->fresh()->voltou_com, $eliminacao->fresh()->definitiva]);
 
-        // Volta de novo e o rebuy é desfeito já no intervalo: a eliminação fica definitiva.
+        // Volta de novo e o rebuy é desfeito já no intervalo: continua provisória (ainda pode voltar).
         $this->entrar($joao, TipoItem::Rebuy);
-        app(EncerrarRebuys::class)($this->jogo, $this->admin);
+        app(AbrirIntervalo::class)($this->jogo, $this->admin);
         $this->desfazer($joao);
 
-        $this->assertTrue($eliminacao->fresh()->definitiva);
+        $this->assertFalse($eliminacao->fresh()->definitiva);
         $this->assertSame(StatusParticipante::Eliminado, $joao->fresh()->status);
     }
 
@@ -86,7 +85,7 @@ class DesfazerAcaoTest extends TestCase
             return $jogador;
         }, ['Ana', 'Beto', 'Caio', 'Dudu']);
 
-        app(EncerrarRebuys::class)($this->jogo, $this->admin);
+        app(AbrirIntervalo::class)($this->jogo, $this->admin);
         app(FecharEntradas::class)($this->jogo, $this->admin);
         $this->eliminar($ana);
         $this->eliminar($beto);

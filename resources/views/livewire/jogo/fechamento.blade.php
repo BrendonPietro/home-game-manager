@@ -118,7 +118,7 @@
 						<label class="rh-fechamento__forma">
 							<span class="rh-small rh-muted">Feito por</span>
 							<select class="rh-select" wire:model="forma">
-								@foreach (FormaPagamento::cases() as $opcao)
+								@foreach (FormaPagamento::disponiveis() as $opcao)
 									<option value="{{ $opcao->value }}">{{ $opcao->label() }}</option>
 								@endforeach
 							</select>
@@ -148,6 +148,9 @@
 							<span class="rh-fechamento__feito">
 								@if ($acerto['pago'])
 									<span class="rh-badge rh-badge--ok">feito</span>
+									@if ($usuario->can('jogo.corrigir'))
+										<button type="button" class="rh-btn rh-btn--ghost rh-btn--sm" wire:click="abrirDesfazerAcerto({{ $acerto['id'] }})" title="Correção: fica no histórico, com o motivo">@svg('rh-undo') Desfazer</button>
+									@endif
 								@elseif ($usuario->can('pagamentos.registrar'))
 									<button type="button" class="rh-btn rh-btn--sm" wire:click="marcarAcerto({{ $acerto['id'] }})" wire:confirm="{{ $nome($acerto['de']).' → '.$nome($acerto['para']).': '.Dinheiro::brlCentavos($acerto['valor']) }} feito?" wire:loading.attr="disabled">@svg('rh-check') FEITO</button>
 								@endif
@@ -167,6 +170,60 @@
 			@endif
 		</div>
 	</div>
+
+	@if ($historico->isNotEmpty())
+		<section class="rh-panel">
+			<div class="rh-panel__hd">
+				<h3 class="rh-heading">Histórico</h3>
+				<span class="rh-small rh-muted">quem mudou o quê e quando</span>
+			</div>
+			<div class="rh-list">
+				@foreach ($historico as $alteracao)
+					<div class="rh-li" wire:key="alteracao-{{ $alteracao->id }}">
+						<span class="rh-small rh-faint" style="min-width:76px">{{ $alteracao->created_at->format('d/m H:i') }}</span>
+						<span style="flex:1;min-width:0">
+							@if ($alteracao->tipo->correcao())
+								<span class="rh-badge rh-badge--off">Correção</span>
+							@endif
+							{{ $alteracao->descricao }}
+							@if ($alteracao->motivo)
+								<span class="rh-small rh-muted">· {{ $alteracao->motivo }}</span>
+							@endif
+						</span>
+						<span class="rh-small rh-muted">{{ $alteracao->quem() }}</span>
+					</div>
+				@endforeach
+			</div>
+		</section>
+	@endif
+
+	@if ($desfazendo && ($acertoDesfeito = $acertos->firstWhere('id', $desfazendo)))
+		<div class="rh-scrim" wire:keydown.escape.window="fecharDesfazerAcerto">
+			<form class="rh-modal" style="max-width:440px" wire:submit="desfazerAcerto" role="dialog" aria-modal="true" aria-labelledby="desfazer-acerto-titulo">
+				<div class="rh-modal__hd">
+					<div>
+						<div class="rh-label">Correção · acerto feito</div>
+						<h2 class="rh-heading" id="desfazer-acerto-titulo" style="font-size:24px">{{ $nome($acertoDesfeito['de']).' → '.$nome($acertoDesfeito['para']).' · '.Dinheiro::brlCentavos($acertoDesfeito['valor']) }}</h2>
+					</div>
+					<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharDesfazerAcerto" aria-label="Fechar">@svg('rh-x')</button>
+				</div>
+				<div class="rh-modal__bd rh-col" style="gap:12px">
+					@if ($erro)
+						<div class="rh-warn" role="alert">@svg('rh-alert')<div>{{ $erro }}</div></div>
+					@endif
+					<div class="rh-small rh-muted">Os pagamentos do acerto ficam cancelados, ele volta a estar em aberto e os acertos em aberto são refeitos. Fica no histórico, com o motivo.</div>
+					<label class="rh-field">
+						<span class="rh-field__label">Motivo</span>
+						<input class="rh-input" wire:model="motivo" maxlength="255" autocomplete="off" placeholder="Ex.: marcado como feito sem ter pago" x-init="$nextTick(() => $el.focus())">
+					</label>
+				</div>
+				<div class="rh-modal__ft">
+					<button type="button" class="rh-btn rh-btn--lg" wire:click="fecharDesfazerAcerto">VOLTAR</button>
+					<button type="submit" class="rh-btn rh-btn--danger rh-btn--lg" wire:loading.attr="disabled">@svg('rh-undo') DESFAZER</button>
+				</div>
+			</form>
+		</div>
+	@endif
 
 	@if ($confirmando)
 		<div class="rh-scrim" wire:keydown.escape.window="fecharFinalizar">

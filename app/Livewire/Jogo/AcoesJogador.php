@@ -3,6 +3,7 @@
 namespace App\Livewire\Jogo;
 
 use App\Actions\Jogo\DesfazerAcao;
+use App\Actions\Jogo\DesfazerPagamento;
 use App\Actions\Jogo\RegistrarCashOut;
 use App\Actions\Jogo\RegistrarEliminacao;
 use App\Actions\Jogo\RegistrarEntrada;
@@ -68,6 +69,9 @@ class AcoesJogador extends Component
 
     public string $motivo = '';
 
+    /** Pagamento escolhido para desfazer depois de finalizar (correção, jogo.corrigir). */
+    public ?int $pagamentoId = null;
+
     public ?string $erro = null;
 
     public ?string $aviso = null;
@@ -132,7 +136,7 @@ class AcoesJogador extends Component
         }
 
         $direcao = DirecaoPagamento::tryFrom($this->direcao) ?? DirecaoPagamento::JogadorPagou;
-        $forma = FormaPagamento::tryFrom($this->forma) ?? FormaPagamento::Outro;
+        $forma = FormaPagamento::tryFrom($this->forma) ?? FormaPagamento::Pix;
 
         $this->executar(function () use ($centavos, $direcao, $forma) {
             $participante = $this->participante();
@@ -158,7 +162,7 @@ class AcoesJogador extends Component
             $posicao = $participante->refresh()->posicao_final;
 
             return match (true) {
-                ! $eliminacao->definitiva => "{$participante->nome()} eliminado: pode voltar com rebuy até encerrar os rebuys.",
+                ! $eliminacao->definitiva => "{$participante->nome()} eliminado: pode voltar com rebuy até fechar as entradas.",
                 $posicao !== null => "{$participante->nome()} eliminado em {$posicao}º.",
                 default => "{$participante->nome()} eliminado.",
             };
@@ -199,6 +203,25 @@ class AcoesJogador extends Component
     public function confirmarDesfazer(): void
     {
         $this->executar(fn () => app(DesfazerAcao::class)($this->participante(), $this->motivo, $this->quem()));
+    }
+
+    // ── Correção depois de finalizar: desfazer um pagamento lançado errado (jogo.corrigir) ──
+
+    public function abrirDesfazerPagamento(int $pagamentoId): void
+    {
+        $this->pagamentoId = $this->participante()->pagamentos()->validas()->findOrFail($pagamentoId)->id;
+        $this->abrir('desfazerPagamento');
+        $this->motivo = '';
+    }
+
+    public function confirmarDesfazerPagamento(): void
+    {
+        $this->executar(function () {
+            $pagamento = $this->participante()->pagamentos()->findOrFail($this->pagamentoId);
+            app(DesfazerPagamento::class)($pagamento, $this->motivo, $this->quem());
+
+            return 'Pagamento desfeito: '.$this->descrever($pagamento).'.';
+        });
     }
 
     public function fecharModal(): void
@@ -261,7 +284,8 @@ class AcoesJogador extends Component
     public function render(Saldos $saldos, DesfazerAcao $desfazer): View
     {
         $participante = $this->participante();
-        $entradas = $participante->entradas()->validas()->with('item')->orderBy('id')->get();
+        // Os opcionais válidos de cada entrada já vêm junto: o histórico não consulta linha por linha.
+        $entradas = $participante->entradas()->validas()->with(['item', 'opcionais' => fn ($q) => $q->validas()])->orderBy('id')->get();
         $itens = $this->itensAtivos();
         $temBuyin = $entradas->contains(fn (Entrada $e) => $e->tipo === TipoItem::Buyin);
 
@@ -308,12 +332,15 @@ class AcoesJogador extends Component
     }
 
     /**
-     * O que cada botão grande mostra: se dá para clicar agora e a linha de baixo.
+     * O que cada botão grande mostra: se dá para clicar agora, a linha de baixo e, no VOLTAR, o rótulo.
      * Só reflete a fase e o que o jogador já tem; quem decide é o RegistrarEntrada.
+     *
+     * Quem caiu com as entradas abertas volta pelo botão do buy-in, que vira VOLTAR e lança um rebuy
+     * (buy-in é um por jogador): na hora ou depois, no intervalo.
      *
      * @param  Collection<int, Entrada>  $entradas
      * @param  Collection<int, Item>  $itens
-     * @return array<string, array{tipo: TipoItem, ok: bool, meta: string}>
+     * @return array<string, array{tipo: TipoItem, ok: bool, meta: string, rotulo?: string}>
      */
     private function botoes(Participante $participante, Collection $entradas, Collection $itens, bool $temBuyin): array
     {
@@ -343,8 +370,16 @@ class AcoesJogador extends Component
             ];
         }
 
-        if ($menor(TipoItem::Rebuy) !== null) {
-            $rebuyAberto = $this->jogo->eCashGame() || $fase === FaseTorneio::Rebuys;
+        $rebuyAberto = $this->jogo->eCashGame() || in_array($fase, [FaseTorneio::Rebuys, FaseTorneio::Intervalo], true);
+
+        if ($eliminado && $abertas && $rebuyAberto && $temBuyin && $menor(TipoItem::Rebuy) !== null) {
+            $botoes['buyin'] = [
+                'tipo' => TipoItem::Rebuy,
+                'ok' => true,
+                'meta' => 'entra como rebuy · '.$preco(TipoItem::Rebuy),
+                'rotulo' => 'Voltar',
+            ];
+        } elseif ($menor(TipoItem::Rebuy) !== null) {
             $botoes['rebuy'] = [
                 'tipo' => TipoItem::Rebuy,
                 'ok' => $abertas && $rebuyAberto && $temBuyin && ! $saiu,
@@ -410,7 +445,8 @@ class AcoesJogador extends Component
     {
         return match (true) {
             $acao instanceof Entrada => $acao->item->nome.' · '.Dinheiro::brlCentavos(
-                Dinheiro::centavos($acao->valor) + $acao->opcionais()->validas()->get()->sum(fn (Entrada $o) => Dinheiro::centavos($o->valor))
+                Dinheiro::centavos($acao->valor) + ($acao->relationLoaded('opcionais') ? $acao->opcionais : $acao->opcionais()->validas()->get())
+                    ->sum(fn (Entrada $o) => Dinheiro::centavos($o->valor))
             ),
             $acao instanceof Pagamento => ($acao->direcao === DirecaoPagamento::JogadorPagou ? 'Pagou ' : 'Recebeu ')
                 .Dinheiro::brl($acao->valor).' ('.mb_strtolower($acao->forma->label()).')',

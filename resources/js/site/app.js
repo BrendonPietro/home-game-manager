@@ -1,6 +1,7 @@
 // Site de operação: Livewire e Alpine num bundle só.
 // O layout usa @livewireScriptConfig, então o Livewire não injeta outro Alpine na página.
 import { Livewire, Alpine } from '../../../vendor/livewire/livewire/dist/livewire.esm';
+import { vigiarConexao } from './conexao';
 import copiar from './copiar';
 import mesa from './mesa';
 import relogioTorneio from './relogio-torneio';
@@ -19,5 +20,8 @@ Alpine.magic('tocar', () => (nome) => tocarAgora(nome === 'aviso' ? aviso : camp
 Alpine.magic('manterAcesa', () => manterAcesa);
 
 window.Alpine = Alpine;
+
+// Toque que não chegou ao servidor, poll sem rede e sessão vencida (conexao.js).
+vigiarConexao(Livewire);
 
 Livewire.start();

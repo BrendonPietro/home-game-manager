@@ -2,8 +2,9 @@
 
 namespace Tests\Feature\Jogo;
 
+use App\Actions\Jogo\AbrirIntervalo;
 use App\Actions\Jogo\ConfirmarJogador;
-use App\Actions\Jogo\EncerrarRebuys;
+use App\Actions\Jogo\DesfazerAcao;
 use App\Actions\Jogo\FecharEntradas;
 use App\Actions\Jogo\FinalizarJogo;
 use App\Actions\Jogo\IniciarJogo;
@@ -70,18 +71,25 @@ class NoiteDeReferenciaTest extends TestCase
             $jogadores[$nome] = [$participante, $buyin, $rebuys, $addons];
         }
 
+        // Iniciar já lança o buy-in padrão de cada sentado (sentar é entrar).
         app(IniciarJogo::class)($jogo, $admin);
+        $this->assertSame(12, $jogo->entradas()->where('tipo', TipoItem::Buyin)->where('jogo_item_id', $itens['simples']->id)->count());
 
         $lancar = fn (Participante $participante, Item $item) => app(RegistrarEntrada::class)($participante, $item, $operador, (string) Str::uuid());
 
         foreach ($jogadores as [$participante, $buyin, $rebuys]) {
-            $lancar($participante, $itens[$buyin]);
+            // Outra variação (buy-in duplo): desfaz o padrão e lança a certa.
+            if ($buyin !== 'simples') {
+                app(DesfazerAcao::class)($participante, 'Buy-in duplo', $admin);
+                $lancar($participante, $itens[$buyin]);
+            }
+
             for ($i = 0; $i < $rebuys; $i++) {
                 $lancar($participante, $itens['rebuy']);
             }
         }
 
-        app(EncerrarRebuys::class)($jogo, $admin);
+        app(AbrirIntervalo::class)($jogo, $admin);
 
         foreach ($jogadores as [$participante, , , $addons]) {
             for ($i = 0; $i < $addons; $i++) {

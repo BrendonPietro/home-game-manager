@@ -10,6 +10,7 @@ use App\Actions\Jogo\SortearLugares;
 use App\Actions\Jogo\TrocarLugar;
 use App\Enums\StatusParticipante;
 use App\Exceptions\RegraDoJogo;
+use App\Livewire\Jogo\Concerns\EscolheQuemSenta;
 use App\Models\Jogo;
 use App\Models\Mesa;
 use App\Models\Participante;
@@ -25,6 +26,8 @@ use Livewire\Component;
  */
 class Mesas extends Component
 {
+    use EscolheQuemSenta;
+
     public Jogo $jogo;
 
     public ?int $selecionado = null;
@@ -36,6 +39,13 @@ class Mesas extends Component
     public function clicarAssento(int $jogoMesaId, int $lugar): void
     {
         $ocupante = $this->jogo->participantes()->where('jogo_mesa_id', $jogoMesaId)->where('lugar', $lugar)->first();
+
+        // Lugar vazio sem ninguém escolhido: abre a escolha de quem senta ali.
+        if ($this->selecionado === null && $ocupante === null) {
+            $this->abrirLugarVazio($jogoMesaId, $lugar);
+
+            return;
+        }
 
         if ($this->selecionado === null || $ocupante?->id === $this->selecionado) {
             $this->selecionado = $ocupante?->id === $this->selecionado ? null : $ocupante?->id;
@@ -167,6 +177,7 @@ class Mesas extends Component
             'selecionadoSentado' => $selecionado?->jogo_mesa_id !== null,
             'dealers' => Usuario::query()->ativos()->dealers()->orderBy('nome')->get(),
             'mesasLivres' => Mesa::query()->ativas()->whereNotIn('id', $mesas->pluck('mesa_id'))->orderBy('nome')->get(),
+            'quemSenta' => $this->dadosDoLugarVazio(),
         ]);
     }
 }

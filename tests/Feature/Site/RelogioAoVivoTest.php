@@ -98,7 +98,7 @@ class RelogioAoVivoTest extends TestCase
         $this->assertSame([7, '150 / 300', 900, null], [$noite->nivel_atual, $noite->blinds_atual, $noite->relogio_segundos, $noite->relogio_desde]);
     }
 
-    public function test_sugere_encerrar_rebuys_no_intervalo(): void
+    public function test_sugere_abrir_o_intervalo_e_depois_fechar_as_entradas(): void
     {
         $this->comEstruturaCurta();
 
@@ -106,21 +106,21 @@ class RelogioAoVivoTest extends TestCase
             ->assertSee(['Não iniciado', '10:00'])
             ->assertSeeHtml("wire:click=\"controlarRelogio('continuar')\"")
             ->call('controlarRelogio', 'continuar')
-            ->assertDontSee('hora de encerrar os rebuys');
+            ->assertDontSee('hora de abrir o intervalo');
 
-        // 20 min: o relógio chegou ao intervalo com os rebuys abertos.
+        // 20 min: o relógio chegou ao intervalo e ele ainda não foi aberto.
         $this->travel(20)->minutes();
         $tela->call('$refresh')
             ->assertSee(['Intervalo', '05:00', 'A seguir · nível 3', '300 / 600'])
-            ->assertSee('hora de encerrar os rebuys e abrir o add-on')
+            ->assertSee('hora de abrir o intervalo (add-on, e quem caiu pode voltar)')
             ->call('abrirFase')
-            ->assertSet('modal', 'encerrar');
+            ->assertSet('modal', 'intervalo');
 
         // Operador vê o relógio, mas não a sugestão nem os controles.
         $this->actingAs($this->operador, 'web');
         Livewire::test(AoVivo::class, ['jogo' => $this->jogo->fresh()])
             ->assertSee(['Intervalo', '05:00'])
-            ->assertDontSee('hora de encerrar os rebuys')
+            ->assertDontSee('hora de abrir o intervalo')
             ->assertDontSeeHtml('controlarRelogio')
             ->assertDontSeeHtml('wire:click="abrirRelogio"')
             ->call('controlarRelogio', 'pausar')
@@ -128,13 +128,15 @@ class RelogioAoVivoTest extends TestCase
 
         $this->assertNotNull($this->jogo->fresh()->relogio_desde);
 
-        // Passou o intervalo: a sugestão some (o botão da fase continua na lateral).
+        // Abriu o intervalo e ele acabou: sugere fechar as entradas.
         $this->actingAs($this->admin, 'web');
+        $tela->call('abrirIntervalo')->assertDontSee('hora de abrir o intervalo');
         $this->travel(5)->minutes();
         $tela->call('$refresh')
             ->assertSee(['Nível 3', '300 / 600', '10:00'])
-            ->assertDontSee('hora de encerrar os rebuys')
-            ->assertSee('ENCERRAR REBUYS');
+            ->assertSee('O intervalo acabou: hora de fechar as entradas')
+            ->call('abrirFase')
+            ->assertSet('modal', 'fechar');
     }
 
     public function test_jogo_sem_estrutura_nao_tem_relogio(): void

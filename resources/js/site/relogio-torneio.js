@@ -20,6 +20,7 @@ const VOLTOU_DE_VERDADE = 3; // s: o servidor voltar um nível com mais que isso
 const BUSCA = 2000; // ms entre uma busca e outra, no link do relógio
 const AVISO_RECENTE = 30; // s: aviso mais velho que isso (a tela estava sem internet) não toca
 const AVISO_NA_TELA = 6000; // ms com o painel piscando "AVISO"
+const ESPERA = 6000; // ms: busca que não responde nisso é cancelada (rede "pendurada" não trava a próxima)
 
 export function formatar(segundos) {
     const s = Math.max(0, segundos);
@@ -52,6 +53,8 @@ export default () => ({
     url: '',
     chave: '',
     proximaBusca: null,
+    buscando: false,
+    aoVoltar: null, // a rede voltou ou a tela acendeu: busca na hora
     avisoVisto: -1, // número do último AVISO já visto (data-aviso ou o JSON do link)
     avisando: false,
     avisoTimer: null,
@@ -68,6 +71,15 @@ export default () => ({
 
         if (this.url) {
             this.proximaBusca = setTimeout(() => this.buscar(), BUSCA);
+
+            // Voltou a internet (ou a tela acendeu): acerta com o servidor agora, sem esperar a próxima busca.
+            this.aoVoltar = () => {
+                if (!document.hidden) {
+                    this.buscar();
+                }
+            };
+            window.addEventListener('online', this.aoVoltar);
+            document.addEventListener('visibilitychange', this.aoVoltar);
         }
     },
 
@@ -76,6 +88,11 @@ export default () => ({
         clearInterval(this.tiques);
         clearTimeout(this.proximaBusca);
         clearTimeout(this.avisoTimer);
+
+        if (this.aoVoltar) {
+            window.removeEventListener('online', this.aoVoltar);
+            document.removeEventListener('visibilitychange', this.aoVoltar);
+        }
     },
 
     // AVISO do gerenciador: toca (evento relogio-aviso) quando o número sobe e o aviso é recente.
@@ -106,10 +123,26 @@ export default () => ({
         }
     },
 
-    // Link do relógio: pede o estado ao servidor. Falhou (sem internet)? Segue contando e tenta de novo.
+    // Link do relógio: pede o estado ao servidor. Falhou (sem internet) ou não respondeu em ESPERA?
+    // Segue contando sozinho e tenta de novo; quando volta, o pacote do servidor acerta o relógio
+    // (pausa, próximo ou anterior feitos enquanto a TV estava sem rede).
     async buscar() {
+        clearTimeout(this.proximaBusca);
+
+        if (this.buscando) {
+            return;
+        }
+
+        this.buscando = true;
+        const controle = new AbortController();
+        const limite = setTimeout(() => controle.abort(), ESPERA);
+
         try {
-            const resposta = await fetch(this.url, { headers: { Accept: 'application/json' }, cache: 'no-store' });
+            const resposta = await fetch(this.url, {
+                headers: { Accept: 'application/json' },
+                cache: 'no-store',
+                signal: controle.signal,
+            });
 
             if (resposta.status === 404) {
                 window.location.reload(); // link trocado ou jogo fora do site
@@ -135,7 +168,10 @@ export default () => ({
                 this.verAviso(dados.aviso);
             }
         } catch {
-            // Sem internet: o relógio segue sozinho.
+            // Sem internet ou sem resposta: o relógio segue sozinho.
+        } finally {
+            clearTimeout(limite);
+            this.buscando = false;
         }
 
         this.proximaBusca = setTimeout(() => this.buscar(), BUSCA);

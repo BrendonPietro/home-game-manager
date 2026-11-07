@@ -4,6 +4,10 @@
 
 return [
 
+    'js_component' => [
+        'failed_to_load' => 'Não foi possível carregar este bloco. Recarregue a página para tentar de novo.',
+    ],
+
     'tabs' => [
         'actions' => [
             'more' => ['label' => 'Mais abas'],

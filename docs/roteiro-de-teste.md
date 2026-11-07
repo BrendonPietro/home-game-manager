@@ -49,6 +49,12 @@ Referência da Poker Night #18: 12 jogadores, 22 entradas, R$ 2.100 arrecadados,
 - [ ] Desative a linha do buy-in padrão, salve e tente **Agendar** → recusa com o motivo (precisa de um buy-in ativo com valor). Ative de novo e agende → status agendado.
 - [ ] **Salvar como modelo** → o modelo aparece em Modelos. **Criar jogo** a partir dele → um jogo novo em rascunho com a mesma estrutura. **Duplicar** um jogo → "(cópia)" em rascunho.
 
+**Pré-torneio (aba Confirmados do jogo agendado)**
+- [ ] **Confirmar jogadores** → escolha vários do cadastro. **Jogador novo** → nome, apelido e telefone; já entra na lista.
+- [ ] **Pagamento** num confirmado → o valor vem com o buy-in (e os obrigatórios); Pix ou Dinheiro (sem Cartão); "Pago antes" mostra o valor.
+- [ ] **Tirar da lista** quem não pagou → sai; quem pagou → recusa (tem lançamento).
+- [ ] Como **Geral**: vê a lista, sem Pagamento nem Confirmar.
+
 **Calendário e aluguéis**
 - [ ] Clique num dia e crie um aluguel numa mesa do jogo, no mesmo horário → aviso de que a mesa já está ocupada (só avisa, não impede).
 - [ ] Marque o aluguel como pago na tela de Aluguéis.
@@ -60,11 +66,12 @@ Referência da Poker Night #18: 12 jogadores, 22 entradas, R$ 2.100 arrecadados,
 - [ ] Jogos → aba Próximos → **Abrir** → Conferência com evento, estrutura de blinds, entradas, taxas e premiação.
 - [ ] **Jogadores**: confirme os jogadores, tire um da lista e confirme de novo.
 - [ ] Cadastro rápido com o nome de alguém que já existe → avisa e não cria. Com um nome novo → cria e já confirma.
-- [ ] **Mesas**: SORTEAR → as mesas ficam equilibradas. Clique num jogador e num lugar vazio (move) e depois num ocupado (troca). Mude os lugares e o dealer de uma mesa.
-- [ ] No celular, como **Operador**: Jogadores confirma; Mesas só mostra, sem sortear nem mexer.
+- [ ] **Mesas**: clique num lugar vazio → "Quem senta aqui" com os confirmados sem lugar; escolha um → senta e some da lista. Busque alguém do cadastro que não estava na lista → confirma e senta. Cadastre um jogador novo ali mesmo.
+- [ ] SORTEAR → as mesas ficam equilibradas. Clique num jogador e num lugar vazio (move) e depois num ocupado (troca). Mude os lugares e o dealer de uma mesa.
+- [ ] Como **Operador**: sem jogo em andamento, o login cai em "Nenhum torneio em andamento".
 - [ ] Na **Conferência**, "Relógio nas outras telas": COPIAR LINK e abra o link na TV (numa janela anônima, sem login) → data, horário, nome e "O relógio começa quando o torneio for iniciado · nível 1: …". Nada de dinheiro.
 - [ ] Quando iniciar o torneio, a TV troca sozinha para o relógio (sem recarregar à mão).
-- [ ] **Iniciar jogo** com menos de 2 sentados → recusa. Com todos sentados → vai para Ao vivo.
+- [ ] **Iniciar jogo** com menos de 2 sentados → recusa. Com todos sentados → vai para Ao vivo e **cada sentado já tem o buy-in** (o confirmado que não sentou, não). Quem pagou antes pelo painel aparece quitado; quem pagou e não veio, na aba Confirmados, como "Não veio · devolver".
 
 ## 3. Durante a noite (torneio)
 
@@ -82,10 +89,11 @@ Referência da Poker Night #18: 12 jogadores, 22 entradas, R$ 2.100 arrecadados,
 - [ ] **Sem internet** (estrutura Teste rápido, relógio correndo): na TV, desligue o Wi-Fi do aparelho → depois de uns 15 s aparece "Sem conexão · o relógio segue contando"; o tempo continua, o nível troca na hora certa (com o som) e o intervalo aparece com "Na volta · nível N". Ligue o Wi-Fi → o aviso some e o relógio acerta com o servidor (se alguém pausou nesse meio tempo, pausa agora).
 
 **Entradas e caixa**
-- [ ] Clique num assento → painel do jogador. BUY-IN para todos; para um, o buy-in duplo; para outro, com o opcional marcado.
+- [ ] Clique num assento → painel do jogador: o buy-in já está feito (sentar é entrar). Para trocar um por buy-in duplo: Desfazer o buy-in e lançar o duplo. Opcional avulso (churrasco) pelo botão do painel.
+- [ ] O painel do jogador e o Resumo não mostram fichas somadas por jogador (as fichas ficam só na escolha da entrada, como referência).
 - [ ] Clique duas vezes rápido no confirmar de um lançamento → grava uma vez só.
 - [ ] REBUY em quem ainda não tem buy-in → recusa ("falta o buy-in").
-- [ ] Elimine alguém → fica apagado na mesa. Faça um REBUY nele → volta a jogar no mesmo lugar.
+- [ ] Elimine alguém → fica apagado na mesa, e o painel dele mostra **VOLTAR** (entra como rebuy) → volta a jogar no mesmo lugar. Elimine outro e só volte com ele no intervalo.
 - [ ] Tente eliminar o último que está em jogo → recusa.
 - [ ] Registre um pagamento parcial e depois o resto → o saldo vai de "deve" para "quitado". Pague a mais → o caixa passa a dever a ele.
 - [ ] **Desfazer** (Admin) a última ação de alguém, com motivo → some do caixa e do histórico do jogador (no banco fica gravada como cancelada, com o motivo). No celular do Operador o Desfazer não aparece.
@@ -93,11 +101,17 @@ Referência da Poker Night #18: 12 jogadores, 22 entradas, R$ 2.100 arrecadados,
 - [ ] **Resumo**: os números batem com a lateral da tela ao vivo; "Só pendentes" e o filtro por mesa funcionam.
 
 **Fases**
-- [ ] Deixe o relógio chegar ao intervalo → aviso "Intervalo: hora de encerrar os rebuys e abrir o add-on", e a TV mostra os blinds da volta.
-- [ ] **ENCERRAR REBUYS** → o modal diz o que fecha, o add-on que abre e quem fica eliminado de vez. Depois disso: REBUY recusa; ADD-ON abre (1 por jogador).
-- [ ] Buy-in atrasado no intervalo: cadastro rápido, sentar e BUY-IN → entra e muda o número de jogadores.
+- [ ] Deixe o relógio chegar ao intervalo → aviso "Intervalo: hora de abrir o intervalo (add-on, e quem caiu pode voltar)", e a TV mostra os blinds da volta.
+- [ ] **ABRIR INTERVALO** → o modal diz o add-on que abre, que o rebuy continua e quem está fora agora. Depois disso: ADD-ON abre (1 por jogador) e quem caiu antes volta pelo **VOLTAR** (entra como rebuy).
+- [ ] Deixe o intervalo acabar → aviso "O intervalo acabou: hora de fechar as entradas".
+- [ ] Atrasado no intervalo: clique num lugar vazio, cadastre ou escolha o jogador → senta e já entra com o buy-in, e muda o número de jogadores.
 - [ ] **FECHAR ENTRADAS** → o modal mostra a conta (arrecadação, cada taxa, prize pool, prêmio de cada posição) e avisa quem está jogando sem buy-in. Depois disso: a lateral mostra a Premiação gravada (a TV só mostra o relógio).
 - [ ] Elimine jogadores → cada um ganha a posição na hora. Desfaça uma eliminação → as posições se refazem.
+
+**Correções (Admin, ficam no histórico)**
+- [ ] Abra o intervalo e use **Voltar aos rebuys** (lateral) com um motivo → volta para a fase de rebuys; o add-on recusa até abrir de novo.
+- [ ] Feche as entradas, elimine alguém e use **Reabrir entradas** com um motivo → as posições somem; quem caiu e não voltou aparece com VOLTAR; feche de novo → as posições voltam com a conta nova.
+- [ ] Como Operador: não vê Voltar aos rebuys nem Reabrir entradas.
 
 ## 4. Final da noite
 
@@ -106,7 +120,10 @@ Referência da Poker Night #18: 12 jogadores, 22 entradas, R$ 2.100 arrecadados,
 - [ ] **Fechamento** (tela 14): a conferência mostra diferença R$ 0 ✓; "Por jogador" com o saldo de cada um; a sugestão de acertos ("quem paga quem").
 - [ ] "Copiar acertos" e cole num bloco de notas → texto pronto para o grupo.
 - [ ] **FINALIZAR** → os acertos ficam gravados com o botão FEITO. Marque um como feito → os saldos dos dois fecham.
-- [ ] Registre um pagamento de pendência depois de finalizar → aceita (é a única coisa que ainda se lança).
+- [ ] Registre um pagamento de pendência depois de finalizar → aceita, e os acertos em aberto se refazem (não cobra duas vezes).
+- [ ] **Desfaça** esse pagamento no painel do jogador (botão Desfazer na linha), com motivo → o saldo volta e os acertos se refazem.
+- [ ] **Desfaça** um FEITO no fechamento, com motivo → o acerto volta a estar em aberto.
+- [ ] No fim do Fechamento (e na aba **Histórico** do jogo, no painel): início, fases, correções (com o motivo e quem fez), acertos e o finalizar.
 - [ ] A TV (link do relógio) mostra "Fim de jogo", sem prêmios.
 
 **No painel, depois da noite**
@@ -125,7 +142,7 @@ Referência da Poker Night #18: 12 jogadores, 22 entradas, R$ 2.100 arrecadados,
 
 ## 6. Acessos
 
-- [ ] Como Operador: não vê ENCERRAR REBUYS, FECHAR ENTRADAS, Desfazer, Finalizar nem os controles do relógio; consegue lançar entradas, pagamentos e eliminações.
+- [ ] Como Operador: não vê ABRIR INTERVALO, FECHAR ENTRADAS, Desfazer, Finalizar nem os controles do relógio; consegue lançar entradas, pagamentos e eliminações.
 - [ ] No painel, uma conta no grupo **Geral**: vê jogos, agenda, rankings e usuários e cadastra jogadores; não vê financeiro, relatórios nem segurança.
 - [ ] Em Segurança, como Admin: não aparece o grupo Desenvolvedor para dar a outra conta, e a conta Desenvolvedor não se edita.
 - [ ] O login do painel não entra no site, e o do site não entra no painel.
@@ -140,5 +157,6 @@ O teste que mais vale: uma noite de verdade no sistema, com a planilha ao lado.
 
 ## Sabido que ainda falta
 
+- **Reabrir um jogo finalizado** (posição errada depois de finalizar): não existe; o que se corrige depois de finalizar são os pagamentos e os acertos.
 - **Mudar entradas, opcionais ou taxas com o jogo em andamento.** As regras dizem que o Admin do site pode, até fechar as entradas (permissões `estrutura.editar` e `taxas.editar`), mas essa tela ainda não existe no site, e o painel trava essas abas quando o jogo começa. Hoje, o que estiver errado no cadastro precisa ser acertado antes de iniciar.
 - Decisões em aberto (`docs/regras.md`): se o Operador registra eliminação (hoje registra) e os pontos dos rankings.

@@ -5,6 +5,7 @@ namespace App\Actions\Jogo\Concerns;
 use App\Enums\StatusJogo;
 use App\Exceptions\RegraDoJogo;
 use App\Models\Jogo;
+use App\Models\Seguranca;
 use App\Models\Usuario;
 use Illuminate\Auth\Access\AuthorizationException;
 
@@ -14,6 +15,21 @@ trait ChecaRegras
     protected function permitir(Usuario $quem, string $permissao, string $mensagem): void
     {
         if (! $quem->can($permissao)) {
+            throw new AuthorizationException($mensagem);
+        }
+    }
+
+    /**
+     * Ação que existe no site e no painel (lista da noite, pagamento antecipado): no site vale a
+     * permissão do site; no painel, a do painel, com a conta ativa.
+     */
+    protected function permitirNosDois(Usuario|Seguranca $quem, string $doSite, string $doPainel, string $mensagem): void
+    {
+        $pode = $quem instanceof Seguranca
+            ? $quem->ativo && $quem->can($doPainel)
+            : $quem->can($doSite);
+
+        if (! $pode) {
             throw new AuthorizationException($mensagem);
         }
     }

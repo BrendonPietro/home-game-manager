@@ -17,8 +17,9 @@ use App\Services\Jogo\Relogio;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Torneio. Na fase de rebuys a eliminação é provisória (o jogador pode voltar com rebuy); depois é
- * definitiva. Com as entradas fechadas, dá a posição na hora (último entre os que restam) e o prêmio.
+ * Torneio. Com as entradas abertas (rebuys e intervalo) a eliminação é provisória: o jogador pode
+ * voltar com rebuy, até no intervalo. Com as entradas fechadas é definitiva e dá a posição na hora
+ * (último entre os que restam) e o prêmio.
  * O lugar continua do jogador até alguém sentar ali.
  */
 class RegistrarEliminacao
@@ -64,7 +65,7 @@ class RegistrarEliminacao
             $eliminacao = $jogo->eliminacoes()->create([
                 'participante_id' => $participante->id,
                 'nivel' => $jogo->nivel_atual,
-                'definitiva' => $jogo->fase !== FaseTorneio::Rebuys,
+                'definitiva' => $jogo->fase === FaseTorneio::SemEntradas,
                 'registrada_por' => $quem->id,
             ]);
 

@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use App\Enums\DestinoItem;
 use App\Enums\TipoItem;
+use App\Support\Dinheiro;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * Linha de jogo_itens: uma entrada (buy-in, rebuy, add-on e variações) ou um opcional.
  * `compravel_com`: ["buyin","rebuy","addon"] ou ["jogador"] (só opcional).
+ * `percentual_premiacao`: quanto do valor vai para a premiação, de 0 a 100 (buy-in 100%, churrasco 0%…).
  */
 class Item extends Model
 {
@@ -25,7 +26,7 @@ class Item extends Model
         'nome',
         'valor',
         'fichas',
-        'destino',
+        'percentual_premiacao',
         'compravel_com',
         'obrigatorio',
         'limite_por_jogador',
@@ -35,7 +36,7 @@ class Item extends Model
     ];
 
     protected $attributes = [
-        'destino' => 'premiacao',
+        'percentual_premiacao' => 100,
         'fichas' => 0,
         'obrigatorio' => false,
         'padrao' => false,
@@ -47,7 +48,7 @@ class Item extends Model
     {
         return [
             'tipo' => TipoItem::class,
-            'destino' => DestinoItem::class,
+            'percentual_premiacao' => 'decimal:2',
             'valor' => 'decimal:2',
             'fichas' => 'integer',
             'compravel_com' => 'array',
@@ -61,14 +62,25 @@ class Item extends Model
 
     protected static function booted(): void
     {
-        // Entradas vão sempre 100% para a premiação.
+        // Entrada não vai junto de outra nem é obrigatória (isso é dos opcionais).
         static::saving(function (Item $item) {
             if ($item->tipo instanceof TipoItem && $item->tipo->eEntrada()) {
-                $item->destino = DestinoItem::Premiacao;
                 $item->compravel_com = null;
                 $item->obrigatorio = false;
             }
         });
+    }
+
+    /** "vai para a premiação" (100%), "75% na premiação", "não vai para a premiação" (0%). */
+    public function textoDaPremiacao(): string
+    {
+        $centesimos = Dinheiro::centavos($this->percentual_premiacao);
+
+        return match (true) {
+            $centesimos >= 10000 => 'vai para a premiação',
+            $centesimos <= 0 => 'não vai para a premiação',
+            default => str_replace('.', ',', rtrim(rtrim(Dinheiro::decimal($centesimos), '0'), '.')).'% na premiação',
+        };
     }
 
     public function jogo(): BelongsTo

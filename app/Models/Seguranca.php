@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Database\Factories\SegurancaFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasName;
 use Filament\Panel;
@@ -15,7 +16,7 @@ use Spatie\Permission\Traits\HasRoles;
  */
 class Seguranca extends Authenticatable implements FilamentUser, HasName
 {
-    /** @use HasFactory<\Database\Factories\SegurancaFactory> */
+    /** @use HasFactory<SegurancaFactory> */
     use HasFactory, HasRoles, Notifiable;
 
     protected $table = 'seguranca';

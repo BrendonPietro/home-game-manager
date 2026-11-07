@@ -77,7 +77,7 @@ class Jogo extends Model
             'avisos' => 'integer',
             'aviso_em' => 'datetime',
             'iniciado_em' => 'datetime',
-            'rebuys_encerrados_em' => 'datetime',
+            'intervalo_aberto_em' => 'datetime',
             'entradas_fechadas_em' => 'datetime',
             'finalizado_em' => 'datetime',
         ];
@@ -218,6 +218,12 @@ class Jogo extends Model
     public function acertos(): HasMany
     {
         return $this->hasMany(Acerto::class);
+    }
+
+    /** Histórico: quem mudou o quê e quando (Services\Jogo\Historico), do mais novo para o mais antigo. */
+    public function alteracoes(): HasMany
+    {
+        return $this->hasMany(Alteracao::class)->latest()->latest('id');
     }
 
     public function pontosRanking(): HasMany

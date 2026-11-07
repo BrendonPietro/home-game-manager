@@ -26,7 +26,8 @@ class JogadoresTest extends TestCase
         $this->withoutVite();
         $this->seed(PermissoesSeeder::class);
 
-        $operador = Usuario::factory()->comAcesso()->create(['nome' => 'Operador', 'apelido' => null]);
+        // Operador com a permissão avulsa site.fora_da_noite: sem ela, o site só abre com jogo em andamento.
+        $operador = Usuario::factory()->foraDaNoite()->create(['nome' => 'Operador', 'apelido' => null]);
         $operador->assignRole('Operador');
         $this->actingAs($operador, 'web');
 
