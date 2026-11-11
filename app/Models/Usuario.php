@@ -34,6 +34,7 @@ class Usuario extends Authenticatable
         'telefone',
         'foto',
         'acessa_site',
+        'login',
         'email',
         'password',
         'pode_ser_dealer',
@@ -58,10 +59,34 @@ class Usuario extends Authenticatable
         ];
     }
 
+    /** Usuário do login do site, gravado limpo (minúsculas, sem espaço); vazio = entra só pelo e-mail. */
+    protected function login(): Attribute
+    {
+        return Attribute::make(set: fn (?string $valor): ?string => filled($valor) ? mb_strtolower(trim($valor)) : null);
+    }
+
     /** Como o nome aparece na mesa: apelido, se tiver. */
     protected function nomeExibicao(): Attribute
     {
         return Attribute::get(fn () => $this->apelido ?: $this->nome);
+    }
+
+    /** Para escolher quem é (listas de quem senta e do sorteio): "Ricardo Alves (RICO)"; sem apelido, só o nome. */
+    protected function nomeComApelido(): Attribute
+    {
+        return Attribute::get(function (): string {
+            [$nome, $apelido] = [trim((string) $this->nome), trim((string) $this->apelido)];
+
+            return $apelido !== '' && mb_strtolower($apelido) !== mb_strtolower($nome) ? "{$nome} ({$apelido})" : $nome;
+        });
+    }
+
+    /** Tem conta ativa no painel com o mesmo usuário ou e-mail (as contas do clube ganham as duas): o menu do site mostra o link do painel. */
+    public function temContaNoPainel(): bool
+    {
+        $logins = array_values(array_filter([$this->login, $this->email ? mb_strtolower($this->email) : null]));
+
+        return $logins !== [] && Seguranca::query()->whereIn('login', $logins)->where('ativo', true)->exists();
     }
 
     public function participacoes(): HasMany

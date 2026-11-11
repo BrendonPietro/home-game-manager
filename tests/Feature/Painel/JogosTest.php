@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Painel;
 
+use App\Actions\Jogo\ExcluirJogo;
 use App\Enums\CalculoTaxa;
 use App\Enums\MetodoPremiacao;
 use App\Enums\Modalidade;
@@ -12,9 +13,13 @@ use App\Filament\Resources\Jogos\JogoResource;
 use App\Filament\Resources\Jogos\Pages\CreateJogo;
 use App\Filament\Resources\Jogos\Pages\EditJogo;
 use App\Filament\Resources\Jogos\Pages\ListJogos;
+use App\Filament\Resources\Jogos\Pages\ViewJogo;
+use App\Models\Entrada;
 use App\Models\EstruturaBlinds;
+use App\Models\Evento;
 use App\Models\Jogo;
 use App\Models\Mesa;
+use App\Models\Participante;
 use App\Models\Usuario;
 use App\Services\Jogo\Calculadora;
 use App\Support\PadroesDoJogo;
@@ -24,6 +29,7 @@ use Database\Seeders\PokerNight18Seeder;
 use Database\Seeders\RegrasPremiacaoSeeder;
 use Filament\Actions\Testing\TestAction;
 use Filament\Forms\Components\Repeater;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\Concerns\UsaPainel;
@@ -310,6 +316,49 @@ class JogosTest extends TestCase
             ->callAction(TestAction::make('delete')->table($rascunho));
 
         $this->assertModelMissing($rascunho);
+
+        // Nem pela Action, sem a permissão de excluir com lançamentos.
+        $this->expectException(AuthorizationException::class);
+        app(ExcluirJogo::class)($noite, $this->entrarNoPainel('Admin'));
+    }
+
+    public function test_desenvolvedor_exclui_qualquer_jogo_com_o_que_foi_lancado(): void
+    {
+        $this->entrarNoPainel('Desenvolvedor');
+        $this->seed(PokerNight18Seeder::class);
+        $noite = Jogo::query()->where('nome', PokerNight18Seeder::NOME)->sole();
+        $outro = Jogo::factory()->create();
+        $this->assertSame(StatusJogo::EmAndamento, $noite->status);
+        $this->assertTrue(Evento::query()->where('jogo_id', $noite->id)->exists());
+
+        // O modal diz o que vai junto (a Poker Night #18: 12 jogadores, 22 entradas, R$ 2.100).
+        $aviso = ExcluirJogo::oQueApaga($noite);
+        $this->assertSame('Apaga o jogo e tudo o que foi lançado nele: 12 jogadores e 22 entradas (R$ 2.100). Não dá para desfazer.', $aviso);
+        $this->assertSame('O jogo sai do painel e do calendário. Não dá para desfazer.', ExcluirJogo::oQueApaga($outro));
+
+        Livewire::test(ListJogos::class)
+            ->mountAction(TestAction::make('delete')->table($noite))
+            ->assertMountedActionModalSee($aviso)
+            ->callMountedAction();
+
+        // Some com a lista, as entradas e o evento da agenda; o outro jogo fica.
+        $this->assertModelMissing($noite);
+        $this->assertSame(0, Entrada::query()->where('jogo_id', $noite->id)->count());
+        $this->assertSame(0, Participante::query()->where('jogo_id', $noite->id)->count());
+        $this->assertFalse(Evento::query()->where('jogo_id', $noite->id)->exists());
+        $this->assertModelExists($outro);
+    }
+
+    public function test_finalizado_se_exclui_pela_tela_de_visualizar(): void
+    {
+        $this->entrarNoPainel('Desenvolvedor');
+        $jogo = Jogo::factory()->create(['status' => StatusJogo::Finalizado]);
+
+        Livewire::test(ViewJogo::class, ['record' => $jogo->getRouteKey()])
+            ->callAction('delete')
+            ->assertRedirect(JogoResource::getUrl('index'));
+
+        $this->assertModelMissing($jogo);
     }
 
     public function test_grupo_geral_so_ve(): void
@@ -335,6 +384,20 @@ class JogosTest extends TestCase
             ->assertSee(['R$ 970', 'R$ 410']); // 966 / 414 arredondados
 
         $this->assertSame(0, Jogo::query()->count());
+    }
+
+    public function test_torneio_com_time_chip_e_bonus_do_pagamento_antecipado(): void
+    {
+        Livewire::test(CreateJogo::class)
+            ->fillForm($this->torneio(['time_chip_fichas' => '10000', 'time_chip_ate_nivel' => '2', 'antecipado_fichas' => '20000']))
+            ->assertSee(['Pagamento antecipado', 'Fichas para quem pagou antes'])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $jogo = Jogo::query()->sole();
+        $this->assertSame([10000, 2, 20000], [$jogo->time_chip_fichas, $jogo->time_chip_ate_nivel, $jogo->antecipado_fichas]);
+        $this->assertTrue($jogo->temTimeChip());
+        $this->assertTrue($jogo->temBonusAntecipado());
     }
 
     public function test_torneio_escolhe_a_estrutura_de_blinds(): void

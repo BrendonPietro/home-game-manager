@@ -33,12 +33,12 @@ class Relatorios
 {
     /** tipo => [título, descrição, ícone] na ordem da tela */
     public const TIPOS = [
-        'jogos' => ['Jogos', 'Datas, jogadores, mesas e status', 'rh-trophy'],
-        'entradas' => ['Entradas', 'Buy-ins, rebuys e add-ons por noite', 'rh-coins'],
-        'prize_pools' => ['Prize pools', 'Arrecadado, taxas e prêmio por jogo', 'rh-chart'],
-        'premiacoes' => ['Premiações', 'Quem ficou ITM e quanto levou', 'rh-trophy'],
-        'alugueis' => ['Aluguéis', 'Reservas, pagos e pendentes', 'rh-key'],
-        'arrecadacao' => ['Arrecadação', 'Taxas, fora da premiação e aluguéis', 'rh-dash'],
+        'jogos' => ['Jogos', 'Datas, jogadores, mesas e status', 'rh-trofeu'],
+        'entradas' => ['Entradas', 'Buy-ins, rebuys e add-ons por noite', 'rh-fichas'],
+        'prize_pools' => ['Prize pools', 'Arrecadado, taxas e prêmio por jogo', 'rh-grafico'],
+        'premiacoes' => ['Premiações', 'Quem ficou ITM e quanto levou', 'rh-trofeu'],
+        'alugueis' => ['Aluguéis', 'Reservas, pagos e pendentes', 'rh-chave'],
+        'arrecadacao' => ['Arrecadação', 'Taxas, fora da premiação e aluguéis', 'rh-painel'],
     ];
 
     private const SEM_RASCUNHO = [StatusJogo::Agendado, StatusJogo::EmAndamento, StatusJogo::Finalizado, StatusJogo::Cancelado];

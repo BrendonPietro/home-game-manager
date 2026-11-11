@@ -24,19 +24,19 @@
 	@if ($relogio) data-relogio="{{ json_encode($relogio->paraNavegador()) }}" @endif
 >
 	<header class="rh-controle__topo">
-		<a class="rh-btn rh-btn--ghost" href="{{ route('jogos.ao-vivo', $jogo) }}">@svg('rh-chev-l') <span class="rh-controle__texto">AO VIVO</span></a>
+		<a class="rh-btn rh-btn--ghost" href="{{ route('jogos.ao-vivo', $jogo) }}">@svg('rh-chevron-esquerda') <span class="rh-controle__texto">AO VIVO</span></a>
 		<div class="rh-controle__jogo">
 			<b>{{ $jogo->nome }}</b>
 			<span>Relógio{{ $jogo->eTorneio() && $jogo->fase ? ' · '.$jogo->fase->label() : '' }}</span>
 		</div>
 		<span class="rh-spacer"></span>
 		<button type="button" class="rh-btn" x-data="{ copiado: false }" x-on:click="$copiar(@js($link)).then(() => { copiado = true; setTimeout(() => copiado = false, 2500) })" title="Copiar o link do relógio para a TV e outras telas">
-			@svg('rh-copy') <span class="rh-controle__texto" x-text="copiado ? 'COPIADO' : 'LINK DA TV'">LINK DA TV</span>
+			@svg('rh-copiar') <span class="rh-controle__texto" x-text="copiado ? 'COPIADO' : 'LINK DA TV'">LINK DA TV</span>
 		</button>
 	</header>
 
 	@if ($erro)
-		<div class="rh-warn" role="alert">@svg('rh-alert')<div>{{ $erro }}</div></div>
+		<div class="rh-warn" role="alert">@svg('rh-alerta')<div>{{ $erro }}</div></div>
 	@elseif ($mensagem)
 		<div class="rh-warn rh-warn--ok" role="status" wire:key="mensagem-{{ md5($mensagem.now()->timestamp) }}">@svg('rh-check')<div>{{ $mensagem }}</div></div>
 	@endif
@@ -63,13 +63,13 @@
 			<div class="rh-controle__comandos">
 				@if ($relogio)
 					<div class="rh-controle__principais">
-						<button type="button" class="rh-btn rh-btn--lg" wire:click="controlar('anterior')" wire:loading.attr="disabled" @disabled(! $relogio->anterior())>@svg('rh-chev-l') ANTERIOR</button>
+						<button type="button" class="rh-btn rh-btn--lg" wire:click="controlar('anterior')" wire:loading.attr="disabled" @disabled(! $relogio->anterior())>@svg('rh-chevron-esquerda') ANTERIOR</button>
 						@if ($comandoPlay)
-							<button type="button" class="rh-btn rh-btn--primary rh-btn--lg rh-controle__play" wire:click="controlar('{{ $comandoPlay }}')" wire:loading.attr="disabled">@svg($comandoPlay === 'pausar' ? 'rh-pause' : 'rh-play') {{ $rotuloPlay }}</button>
+							<button type="button" class="rh-btn rh-btn--primary rh-btn--lg rh-controle__play" wire:click="controlar('{{ $comandoPlay }}')" wire:loading.attr="disabled">@svg($comandoPlay === 'pausar' ? 'rh-pausar' : 'rh-continuar') {{ $rotuloPlay }}</button>
 						@else
 							<button type="button" class="rh-btn rh-btn--lg rh-controle__play" disabled>FIM</button>
 						@endif
-						<button type="button" class="rh-btn rh-btn--lg" wire:click="controlar('proximo')" wire:loading.attr="disabled" @disabled(! $relogio->proximo())>PRÓXIMO @svg('rh-chev-r')</button>
+						<button type="button" class="rh-btn rh-btn--lg" wire:click="controlar('proximo')" wire:loading.attr="disabled" @disabled(! $relogio->proximo())>PRÓXIMO @svg('rh-chevron-direita')</button>
 					</div>
 					<div class="rh-controle__ajustes" role="group" aria-label="Ajustar o tempo do nível">
 						@foreach ([-5, -1, 1, 5] as $minutos)
@@ -78,7 +78,7 @@
 					</div>
 				@endif
 				<button type="button" class="rh-btn rh-btn--danger rh-btn--lg rh-controle__aviso" x-on:click="$tocar('aviso')" wire:click="avisar" wire:loading.attr="disabled" title="Toca o som de aviso em todas as telas do link">
-					@svg('rh-alert') AVISO
+					@svg('rh-alerta') AVISO
 				</button>
 			</div>
 		@else

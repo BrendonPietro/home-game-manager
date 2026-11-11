@@ -12,8 +12,8 @@
 <x-filament-panels::page>
     <div class="rh-cal-hd">
         <div class="rh-cal-hd__nav">
-            <x-filament::icon-button icon="rh-chev-l" color="gray" label="Mês anterior" wire:click="mudarMes(-1)" />
-            <x-filament::icon-button icon="rh-chev-r" color="gray" label="Próximo mês" wire:click="mudarMes(1)" />
+            <x-filament::icon-button icon="rh-chevron-esquerda" color="gray" label="Mês anterior" wire:click="mudarMes(-1)" />
+            <x-filament::icon-button icon="rh-chevron-direita" color="gray" label="Próximo mês" wire:click="mudarMes(1)" />
             <h2 class="rh-cal-hd__mes">{{ $this->nomeDoMes() }}</h2>
             <x-filament::button color="gray" size="sm" wire:click="hoje">Hoje</x-filament::button>
         </div>

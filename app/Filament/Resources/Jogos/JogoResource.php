@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Jogos;
 
+use App\Actions\Jogo\ExcluirJogo;
 use App\Filament\Resources\Jogos\Pages\CreateJogo;
 use App\Filament\Resources\Jogos\Pages\EditJogo;
 use App\Filament\Resources\Jogos\Pages\ListJogos;
@@ -15,6 +16,7 @@ use App\Models\Jogo;
 use App\Services\Jogo\CopiaDoJogo;
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -32,7 +34,7 @@ class JogoResource extends Resource
 {
     protected static ?string $model = Jogo::class;
 
-    protected static string|BackedEnum|null $navigationIcon = 'rh-trophy';
+    protected static string|BackedEnum|null $navigationIcon = 'rh-menu-jogos';
 
     protected static string|UnitEnum|null $navigationGroup = 'Cadastros';
 
@@ -83,7 +85,7 @@ class JogoResource extends Resource
     {
         return Action::make('duplicar')
             ->label('Duplicar')
-            ->icon('rh-copy')
+            ->icon('rh-copiar')
             ->color('gray')
             ->visible(fn (): bool => (bool) Filament::auth()->user()?->can('jogos.criar'))
             ->modalHeading('Duplicar jogo')
@@ -100,12 +102,27 @@ class JogoResource extends Resource
             });
     }
 
+    /**
+     * Excluir (lista e cadastro): a JogoPolicy diz quando aparece. Com lançamentos, o modal diz o que vai
+     * junto, e o ExcluirJogo apaga as entradas antes do jogo.
+     */
+    public static function acaoExcluir(): DeleteAction
+    {
+        return DeleteAction::make()
+            ->modalDescription(fn (Jogo $record): string => ExcluirJogo::oQueApaga($record))
+            ->using(function (Jogo $record): bool {
+                app(ExcluirJogo::class)($record, Filament::auth()->user());
+
+                return true;
+            });
+    }
+
     /** O cadastro deste jogo vira um torneio modelo (o jogo continua como está). */
     public static function acaoSalvarComoModelo(): Action
     {
         return Action::make('salvarComoModelo')
             ->label('Salvar como modelo')
-            ->icon('rh-copy')
+            ->icon('rh-copiar')
             ->color('gray')
             ->visible(fn (): bool => (bool) Filament::auth()->user()?->can('modelos.criar'))
             ->modalHeading('Salvar como modelo')

@@ -26,7 +26,7 @@
 
 			<form method="POST" action="{{ route('logout') }}">
 				@csrf
-				<button type="submit" class="rh-btn rh-btn--ghost rh-btn--block">@svg('rh-out') Sair</button>
+				<button type="submit" class="rh-btn rh-btn--ghost rh-btn--block">@svg('rh-sair') Sair</button>
 			</form>
 		</div>
 

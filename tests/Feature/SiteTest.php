@@ -27,9 +27,11 @@ class SiteTest extends TestCase
 
     public function test_icones_do_design_system(): void
     {
-        $html = svg('rh-home')->toHtml();
+        $html = svg('rh-inicio')->toHtml();
 
         $this->assertStringContainsString('class="rh-ic"', $html);
+        // O traço vem do próprio arquivo (dá para trocar por qualquer SVG baixado com o mesmo nome).
+        $this->assertStringContainsString('stroke="currentColor"', $html);
         $this->assertStringContainsString('aria-hidden="true"', $html);
         $this->assertStringContainsString('viewBox="0 0 24 24"', $html);
     }
@@ -44,6 +46,7 @@ class SiteTest extends TestCase
 
     public function test_vitrine_so_existe_em_ambiente_local(): void
     {
-        $this->get('/vitrine')->assertNotFound();
+        // Fora do local a rota não existe: volta para o início, como toda página que não existe.
+        $this->get('/vitrine')->assertRedirect(route('home'));
     }
 }

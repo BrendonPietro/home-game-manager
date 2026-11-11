@@ -37,7 +37,7 @@ class ModeloResource extends Resource
 
     protected static ?string $slug = 'modelos';
 
-    protected static string|BackedEnum|null $navigationIcon = 'rh-copy';
+    protected static string|BackedEnum|null $navigationIcon = 'rh-menu-modelos';
 
     protected static string|UnitEnum|null $navigationGroup = 'Cadastros';
 
@@ -93,7 +93,7 @@ class ModeloResource extends Resource
     {
         return Action::make('criarJogo')
             ->label('Criar jogo')
-            ->icon('rh-plus')
+            ->icon('rh-adicionar')
             ->color('primary')
             ->visible(fn (): bool => (bool) Filament::auth()->user()?->can('jogos.criar'))
             ->modalHeading(fn (Jogo $record): string => "Criar jogo a partir de {$record->nome_modelo}")

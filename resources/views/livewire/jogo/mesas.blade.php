@@ -32,25 +32,25 @@
 					>
 						<x-site.props.avatar :nome="$participante->usuario->nome_exibicao" :foto="$participante->usuario->foto" tamanho="sm" />
 						<span class="rh-pcard__n">{{ $participante->usuario->nome_exibicao }}</span>
-						@svg('rh-move', 'rh-faint')
+						@svg('rh-mover', 'rh-faint')
 					</button>
 				@empty
 					<span class="rh-small rh-muted">Todos os confirmados têm lugar</span>
 				@endforelse
 
 				@if ($podeOrganizar && $selecionadoSentado)
-					<button type="button" class="rh-btn rh-btn--sm rh-btn--block" wire:click="semLugar">@svg('rh-out') Tirar {{ $selecionadoNome }} do lugar</button>
+					<button type="button" class="rh-btn rh-btn--sm rh-btn--block" wire:click="semLugar">@svg('rh-sair') Tirar {{ $selecionadoNome }} do lugar</button>
 				@endif
 			</div>
 		</div>
 
 		@if ($podeOrganizar)
-			<button type="button" class="rh-btn rh-btn--block" wire:click="sortear" wire:confirm="Sortear de novo o lugar de todos os confirmados?" wire:loading.attr="disabled">@svg('rh-rotate') Sortear lugares</button>
+			<button type="button" class="rh-btn rh-btn--block" x-on:click="$dispatch('abrir-sorteio')">@svg('rh-girar') Sortear lugares</button>
 
-			<button type="button" class="rh-btn rh-btn--block" wire:click="adicionarMesa" wire:loading.attr="disabled">@svg('rh-plus') Adicionar mesa</button>
+			<button type="button" class="rh-btn rh-btn--block" wire:click="adicionarMesa" wire:loading.attr="disabled">@svg('rh-adicionar') Adicionar mesa</button>
 
 			<div class="rh-mesas__dica">
-				@svg('rh-move')
+				@svg('rh-mover')
 				<span>
 					@if ($selecionadoNome)
 						<b>{{ $selecionadoNome }}</b> selecionado: clique num lugar vazio para mover ou num jogador para trocar.
@@ -72,7 +72,7 @@
 
 	<div class="rh-col" style="gap:16px;min-width:0">
 		@if ($erro && ! $quemSenta)
-			<div class="rh-warn" role="alert">@svg('rh-alert')<div>{{ $erro }}</div></div>
+			<div class="rh-warn" role="alert">@svg('rh-alerta')<div>{{ $erro }}</div></div>
 		@endif
 
 		@forelse ($mesas as $jogoMesa)
@@ -107,10 +107,10 @@
 						<span class="rh-small rh-muted">Dealer: {{ $jogoMesa->dealer?->nome_exibicao ?? '—' }}</span>
 					@endif
 
-					<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-btn--sm" x-on:click="$dispatch('girar-mesa', {{ $jogoMesa->id }})" aria-label="Girar a {{ $jogoMesa->nome }}" title="Girar a mesa">@svg('rh-rotate')</button>
+					<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-btn--sm" x-on:click="$dispatch('girar-mesa', {{ $jogoMesa->id }})" aria-label="Girar a {{ $jogoMesa->nome }}" title="Girar a mesa">@svg('rh-girar')</button>
 
 					@if ($podeOrganizar && $porLugar->isEmpty())
-						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-btn--sm" wire:click="removerMesa({{ $jogoMesa->id }})" wire:confirm="Tirar a {{ $jogoMesa->nome }} deste jogo?" aria-label="Tirar a {{ $jogoMesa->nome }} do jogo" title="Tirar do jogo">@svg('rh-x')</button>
+						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-btn--sm" wire:click="removerMesa({{ $jogoMesa->id }})" wire:confirm="Tirar a {{ $jogoMesa->nome }} deste jogo?" aria-label="Tirar a {{ $jogoMesa->nome }} do jogo" title="Tirar do jogo">@svg('rh-fechar')</button>
 					@endif
 				</div>
 
@@ -138,4 +138,9 @@
 	</div>
 
 	@include('livewire.jogo.partials.quem-senta')
+
+	{{-- Modal Jogadores: marcar quem chegou (ou todos), as mesas, e sortear. --}}
+	@if ($podeOrganizar)
+		<livewire:jogo.sorteio :jogo="$jogo" :key="'sorteio-'.$jogo->id" />
+	@endif
 </div>

@@ -33,7 +33,7 @@ class Calendario extends Page
 {
     protected string $view = 'filament.painel.calendario';
 
-    protected static string|BackedEnum|null $navigationIcon = 'rh-cal';
+    protected static string|BackedEnum|null $navigationIcon = 'rh-menu-calendario';
 
     protected static string|UnitEnum|null $navigationGroup = 'Agenda';
 
@@ -132,7 +132,7 @@ class Calendario extends Page
         return [
             Action::make('novoJogo')
                 ->label('Novo jogo')
-                ->icon('rh-trophy')
+                ->icon('rh-trofeu')
                 ->color('gray')
                 ->url(fn (): string => JogoResource::getUrl('create'))
                 ->visible(fn (): bool => Filament::auth()->user()->can('create', Jogo::class)),
@@ -144,7 +144,7 @@ class Calendario extends Page
     {
         return Action::make('novoEvento')
             ->label('Novo evento')
-            ->icon('rh-plus')
+            ->icon('rh-adicionar')
             ->modalHeading('Novo evento')
             ->modalWidth(Width::TwoExtraLarge)
             ->modalSubmitActionLabel('Salvar evento')

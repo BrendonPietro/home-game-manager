@@ -4,10 +4,10 @@ namespace App\Filament\Resources\Jogos\Tables;
 
 use App\Enums\Modalidade;
 use App\Enums\StatusJogo;
+use App\Filament\Resources\Jogos\JogoResource;
 use App\Filament\Resources\Jogos\Schemas\JogoForm;
 use App\Models\Jogo;
 use App\Support\Dinheiro;
-use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
@@ -56,7 +56,7 @@ class JogosTable
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
-                DeleteAction::make(),
+                JogoResource::acaoExcluir(),
             ]);
     }
 }

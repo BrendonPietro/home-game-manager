@@ -95,18 +95,6 @@
 		}
 	}
 
-	&__espera {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 8px;
-
-		.rh-pcard {
-			width: auto;
-			padding: 8px 12px;
-		}
-	}
-
 	&__lado {
 		border-left: 1px solid var(--line-200);
 		background: var(--bg-100);

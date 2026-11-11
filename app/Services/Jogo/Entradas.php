@@ -8,7 +8,7 @@ use App\Models\Jogo;
 use App\Support\Dinheiro;
 use Illuminate\Support\Collection;
 
-/** Entradas válidas do jogo por jogador (assentos da tela ao vivo e tabela do resumo). */
+/** Entradas válidas do jogo por jogador (assentos da tela ao vivo e tabela do resumo), com as fichas que cada um recebeu. */
 class Entradas
 {
     /** @return Collection<int, EntradasDoJogador> pelo id do participante (só quem tem entrada) */
@@ -23,6 +23,9 @@ class Entradas
                 addons: $doJogador->filter(fn (Entrada $e) => $e->tipo === TipoItem::Addon)->count(),
                 opcionais: $doJogador->filter(fn (Entrada $e) => $e->tipo === TipoItem::Opcional)->count(),
                 total: $doJogador->sum(fn (Entrada $e) => Dinheiro::centavos($e->valor)),
+                fichas: (int) $doJogador->sum(fn (Entrada $e) => (int) $e->fichas + (int) $e->time_chip + (int) $e->antecipado),
+                timeChip: (int) $doJogador->sum('time_chip'),
+                antecipado: (int) $doJogador->sum('antecipado'),
             ));
     }
 }

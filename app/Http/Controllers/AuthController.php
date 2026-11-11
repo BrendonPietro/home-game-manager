@@ -11,7 +11,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 /**
- * Tela 01: login do site de operação (guard `web`, tabela `usuarios`).
+ * Tela 01: login do site de operação (guard `web`, tabela `usuarios`), pelo usuário (`login`) ou pelo e-mail.
  * Só entra quem tem `acessa_site` e está ativo; jogador sem login nunca passa daqui.
  */
 class AuthController extends Controller
@@ -26,21 +26,23 @@ class AuthController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $dados = $request->validate([
-            'email' => ['required', 'string', 'email'],
+            'login' => ['required', 'string', 'max:255'],
             'password' => ['required', 'string'],
-        ]);
+        ], [], ['login' => 'usuário ou e-mail']);
 
-        $email = Str::lower(trim($dados['email']));
-        $chave = 'login-site|'.$email.'|'.$request->ip();
+        // Com @ é o e-mail; sem, o usuário (usuarios.login não aceita @). Os dois gravados em minúsculas.
+        $login = Str::lower(trim($dados['login']));
+        $campo = str_contains($login, '@') ? 'email' : 'login';
+        $chave = 'login-site|'.$login.'|'.$request->ip();
 
         if (RateLimiter::tooManyAttempts($chave, self::MAX_TENTATIVAS)) {
             throw ValidationException::withMessages([
-                'email' => 'Muitas tentativas. Tente de novo em '.RateLimiter::availableIn($chave).' segundos.',
+                'login' => 'Muitas tentativas. Tente de novo em '.RateLimiter::availableIn($chave).' segundos.',
             ]);
         }
 
         $entrou = Auth::guard('web')->attempt([
-            'email' => $email,
+            $campo => $login,
             'password' => $dados['password'],
             'acessa_site' => true,
             'ativo' => true,
@@ -50,7 +52,7 @@ class AuthController extends Controller
             RateLimiter::hit($chave);
 
             throw ValidationException::withMessages([
-                'email' => 'E-mail ou senha incorretos.',
+                'login' => 'Usuário ou senha incorretos.',
             ]);
         }
 

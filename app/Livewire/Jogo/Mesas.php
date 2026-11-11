@@ -6,7 +6,6 @@ use App\Actions\Jogo\AdicionarMesa;
 use App\Actions\Jogo\AjustarMesa;
 use App\Actions\Jogo\IniciarJogo;
 use App\Actions\Jogo\RemoverMesa;
-use App\Actions\Jogo\SortearLugares;
 use App\Actions\Jogo\TrocarLugar;
 use App\Enums\StatusParticipante;
 use App\Exceptions\RegraDoJogo;
@@ -17,11 +16,13 @@ use App\Models\Usuario;
 use App\Support\EtapaDoJogo;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\View\View;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 /**
  * Tela 06: montar as mesas e iniciar o jogo. Clicar num jogador seleciona; clicar depois num lugar
- * vazio move, num lugar ocupado troca os dois. As regras ficam nas Actions.
+ * vazio move, num lugar ocupado troca os dois. Sortear lugares abre o modal Jogadores (Jogo\Sorteio):
+ * quem chegou (ou todos) e em quais mesas. As regras ficam nas Actions.
  */
 class Mesas extends Component
 {
@@ -77,10 +78,11 @@ class Mesas extends Component
         }
     }
 
-    public function sortear(): void
+    /** O modal Jogadores (Jogo\Sorteio) sorteou ou pôs alguém na lista: redesenha as mesas. */
+    #[On('caixa-mudou')]
+    public function caixaMudou(): void
     {
         $this->selecionado = null;
-        $this->executar(fn () => app(SortearLugares::class)($this->jogo, $this->quem()));
     }
 
     public function ajustarLugares(int $jogoMesaId, int|string $lugares): void

@@ -9,6 +9,7 @@ use App\Filament\Widgets\ProximoJogo;
 use App\Filament\Widgets\Proximos;
 use App\Filament\Widgets\RankingEmDestaque;
 use App\Models\Jogo;
+use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
 use Filament\Pages\Dashboard as BaseDashboard;
@@ -22,6 +23,8 @@ use Illuminate\Support\Str;
  */
 class Dashboard extends BaseDashboard
 {
+    protected static string|BackedEnum|null $navigationIcon = 'rh-menu-painel-de-controle';
+
     protected static ?string $navigationLabel = 'Painel de controle';
 
     protected static ?string $title = 'Painel de controle';
@@ -52,7 +55,7 @@ class Dashboard extends BaseDashboard
         return [
             Action::make('novoJogo')
                 ->label('Novo jogo')
-                ->icon('rh-plus')
+                ->icon('rh-adicionar')
                 ->url(fn (): string => JogoResource::getUrl('create'))
                 ->visible(fn (): bool => Filament::auth()->user()->can('create', Jogo::class)),
         ];

@@ -4,6 +4,7 @@ namespace Tests\Feature\Site;
 
 use App\Enums\StatusJogo;
 use App\Livewire\Jogo\Mesas;
+use App\Livewire\Jogo\Sorteio;
 use App\Models\Jogo;
 use App\Models\JogoMesa;
 use App\Models\Participante;
@@ -141,8 +142,14 @@ class MesasTest extends TestCase
             $this->jogador($nome);
         }
 
-        Livewire::test(Mesas::class, ['jogo' => $this->jogo])
+        // Sortear lugares abre o modal Jogadores: todos marcados, todas as mesas.
+        Livewire::test(Sorteio::class, ['jogo' => $this->jogo])
+            ->dispatch('abrir-sorteio')
+            ->call('marcarTodos')
             ->call('sortear')
+            ->assertSee('Lugares sorteados');
+
+        Livewire::test(Mesas::class, ['jogo' => $this->jogo])
             ->assertSee('3/9')
             ->call('ajustarLugares', $this->mesa1->id, '2')
             ->assertSee('Tem jogador no lugar');

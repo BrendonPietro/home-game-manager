@@ -26,7 +26,7 @@ use Illuminate\Support\Str;
 use UnitEnum;
 
 /**
- * Sistema → Usuários do site: quem entra no site de operação (e-mail, senha e grupos do site). É a mesma
+ * Sistema → Usuários do site: quem entra no site de operação (usuário ou e-mail, senha e grupos do site). É a mesma
  * tabela `usuarios` dos Jogadores, só com quem tem `acessa_site`; aqui se dá e se tira o acesso, sem
  * apagar a pessoa (que pode jogar). Permissão própria do painel: `acessos.*` (o Geral não tem).
  */
@@ -36,7 +36,7 @@ class UsuarioDoSiteResource extends Resource
 
     protected static ?string $slug = 'usuarios-do-site';
 
-    protected static string|BackedEnum|null $navigationIcon = 'rh-key';
+    protected static string|BackedEnum|null $navigationIcon = 'rh-menu-usuarios-do-site';
 
     protected static string|UnitEnum|null $navigationGroup = 'Sistema';
 
@@ -81,6 +81,7 @@ class UsuarioDoSiteResource extends Resource
                 TextInput::make('nome')
                     ->required()
                     ->maxLength(255),
+                self::campoLogin(),
                 self::campoEmail(),
                 self::campoSenha(),
                 Toggle::make('ativo')
@@ -101,10 +102,16 @@ class UsuarioDoSiteResource extends Resource
             ->columns([
                 TextColumn::make('nome')
                     ->description(fn (Usuario $usuario): ?string => $usuario->apelido)
-                    ->searchable(['nome', 'apelido', 'email'])
+                    ->searchable(['nome', 'apelido', 'login', 'email'])
+                    ->sortable(),
+                TextColumn::make('login')
+                    ->label('Usuário')
+                    ->placeholder('Pelo e-mail')
+                    ->searchable()
                     ->sortable(),
                 TextColumn::make('email')
                     ->label('E-mail')
+                    ->placeholder('Sem e-mail')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('roles.name')
@@ -128,7 +135,7 @@ class UsuarioDoSiteResource extends Resource
     {
         return Action::make('darAcesso')
             ->label('Dar acesso a um jogador')
-            ->icon('rh-users')
+            ->icon('rh-jogadores')
             ->color('gray')
             ->visible(fn (): bool => static::canCreate())
             ->modalHeading('Dar acesso ao site')
@@ -142,6 +149,7 @@ class UsuarioDoSiteResource extends Resource
                     ->options(fn (): array => Usuario::query()->where('acessa_site', false)->orderBy('nome')->get()
                         ->mapWithKeys(fn (Usuario $u): array => [$u->id => $u->apelido ? "{$u->nome} ({$u->apelido})" : $u->nome])
                         ->all()),
+                self::campoLogin(),
                 self::campoEmail(),
                 self::campoSenha(),
                 // Sem registro no modal: as opções vêm direto (o relationship é só do formulário).
@@ -155,7 +163,8 @@ class UsuarioDoSiteResource extends Resource
                 $usuario = Usuario::query()->where('acessa_site', false)->findOrFail($data['usuario']);
                 $usuario->forceFill([
                     'acessa_site' => true,
-                    'email' => $data['email'],
+                    'login' => $data['login'] ?? null,
+                    'email' => $data['email'] ?? null,
                     'password' => $data['password'],
                 ])->save();
                 $usuario->syncRoles(Grupo::query()->where('guard_name', 'web')->whereKey($data['roles'])->get());
@@ -169,7 +178,7 @@ class UsuarioDoSiteResource extends Resource
     {
         return Action::make('tirarAcesso')
             ->label('Tirar acesso')
-            ->icon('rh-x')
+            ->icon('rh-fechar')
             ->color('danger')
             ->visible(fn (Usuario $record): bool => static::canEdit($record))
             ->requiresConfirmation()
@@ -184,17 +193,36 @@ class UsuarioDoSiteResource extends Resource
             });
     }
 
+    /** Entra no site pelo usuário ou pelo e-mail: precisa de ao menos um dos dois. */
+    private static function campoLogin(): TextInput
+    {
+        return TextInput::make('login')
+            ->label('Usuário')
+            ->maxLength(60)
+            ->regex('/^[A-Za-z0-9._-]+$/')
+            ->validationMessages([
+                'regex' => 'Use só letras, números, ponto, traço e sublinhado (o e-mail vai no campo dele).',
+                'required_without' => 'Preencha o usuário ou o e-mail: é com um deles que se entra no site.',
+            ])
+            ->requiredWithout('email')
+            ->unique(Usuario::class, 'login', ignoreRecord: true)
+            ->helperText('Para entrar no site: o usuário (ex.: FulanoDeTal) ou o e-mail.')
+            ->mutateStateForValidationUsing(fn (?string $state): ?string => self::limpo($state))
+            ->dehydrateStateUsing(fn (?string $state): ?string => self::limpo($state));
+    }
+
     private static function campoEmail(): TextInput
     {
         return TextInput::make('email')
             ->label('E-mail')
             ->email()
-            ->required()
+            ->requiredWithout('login')
+            ->validationMessages(['required_without' => 'Preencha o usuário ou o e-mail: é com um deles que se entra no site.'])
             ->maxLength(255)
             ->unique(Usuario::class, 'email', ignoreRecord: true)
             // O login do site compara em minúsculas: valida e grava já limpo.
-            ->mutateStateForValidationUsing(fn (?string $state): ?string => self::email($state))
-            ->dehydrateStateUsing(fn (?string $state): ?string => self::email($state));
+            ->mutateStateForValidationUsing(fn (?string $state): ?string => self::limpo($state))
+            ->dehydrateStateUsing(fn (?string $state): ?string => self::limpo($state));
     }
 
     private static function campoSenha(): TextInput
@@ -223,9 +251,9 @@ class UsuarioDoSiteResource extends Resource
             ->columnSpanFull();
     }
 
-    private static function email(?string $email): ?string
+    private static function limpo(?string $texto): ?string
     {
-        return filled($email) ? Str::lower(trim($email)) : null;
+        return filled($texto) ? Str::lower(trim($texto)) : null;
     }
 
     public static function getPages(): array

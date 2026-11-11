@@ -15,7 +15,7 @@ Um único app Laravel 13 (PHP 8.5), no molde do site do casamento: site de opera
 | Banco | MySQL | Laragon local; produção a definir |
 | PDF | Página para imprimir (Salvar como PDF do navegador) | Relatórios; sem dompdf. CSV e Excel pelo OpenSpout, que vem com o Filament |
 | Permissões | `spatie/laravel-permission` v6 | Dois guards (`painel`, `web`), tabelas em português |
-| Ícones | `blade-ui-kit/blade-icons` | SVGs do design system em `resources/svg/site/icons` |
+| Ícones | `blade-ui-kit/blade-icons` | Todos os SVGs (site e painel) em `resources/svg/icones`; os do Filament apontam para lá (`App\Support\IconesDoPainel`) |
 
 Diferenças para o casamento: Laravel 10 → 13, Filament 3 → 5 (API de formulários mudou para Schemas, não copiar resources direto), guard `web` em vez de `guest`, sem Spatie ResponseCache.
 
@@ -87,7 +87,7 @@ resources/
 ├── scss/site/                  # vars, core, components, pages
 ├── css/filament/painel/theme.css
 ├── fonts/barlow/
-├── svg/site/icons/
+├── svg/icones/                 # todos os ícones do site e do painel (LEIAME.md: onde cada um aparece)
 └── js/site/                    # app.js, mesa.js, relogio-torneio.js (v3: o motor do relógio), tv.js (link do relógio), som.js (campainha e AVISO), tela-acesa.js e copiar.js
 
 config/permission.php           # tabelas do spatie renomeadas (grupos, permissoes...)
@@ -108,8 +108,8 @@ Tudo atrás de `auth` (guard `web`, tabela `usuarios`) e das permissões do site
 | 03 Seleção do jogo | `GET /jogos` | `jogos.index` | `JogoController@index` (abas Próximos / Em andamento / Finalizados, busca `?busca=`, destaque do jogo ao vivo ou de hoje) |
 | 04 Conferência | `GET /jogos/{jogo}/conferencia` | `jogos.conferencia` | `JogoController@conferencia` |
 | 05 Jogadores confirmados | `GET /jogos/{jogo}/jogadores` | `jogos.jogadores` | Livewire `Jogo\Jogadores` (cadastro rápido incluso) |
-| 06 Mesas | `GET /jogos/{jogo}/mesas` | `jogos.mesas` | Livewire `Jogo\Mesas` (sem lugar, clicar para mover/trocar, sortear, lugares e dealer por mesa, adicionar/remover mesa, girar, Iniciar jogo). O floor do jogo é escolhido no painel |
-| 07–09, 11 Ao vivo | `GET /jogos/{jogo}/ao-vivo` | `jogos.ao-vivo` | Livewire `Jogo\AoVivo` + `Jogo\AcoesJogador` (entrada, pagamento, eliminação/cash-out, trocar lugar, desfazer) + botões de fase |
+| 06 Mesas | `GET /jogos/{jogo}/mesas` | `jogos.mesas` | Livewire `Jogo\Mesas` (sem lugar, clicar para mover/trocar, Sortear lugares pelo modal `Jogo\Sorteio`, lugares e dealer por mesa, adicionar/remover mesa, girar, Iniciar jogo). O floor do jogo é escolhido no painel |
+| 07–09, 11 Ao vivo | `GET /jogos/{jogo}/ao-vivo` | `jogos.ao-vivo` | Livewire `Jogo\AoVivo` + `Jogo\AcoesJogador` (entrada, pagamento, eliminação/cash-out, trocar lugar, desfazer) + `Jogo\Sorteio` (JOGADORES: quem chegou, cadastro e sorteio do lugar) + botões de fase |
 | 10 Resumo | `GET /jogos/{jogo}/resumo` | `jogos.resumo` | Livewire `Jogo\Resumo` (saldos e pendências) |
 | TV | `GET /jogos/{jogo}/tv` | `jogos.tv` | v3: leva para o link do relógio do jogo (a tela da TV da v2, Livewire `Jogo\Tv` com prize pool e premiação, saiu) |
 | Relógio do gerenciador (v3) | `GET /jogos/{jogo}/relogio` | `jogos.relogio` | Livewire `Jogo\ControleDoRelogio` (`jogo.etapa:ao-vivo`): relógio grande, ANTERIOR, PAUSAR/CONTINUAR, PRÓXIMO, ± minutos e o AVISO; o Operador só vê |

@@ -46,7 +46,7 @@ class AcessoDoSite
             $this->sair($request);
 
             return redirect()->route('login')
-                ->withErrors(['email' => 'Seu acesso ao site foi desativado. Fale com o organizador.']);
+                ->withErrors(['login' => 'Seu acesso ao site foi desativado. Fale com o organizador.']);
         }
 
         if ($usuario->can(self::FORA_DA_NOITE)) {

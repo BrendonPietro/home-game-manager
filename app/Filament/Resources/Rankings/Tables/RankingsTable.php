@@ -42,7 +42,7 @@ class RankingsTable
             ->recordActions([
                 Action::make('classificacao')
                     ->label('Classificação')
-                    ->icon('rh-list')
+                    ->icon('rh-lista')
                     ->url(fn (Ranking $r): string => RankingResource::getUrl('classificacao', ['record' => $r])),
                 EditAction::make(),
                 DeleteAction::make(),

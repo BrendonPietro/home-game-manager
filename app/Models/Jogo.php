@@ -42,6 +42,9 @@ class Jogo extends Model
         'metodo_premiacao',
         'lugares_por_mesa',
         'tamanho_mesa_final',
+        'time_chip_fichas',
+        'time_chip_ate_nivel',
+        'antecipado_fichas',
         'estrutura_blinds_id',
         'nivel_atual',
         'blinds_atual',
@@ -71,6 +74,9 @@ class Jogo extends Model
             'data' => 'date',
             'lugares_por_mesa' => 'integer',
             'tamanho_mesa_final' => 'integer',
+            'time_chip_fichas' => 'integer',
+            'time_chip_ate_nivel' => 'integer',
+            'antecipado_fichas' => 'integer',
             'nivel_atual' => 'integer',
             'valor_ficha' => 'decimal:4',
             'relogio_segundos' => 'integer',
@@ -284,6 +290,18 @@ class Jogo extends Model
     public function eCashGame(): bool
     {
         return $this->modalidade === Modalidade::CashGame;
+    }
+
+    /** Torneio com time chip: fichas a mais para quem entra até o fim de um nível (Services\Jogo\TimeChip). */
+    public function temTimeChip(): bool
+    {
+        return $this->eTorneio() && (int) $this->time_chip_fichas > 0;
+    }
+
+    /** Torneio com bônus do pagamento antecipado: quem está marcado como "pagou antes" ganha essas fichas no buy-in. */
+    public function temBonusAntecipado(): bool
+    {
+        return $this->eTorneio() && (int) $this->antecipado_fichas > 0;
     }
 
     /** v2: torneio com estrutura de blinds tem relógio (Services\Jogo\Relogio); sem ela, nível e blinds são digitados. */

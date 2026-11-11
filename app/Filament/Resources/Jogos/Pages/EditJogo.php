@@ -13,7 +13,6 @@ use App\Services\Jogo\Calculadora;
 use App\Services\Jogo\EventoDoJogo;
 use App\Services\Jogo\ResumoFinanceiro;
 use Filament\Actions\Action;
-use Filament\Actions\DeleteAction;
 use Filament\Actions\ViewAction;
 use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
@@ -30,7 +29,7 @@ class EditJogo extends EditRecord
         return [
             Action::make('agendar')
                 ->label('Agendar')
-                ->icon('rh-cal')
+                ->icon('rh-calendario')
                 ->color('primary')
                 ->visible(fn (): bool => $this->record->status === StatusJogo::Rascunho)
                 ->requiresConfirmation()
@@ -40,7 +39,7 @@ class EditJogo extends EditRecord
                 ->action(fn () => $this->mudarStatus(app(AgendarJogo::class), 'Jogo agendado.')),
             Action::make('cancelar')
                 ->label('Cancelar jogo')
-                ->icon('rh-x')
+                ->icon('rh-fechar')
                 ->color('danger')
                 ->outlined()
                 ->visible(fn (): bool => $this->record->status->podeCancelar())
@@ -53,7 +52,7 @@ class EditJogo extends EditRecord
             JogoResource::acaoDuplicar(),
             JogoResource::acaoSalvarComoModelo(),
             ViewAction::make(),
-            DeleteAction::make(),
+            JogoResource::acaoExcluir(),
         ];
     }
 

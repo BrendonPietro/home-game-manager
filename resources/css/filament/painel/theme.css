@@ -95,10 +95,9 @@
         border-inline-end: 1px solid #262b2e; /* line-100 */
     }
 
-    /* Item ativo do menu: fundo bg-300 + filete vermelho à esquerda */
+    /* Item ativo do menu: só o fundo bg-300 (o ícone e o texto já ficam vermelhos), sem filete na borda */
     .dark .fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
         background-color: var(--color-gray-800);
-        box-shadow: inset 3px 0 0 var(--color-primary-600);
     }
 
     /* Títulos e números em Barlow Condensed, peso 500: a hierarquia vem do tamanho, não do negrito */
@@ -136,15 +135,6 @@
     .rh-marca__naipe {
         font-size: 1.4em;
         color: var(--color-primary-600);
-    }
-
-    /* Ícones do design system (resources/svg/site/icons) no menu e nas ações: só traço */
-    .rh-ic {
-        fill: none;
-        stroke: currentColor;
-        stroke-width: 1.5;
-        stroke-linecap: round;
-        stroke-linejoin: round;
     }
 
     /* Login (tela 15): "Vai operar a noite? Entrar no site de operação" */

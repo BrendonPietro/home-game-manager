@@ -24,7 +24,7 @@ class RankingResource extends Resource
 {
     protected static ?string $model = Ranking::class;
 
-    protected static string|BackedEnum|null $navigationIcon = 'rh-list';
+    protected static string|BackedEnum|null $navigationIcon = 'rh-menu-rankings';
 
     protected static string|UnitEnum|null $navigationGroup = 'Cadastros';
 

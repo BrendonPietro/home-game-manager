@@ -30,6 +30,7 @@ class Participante extends Model
     {
         return [
             'status' => StatusParticipante::class,
+            'pagou_antes' => 'boolean',
             'lugar' => 'integer',
             'posicao_final' => 'integer',
             'premio' => 'decimal:2',

@@ -24,7 +24,7 @@ class UsuarioResource extends Resource
 {
     protected static ?string $model = Usuario::class;
 
-    protected static string|BackedEnum|null $navigationIcon = 'rh-users';
+    protected static string|BackedEnum|null $navigationIcon = 'rh-menu-jogadores';
 
     protected static string|UnitEnum|null $navigationGroup = 'Cadastros';
 

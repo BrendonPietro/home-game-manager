@@ -5,6 +5,7 @@ namespace App\Livewire\Jogo;
 use App\Actions\Jogo\CadastrarJogadorRapido;
 use App\Actions\Jogo\ConfirmarJogador;
 use App\Actions\Jogo\DesconfirmarJogador;
+use App\Actions\Jogo\MarcarPagamentoAntecipado;
 use App\Exceptions\RegraDoJogo;
 use App\Models\Jogo;
 use App\Models\Participante;
@@ -19,7 +20,8 @@ use Livewire\Component;
 
 /**
  * Tela 05: quem vai jogar hoje. Clicar no cartão confirma ou tira da lista; NOVO JOGADOR faz o
- * cadastro rápido e já confirma. As regras ficam nas Actions; aqui só se mostra o resultado.
+ * cadastro rápido e já confirma. No torneio com bônus do pagamento antecipado, quem tem a permissão marca
+ * na lista quem pagou antes (ganha as fichas ao sentar). As regras ficam nas Actions; aqui só se mostra o resultado.
  */
 class Jogadores extends Component
 {
@@ -54,6 +56,14 @@ class Jogadores extends Component
         $jogador = Usuario::query()->findOrFail($usuarioId);
 
         $this->executar(fn () => app(DesconfirmarJogador::class)($this->jogo, $jogador, $this->quem()));
+    }
+
+    /** Pagou antes (ou tira a marca): ganha as fichas do bônus junto do buy-in. */
+    public function alternarAntecipado(int $participanteId): void
+    {
+        $participante = $this->jogo->participantes()->findOrFail($participanteId);
+
+        $this->executar(fn () => app(MarcarPagamentoAntecipado::class)($participante, ! $participante->pagou_antes, $this->quem()));
     }
 
     public function abrirNovo(): void

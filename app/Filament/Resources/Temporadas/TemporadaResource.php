@@ -15,12 +15,25 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use UnitEnum;
 
-/** Temporadas ("2026/2"): o jogo escolhe a sua no cadastro. Temporada com jogo não se exclui. */
+/**
+ * Temporadas ("2026/2"): o jogo escolhe a sua no cadastro. Temporada com jogo não se exclui.
+ *
+ * POR ENQUANTO FORA DO PAINEL (NO_PAINEL = false): sem item no menu nem atalho, e sem o campo "Temporada" no
+ * cadastro do jogo. O resto continua (tabela, model, períodos dos relatórios quando houver temporada):
+ * para voltar, é só trocar para true.
+ */
 class TemporadaResource extends Resource
 {
+    public const NO_PAINEL = false;
+
     protected static ?string $model = Temporada::class;
 
-    protected static string|BackedEnum|null $navigationIcon = 'rh-clock';
+    public static function shouldRegisterNavigation(): bool
+    {
+        return self::NO_PAINEL && parent::shouldRegisterNavigation();
+    }
+
+    protected static string|BackedEnum|null $navigationIcon = 'rh-menu-temporadas';
 
     protected static string|UnitEnum|null $navigationGroup = 'Cadastros';
 

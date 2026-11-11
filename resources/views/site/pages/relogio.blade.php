@@ -39,10 +39,10 @@
 			<div class="rh-tv__botoes" x-bind:class="{ 'is-escondido': ! controles }">
 				<span class="rh-tv__toque" x-show="som && travado" x-cloak>Toque na tela para ligar o som</span>
 				<button type="button" class="rh-btn" x-on:click="alternarSom()" x-bind:aria-pressed="som ? 'true' : 'false'">
-					<span x-show="som" x-cloak>@svg('rh-som')</span><span x-show="! som">@svg('rh-mudo')</span>
+					<span x-show="som" x-cloak>@svg('rh-som-ligado')</span><span x-show="! som">@svg('rh-som-desligado')</span>
 					<span class="rh-tv__botao-texto" x-text="som ? 'SOM LIGADO' : 'SOM DESLIGADO'">SOM DESLIGADO</span>
 				</button>
-				<button type="button" class="rh-btn" x-on:click="telaCheia()" x-show="podeTelaCheia">@svg('rh-expand') <span class="rh-tv__botao-texto" x-text="cheia ? 'SAIR DA TELA CHEIA' : 'TELA CHEIA'">TELA CHEIA</span></button>
+				<button type="button" class="rh-btn" x-on:click="telaCheia()" x-show="podeTelaCheia">@svg('rh-tela-cheia') <span class="rh-tv__botao-texto" x-text="cheia ? 'SAIR DA TELA CHEIA' : 'TELA CHEIA'">TELA CHEIA</span></button>
 			</div>
 		</header>
 

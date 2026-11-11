@@ -143,7 +143,7 @@ class EstruturaBlindsForm
 
         return Action::make('gerarNiveis')
             ->label('Gerar próximos níveis')
-            ->icon('rh-plus')
+            ->icon('rh-adicionar')
             ->color('gray')
             ->disabled(fn (Get $get): bool => ! $temBlinds($get('niveis')))
             ->tooltip(fn (Get $get): ?string => $temBlinds($get('niveis')) ? null : 'Preencha ao menos um nível com blinds.')

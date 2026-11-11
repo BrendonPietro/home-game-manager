@@ -9,10 +9,11 @@ use Illuminate\Support\Str;
 
 /**
  * Contas de quem administra o clube (config/clube.php, do .env), em qualquer ambiente: cada pessoa
- * ganha o login do site (usuarios, pelo e-mail) e o do painel (seguranca, com o e-mail como login),
- * com a mesma senha inicial. Desenvolvedor fica no grupo Desenvolvedor dos dois lados; os admins, no
- * Admin. Sem senha no .env, uma aleatória aparece no terminal. Não mexe em conta que já existe
- * (a senha trocada depois de entrar continua).
+ * ganha o login do site (usuarios) e o do painel (seguranca), com o mesmo usuário e a mesma senha
+ * inicial. O usuário pode ser um nome ("FulanoDeTal", entra assim nos dois) ou um e-mail (no site
+ * vai para o e-mail). Desenvolvedor fica no grupo Desenvolvedor dos dois lados; os admins, no Admin.
+ * Sem senha no .env, uma aleatória aparece no terminal. Não mexe em conta que já existe (a senha
+ * trocada depois de entrar continua).
  */
 class ContasDoClubeSeeder extends Seeder
 {
@@ -27,18 +28,19 @@ class ContasDoClubeSeeder extends Seeder
             return;
         }
 
-        foreach ($desenvolvedores as [$nome, $email]) {
-            $this->criar($nome, $email, config('clube.desenvolvedor_senha'), 'CONTA_DESENVOLVEDOR_SENHA', 'Desenvolvedor');
+        foreach ($desenvolvedores as [$nome, $login]) {
+            $this->criar($nome, $login, config('clube.desenvolvedor_senha'), 'CONTA_DESENVOLVEDOR_SENHA', 'Desenvolvedor');
         }
 
-        foreach ($admins as [$nome, $email]) {
-            $this->criar($nome, $email, config('clube.admins_senha'), 'CONTAS_ADMIN_SENHA', 'Admin');
+        foreach ($admins as [$nome, $login]) {
+            $this->criar($nome, $login, config('clube.admins_senha'), 'CONTAS_ADMIN_SENHA', 'Admin');
         }
     }
 
     /**
-     * "Brendon <brendon@exemplo.com>, Seij <seij@exemplo.com>" → [['Brendon', 'brendon@exemplo.com'], …].
-     * Sem o nome ("seij@exemplo.com"), o nome é o começo do e-mail.
+     * "Fulano de Tal <FulanoDeTal>, Seij <seij@exemplo.com>" → [['Fulano de Tal', 'fulanodetal'], ['Seij', 'seij@exemplo.com']].
+     * O usuário vai em minúsculas (o login dos dois lados não diferencia). Sem o nome, o nome é o usuário
+     * (ou o começo do e-mail). O que não for usuário nem e-mail válido fica de fora.
      *
      * @return list<array{string, string}>
      */
@@ -48,30 +50,32 @@ class ContasDoClubeSeeder extends Seeder
 
         foreach (array_filter(array_map('trim', explode(',', (string) $lista))) as $conta) {
             if (preg_match('/^(.*?)\s*<([^>]+)>$/', $conta, $partes)) {
-                [$nome, $email] = [trim($partes[1]), trim($partes[2])];
+                [$nome, $login] = [trim($partes[1]), trim($partes[2])];
             } else {
-                [$nome, $email] = ['', $conta];
+                [$nome, $login] = ['', $conta];
             }
 
-            $email = Str::lower($email);
+            $eEmail = str_contains($login, '@');
+            $valido = $eEmail ? filter_var($login, FILTER_VALIDATE_EMAIL) : preg_match('/^[A-Za-z0-9._-]{1,60}$/', $login);
 
-            if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $contas[] = [$nome !== '' ? $nome : Str::ucfirst(Str::before($email, '@')), $email];
+            if ($valido) {
+                $contas[] = [$nome !== '' ? $nome : Str::ucfirst($eEmail ? Str::before($login, '@') : $login), Str::lower($login)];
             }
         }
 
         return $contas;
     }
 
-    private function criar(string $nome, string $email, ?string $doEnv, string $variavel, string $grupo): void
+    private function criar(string $nome, string $login, ?string $doEnv, string $variavel, string $grupo): void
     {
         $senha = filled($doEnv) ? $doEnv : Str::password(16, symbols: false);
+        $campoDoSite = str_contains($login, '@') ? 'email' : 'login';
         $criadas = [];
 
-        if (! Usuario::withTrashed()->where('email', $email)->exists()) {
+        if (! Usuario::withTrashed()->where($campoDoSite, $login)->exists()) {
             Usuario::query()->create([
                 'nome' => $nome,
-                'email' => $email,
+                $campoDoSite => $login,
                 'password' => $senha,
                 'acessa_site' => true,
                 'ativo' => true,
@@ -80,10 +84,10 @@ class ContasDoClubeSeeder extends Seeder
             $criadas[] = 'site';
         }
 
-        if (! Seguranca::query()->where('login', $email)->exists()) {
+        if (! Seguranca::query()->where('login', $login)->exists()) {
             Seguranca::query()->create([
                 'nome' => $nome,
-                'login' => $email,
+                'login' => $login,
                 'password' => $senha,
                 'ativo' => true,
             ])->assignRole($grupo);
@@ -98,7 +102,7 @@ class ContasDoClubeSeeder extends Seeder
         $onde = implode(' e ', $criadas);
 
         filled($doEnv)
-            ? $this->command?->info("Conta do clube: {$email} ({$grupo}, {$onde}), senha do {$variavel}")
-            : $this->command?->warn("Conta do clube: {$email} ({$grupo}, {$onde}) / senha {$senha}");
+            ? $this->command?->info("Conta do clube: {$login} ({$grupo}, {$onde}), senha do {$variavel}")
+            : $this->command?->warn("Conta do clube: {$login} ({$grupo}, {$onde}) / senha {$senha}");
     }
 }

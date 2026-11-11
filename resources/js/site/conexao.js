@@ -6,6 +6,8 @@
 // - Um toque (lançamento, pagamento, botão de fase…) falhou: faixa vermelha dizendo que não foi
 //   gravado, que fica até alguém fechar ou até o próximo toque dar certo.
 // - Sessão vencida (419): recarrega a página em vez do aviso em inglês do Livewire.
+// - O que a tela mostrava não existe mais (404, ex.: o jogo foi excluído com a tela aberta): recarrega,
+//   e o servidor leva para o início com o aviso (App\Support\PaginaQueNaoExiste).
 
 const TEXTO = {
     poll: 'Sem conexão com o servidor · tentando de novo',
@@ -77,7 +79,7 @@ export function vigiarConexao(Livewire) {
         });
 
         onError(({ response, preventDefault }) => {
-            if (response?.status === 419) {
+            if (response?.status === 419 || response?.status === 404) {
                 preventDefault();
                 window.location.reload();
             }

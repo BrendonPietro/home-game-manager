@@ -34,10 +34,10 @@
 		</div>
 		<span class="rh-spacer"></span>
 		@if ($regras->isNotEmpty())
-			<a class="rh-btn" href="#regra">@svg('rh-eye') Ver regra de distribuição</a>
+			<a class="rh-btn" href="#regra">@svg('rh-ver') Ver regra de distribuição</a>
 		@endif
 		@if ($urlResultado)
-			<a class="rh-btn rh-btn--primary rh-btn--lg" href="{{ $urlResultado }}">{{ $jogo->estaFinalizado() ? 'VER RESULTADO' : 'REGISTRAR RESULTADO' }} @svg('rh-chev-r')</a>
+			<a class="rh-btn rh-btn--primary rh-btn--lg" href="{{ $urlResultado }}">{{ $jogo->estaFinalizado() ? 'VER RESULTADO' : 'REGISTRAR RESULTADO' }} @svg('rh-chevron-direita')</a>
 		@endif
 	</div>
 

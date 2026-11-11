@@ -9,6 +9,7 @@ use App\Enums\MetodoPremiacao;
 use App\Enums\Modalidade;
 use App\Enums\StatusJogo;
 use App\Enums\TipoItem;
+use App\Filament\Resources\Temporadas\TemporadaResource;
 use App\Models\Entrada;
 use App\Models\EstruturaBlinds;
 use App\Models\Item;
@@ -166,11 +167,13 @@ class JogoForm
                 Text::make('Quem não é admin entra no site de 3 h antes do início até 3 h depois do término previsto.')
                     ->columnSpanFull()
                     ->visible(! $modelo),
+                // Temporadas estão fora do painel por enquanto (TemporadaResource::NO_PAINEL).
                 Select::make('temporada_id')
                     ->label('Temporada')
                     ->relationship('temporada', 'nome')
                     ->preload()
-                    ->placeholder('Sem temporada'),
+                    ->placeholder('Sem temporada')
+                    ->visible(TemporadaResource::NO_PAINEL),
                 // O tipo de evento nas Métricas: criar a partir do modelo já preenche.
                 Select::make('modelo_id')
                     ->label('Tipo de evento (modelo)')
@@ -232,6 +235,37 @@ class JogoForm
                         'linhas' => EstruturaBlinds::linhas(EstruturaBlinds::query()->find($get('estrutura_blinds_id'))?->niveis ?? []),
                     ])
                     ->visible(fn (Get $get): bool => filled($get('estrutura_blinds_id'))),
+                // Time chip: fichas a mais para quem faz o buy-in (senta) até o fim de um nível (Services\Jogo\TimeChip).
+                Section::make('Time chip')
+                    ->description('Quem entra (faz o buy-in) até o fim do nível escolhido ganha essas fichas a mais. Antes de o torneio começar conta como dentro do prazo. Para dar mais tempo, aumente a duração do nível na estrutura.')
+                    ->columns(2)
+                    ->schema([
+                        TextInput::make('time_chip_fichas')
+                            ->label('Fichas do time chip')
+                            ->integer()
+                            ->minValue(0)
+                            ->suffix('fichas')
+                            ->placeholder('Sem time chip'),
+                        TextInput::make('time_chip_ate_nivel')
+                            ->label('Até o fim do nível')
+                            ->integer()
+                            ->minValue(1)
+                            ->maxValue(30)
+                            ->default(1)
+                            ->required(),
+                    ]),
+                // Bônus do pagamento antecipado: fichas a mais no buy-in de quem está marcado como "pagou antes".
+                Section::make('Pagamento antecipado')
+                    ->description('Quem pagou o buy-in antes ganha essas fichas a mais junto do buy-in. Marque quem pagou na aba Confirmados (ou no site, no painel do jogador): sentar já soma as fichas, e o aviso diz quanto entregar.')
+                    ->columns(2)
+                    ->schema([
+                        TextInput::make('antecipado_fichas')
+                            ->label('Fichas para quem pagou antes')
+                            ->integer()
+                            ->minValue(0)
+                            ->suffix('fichas')
+                            ->placeholder('Sem bônus'),
+                    ]),
             ]);
     }
 
@@ -582,7 +616,7 @@ class JogoForm
                     ->addAction(fn (Action $action): Action => $action
                         ->label('Adicionar posição')
                         ->hiddenLabel()
-                        ->icon('rh-plus')
+                        ->icon('rh-adicionar')
                         ->tooltip('Adicionar posição'))
                     ->extraAttributes(['class' => 'rh-premiacao'])
                     ->visible($manual)
@@ -727,7 +761,7 @@ class JogoForm
                     ->addAction(fn (Action $action): Action => $action
                         ->label('Adicionar mesa')
                         ->hiddenLabel()
-                        ->icon('rh-plus')
+                        ->icon('rh-adicionar')
                         ->tooltip('Adicionar mesa'))
                     // Mesa com jogadores sentados não sai daqui: troque os lugares no site antes.
                     ->deleteAction(fn (Action $action) => $action->hidden(

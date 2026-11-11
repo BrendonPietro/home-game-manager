@@ -67,16 +67,12 @@
 	font-weight: 600;
 }
 
-// Ícones do design system (resources/svg/site/icons, @svg('rh-…'))
+// Ícones (resources/svg/icones, @svg('rh-…')): só o tamanho. O traço ou o preenchimento vem de cada arquivo
+// (com currentColor), então dá para trocar por qualquer SVG baixado com o mesmo nome.
 .rh-ic {
 	width: 18px;
 	height: 18px;
 	flex: none;
-	stroke: currentColor;
-	fill: none;
-	stroke-width: 1.5;
-	stroke-linecap: round;
-	stroke-linejoin: round;
 }
 
 .rh-link {

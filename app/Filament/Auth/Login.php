@@ -55,8 +55,9 @@ class Login extends LoginBase
      */
     protected function getCredentialsFromFormData(#[SensitiveParameter] array $data): array
     {
+        // O cadastro grava o login em minúsculas: "FulanoDeTal" entra como "fulanodetal" em qualquer banco.
         return [
-            'login' => $data['login'],
+            'login' => mb_strtolower(trim((string) $data['login'])),
             'password' => $data['password'],
         ];
     }

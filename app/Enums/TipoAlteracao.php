@@ -21,6 +21,7 @@ enum TipoAlteracao: string
     case AcertoFeito = 'acerto_feito';
     case DesfezAcerto = 'desfez_acerto';
     case CadastroAlterado = 'cadastro_alterado';
+    case PagamentoAntecipado = 'pagamento_antecipado';
 
     public function label(): string
     {
@@ -37,6 +38,7 @@ enum TipoAlteracao: string
             self::AcertoFeito => 'Acerto feito',
             self::DesfezAcerto => 'Acerto desfeito',
             self::CadastroAlterado => 'Cadastro alterado',
+            self::PagamentoAntecipado => 'Pagamento antecipado',
         };
     }
 

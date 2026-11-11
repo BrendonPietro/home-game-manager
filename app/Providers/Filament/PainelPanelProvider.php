@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Auth\AvatarDeFichaProvider;
 use App\Filament\Auth\Login;
 use App\Filament\Auth\LoginResponse;
 use App\Filament\Auth\Perfil;
@@ -72,6 +73,7 @@ class PainelPanelProvider extends PanelProvider
             ->brandName('Rodrigues Home Game')
             ->brandLogo(fn () => view('filament.painel.marca'))
             ->brandLogoHeight('1.75rem')
+            ->defaultAvatarProvider(AvatarDeFichaProvider::class) // as iniciais dentro da ficha (resources/svg/icones/ficha.svg)
             ->defaultThemeMode(ThemeMode::Dark)
             ->font('Barlow', provider: LocalFontProvider::class) // @font-face no tema; sem CDN
             ->colors([

@@ -281,6 +281,12 @@ class AoVivo extends Component
         return true;
     }
 
+    /** Sentou com o torneio rodando (EscolheQuemSenta): quanto entregar, com o time chip e o bônus de quem pagou antes. */
+    protected function avisarQueSentou(string $texto): void
+    {
+        $this->aviso = $texto;
+    }
+
     private function quem(): Usuario
     {
         return auth('web')->user();

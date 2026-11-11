@@ -8,7 +8,7 @@
 <x-filament-widgets::widget class="rh-wi-proximos rh-wi-cheio">
     <x-filament::section heading="Próximos">
         <x-slot name="afterHeader">
-            <x-filament::link :href="$calendario" icon="rh-chev-r" icon-position="after" size="sm">Calendário</x-filament::link>
+            <x-filament::link :href="$calendario" icon="rh-chevron-direita" icon-position="after" size="sm">Calendário</x-filament::link>
         </x-slot>
 
         @if ($eventos->isEmpty())

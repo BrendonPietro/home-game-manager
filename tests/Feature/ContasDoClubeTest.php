@@ -37,10 +37,41 @@ class ContasDoClubeTest extends TestCase
     public function test_ler_a_lista_do_env(): void
     {
         $this->assertSame(
-            [['Brendon Pietro', 'brendon@exemplo.com'], ['Diego', 'diego@exemplo.com']],
-            ContasDoClubeSeeder::ler(' Brendon Pietro <Brendon@Exemplo.com> , diego@exemplo.com, não-é-email '),
+            [['Brendon Pietro', 'brendon@exemplo.com'], ['Diego', 'diego@exemplo.com'], ['Ciclano Souza', 'ciclanosouza'], ['Seij', 'seij']],
+            ContasDoClubeSeeder::ler(' Brendon Pietro <Brendon@Exemplo.com> , diego@exemplo.com, não é login, Ciclano Souza <CiclanoSouza>, seij, x <a@@b>'),
         );
         $this->assertSame([], ContasDoClubeSeeder::ler(null));
+    }
+
+    public function test_conta_pelo_usuario_entra_assim_no_site_e_no_painel(): void
+    {
+        config([
+            'clube.desenvolvedor' => 'Fulano de Tal <FulanoDeTal>',
+            'clube.admins' => 'Ciclano Souza <CiclanoSouza>',
+        ]);
+
+        $this->seed(ContasDoClubeSeeder::class);
+
+        $dev = Usuario::query()->where('login', 'fulanodetal')->sole();
+        $this->assertNull($dev->email);
+        $this->assertSame(['Desenvolvedor'], Seguranca::query()->where('login', 'fulanodetal')->sole()->getRoleNames()->all());
+        $this->assertSame(['Admin'], Usuario::query()->where('login', 'ciclanosouza')->sole()->getRoleNames()->all());
+
+        // Site: o usuário como foi escrito no .env.
+        $this->post('/login', ['login' => 'FulanoDeTal', 'password' => 'senha-do-dev'])->assertRedirect();
+        $this->assertAuthenticatedAs($dev, 'web');
+
+        // Painel: também.
+        Filament::setCurrentPanel('painel');
+        Livewire::test(Login::class)
+            ->fillForm(['login' => 'CiclanoSouza', 'password' => 'senha-dos-admins'])
+            ->call('authenticate')
+            ->assertHasNoFormErrors();
+        $this->assertAuthenticatedAs(Seguranca::query()->where('login', 'ciclanosouza')->sole(), 'painel');
+
+        // Rodar de novo não duplica.
+        $this->seed(ContasDoClubeSeeder::class);
+        $this->assertSame([2, 2], [Usuario::query()->count(), Seguranca::query()->count()]);
     }
 
     public function test_cria_as_contas_nos_dois_logins_com_o_grupo_certo(): void

@@ -27,7 +27,7 @@ class EstruturaBlindsResource extends Resource
 
     protected static ?string $slug = 'estruturas';
 
-    protected static string|BackedEnum|null $navigationIcon = 'rh-coins';
+    protected static string|BackedEnum|null $navigationIcon = 'rh-menu-blinds';
 
     protected static string|UnitEnum|null $navigationGroup = 'Cadastros';
 
@@ -47,7 +47,7 @@ class EstruturaBlindsResource extends Resource
     {
         return Action::make('duplicar')
             ->label('Duplicar')
-            ->icon('rh-copy')
+            ->icon('rh-copiar')
             ->color('gray')
             ->visible(fn (): bool => static::canCreate())
             ->action(function (EstruturaBlinds $record, Action $action): void {

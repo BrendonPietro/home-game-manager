@@ -87,9 +87,13 @@ class SegurancaTest extends TestCase
 
         $painel = Permissoes::opcoes('painel');
         $this->assertSame(['jogos.ver', 'jogos.criar', 'jogos.editar', 'jogos.excluir', 'modelos.ver'], array_slice(array_keys($painel), 0, 5));
-        $this->assertSame(['relatorios.ver', 'relatorios.exportar', 'financeiro.ver', 'configuracoes.editar', 'pagamentos.registrar', 'jogos.andamento'], array_slice(array_keys($painel), -6));
-        $this->assertSame(['Jogos · ver', 'Agenda · editar', 'Jogos · editar em andamento'], [$painel['jogos.ver'], $painel['eventos.editar'], $painel['jogos.andamento']]);
-        $this->assertSame('Lançar entradas', Permissoes::opcoes('web')['entradas.registrar']);
+        $this->assertSame(['relatorios.ver', 'relatorios.exportar', 'financeiro.ver', 'configuracoes.editar', 'pagamentos.registrar', 'pagamentos.antecipado', 'jogos.andamento', 'jogos.excluir_tudo'], array_slice(array_keys($painel), -8));
+        $this->assertSame(['Jogos · ver', 'Agenda · editar', 'Jogos · editar em andamento', 'Pagamentos · marcar antecipado (fichas a mais)', 'Jogos · excluir com lançamentos (apaga tudo)'], [$painel['jogos.ver'], $painel['eventos.editar'], $painel['jogos.andamento'], $painel['pagamentos.antecipado'], $painel['jogos.excluir_tudo']]);
+
+        // Só o Desenvolvedor começa com ela; o Admin, não.
+        $this->assertTrue($this->grupo('Desenvolvedor')->hasPermissionTo('jogos.excluir_tudo'));
+        $this->assertFalse($this->grupo('Admin')->hasPermissionTo('jogos.excluir_tudo'));
+        $this->assertSame(['Lançar entradas', 'Marcar pagamento antecipado (fichas a mais)'], [Permissoes::opcoes('web')['entradas.registrar'], Permissoes::opcoes('web')['pagamentos.antecipado']]);
     }
 
     public function test_desenvolvedor_cria_e_edita_grupo(): void

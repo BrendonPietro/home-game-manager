@@ -21,7 +21,7 @@
 				</div>
 				<span class="rh-spacer"></span>
 				<form method="GET" action="{{ route('jogos.index') }}" class="rh-search rh-jogos__busca" role="search">
-					@svg('rh-search')
+					@svg('rh-pesquisar')
 					<input type="hidden" name="aba" value="{{ $aba }}">
 					<input class="rh-input" type="search" name="busca" value="{{ $busca }}" placeholder="Buscar jogo" aria-label="Buscar jogo">
 				</form>
@@ -95,9 +95,9 @@
 										<td class="n">{{ $buyin ? \App\Support\Dinheiro::brl($buyin->valor) : '—' }}</td>
 										<td style="text-align:right">
 											@if ($abrir)
-												<a @class(['rh-btn rh-btn--sm', 'rh-btn--primary' => $emDestaque]) href="{{ $abrir }}">Abrir @svg('rh-chev-r')</a>
+												<a @class(['rh-btn rh-btn--sm', 'rh-btn--primary' => $emDestaque]) href="{{ $abrir }}">Abrir @svg('rh-chevron-direita')</a>
 											@else
-												<button class="rh-btn rh-btn--sm" disabled title="A tela desta etapa ainda não existe">Abrir @svg('rh-chev-r')</button>
+												<button class="rh-btn rh-btn--sm" disabled title="A tela desta etapa ainda não existe">Abrir @svg('rh-chevron-direita')</button>
 											@endif
 										</td>
 									</tr>

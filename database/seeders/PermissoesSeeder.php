@@ -24,8 +24,13 @@ class PermissoesSeeder extends Seeder
     public const EXTRAS_PAINEL = [
         'relatorios.ver', 'relatorios.exportar', 'financeiro.ver', 'configuracoes.editar',
         'pagamentos.registrar', // pagamento antecipado no pré-torneio (lista de confirmados do jogo)
+        'pagamentos.antecipado', // marcar quem pagou antes: ganha as fichas do bônus (MarcarPagamentoAntecipado)
         'jogos.andamento', // mudar o cadastro com o jogo em andamento (refaz entradas e prêmios: RefazerPeloCadastro)
+        'jogos.excluir_tudo', // excluir qualquer jogo, com o que foi lançado (ExcluirJogo); só o Desenvolvedor começa com ela
     ];
+
+    /** Do painel, só o Desenvolvedor começa com estas (o Admin ganha se o Desenvolvedor der em Grupos). */
+    public const SO_DESENVOLVEDOR_PAINEL = ['jogos.excluir_tudo'];
 
     public const SITE_OPERADOR = [
         'entradas.registrar',
@@ -45,6 +50,7 @@ class PermissoesSeeder extends Seeder
         'estrutura.editar', // entradas e opcionais durante o jogo
         'taxas.editar',
         'financeiro.ver',
+        'pagamentos.antecipado', // marcar quem pagou antes: ganha as fichas do bônus
         'site.fora_da_noite', // sem ela (Operador), o site só abre com um jogo em andamento
     ];
 
@@ -66,7 +72,7 @@ class PermissoesSeeder extends Seeder
 
         $this->grupo('Admin', 'painel', array_values(array_filter(
             $painel,
-            fn (string $p) => ! str_starts_with($p, 'grupos.'),
+            fn (string $p) => ! str_starts_with($p, 'grupos.') && ! in_array($p, self::SO_DESENVOLVEDOR_PAINEL, true),
         )));
 
         $this->grupo('Geral', 'painel', [

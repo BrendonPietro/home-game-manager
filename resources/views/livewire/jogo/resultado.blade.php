@@ -18,7 +18,7 @@
 		</div>
 		<span class="rh-spacer"></span>
 		@if ($urlFechamento)
-			<a class="rh-btn rh-btn--primary rh-btn--lg" href="{{ $urlFechamento }}">{{ $jogo->estaFinalizado() ? 'VER FECHAMENTO' : 'IR PARA FECHAMENTO' }} @svg('rh-chev-r')</a>
+			<a class="rh-btn rh-btn--primary rh-btn--lg" href="{{ $urlFechamento }}">{{ $jogo->estaFinalizado() ? 'VER FECHAMENTO' : 'IR PARA FECHAMENTO' }} @svg('rh-chevron-direita')</a>
 		@endif
 	</div>
 
@@ -26,7 +26,7 @@
 		<div class="rh-warn rh-warn--ok" role="status">@svg('rh-check')<div>{{ $aviso }}</div></div>
 	@endif
 	@if ($erro)
-		<div class="rh-warn" role="alert">@svg('rh-alert')<div>{{ $erro }}</div></div>
+		<div class="rh-warn" role="alert">@svg('rh-alerta')<div>{{ $erro }}</div></div>
 	@endif
 
 	{{-- Pódio: as posições premiadas e quem está nelas. --}}

@@ -66,6 +66,7 @@
 						@if ($torneio)
 							<th class="n">Add-on</th>
 						@endif
+						<th class="n">Fichas</th>
 						<th class="n">Total</th>
 						@if ($mostraPremio)
 							<th class="n">{{ $torneio ? 'Prêmio' : 'Cash-out' }}</th>
@@ -92,6 +93,9 @@
 									@if ($situacao)
 										<span class="rh-badge rh-badge--off">{{ $situacao }}</span>
 									@endif
+									@if ($participante->pagou_antes && $jogo->temBonusAntecipado())
+										<span class="rh-badge rh-badge--ok">Pagou antes</span>
+									@endif
 								</span>
 							</td>
 							<td class="rh-muted">{{ $participante->jogoMesa ? $participante->jogoMesa->nome.' · '.$participante->lugar : 'Sem lugar' }}</td>
@@ -107,6 +111,8 @@
 							@if ($torneio)
 								<td class="n">{!! $compras?->addons ? e($compras->addons) : '<span class="rh-faint">—</span>' !!}</td>
 							@endif
+							@php $extras = collect([$compras?->timeChip ? number_format($compras->timeChip, 0, ',', '.').' do time chip' : null, $compras?->antecipado ? number_format($compras->antecipado, 0, ',', '.').' do pagamento antecipado' : null])->filter(); @endphp
+							<td class="n" @if ($extras->isNotEmpty()) title="Com {{ $extras->implode(' e ') }}" @endif>{!! $compras?->fichas ? e(number_format($compras->fichas, 0, ',', '.')) : '<span class="rh-faint">—</span>' !!}</td>
 							<td class="n">{{ Dinheiro::brlCentavos($conta->investido) }}</td>
 							@if ($mostraPremio)
 								<td class="n">{{ $conta->premio ? Dinheiro::brlCentavos($conta->premio) : '—' }}</td>

@@ -26,6 +26,8 @@ class Entrada extends Model
         'tipo',
         'valor',
         'fichas',
+        'time_chip',
+        'antecipado',
         'percentual_premiacao',
         'vinculada_a',
         'registrado_por',
@@ -38,6 +40,8 @@ class Entrada extends Model
             'percentual_premiacao' => 'decimal:2',
             'valor' => 'decimal:2',
             'fichas' => 'integer',
+            'time_chip' => 'integer',
+            'antecipado' => 'integer',
             'cancelada_em' => 'datetime',
         ];
     }

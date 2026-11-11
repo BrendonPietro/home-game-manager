@@ -31,7 +31,7 @@ class Configuracoes extends Page
 {
     protected string $view = 'filament.painel.configuracoes';
 
-    protected static string|BackedEnum|null $navigationIcon = 'rh-gear';
+    protected static string|BackedEnum|null $navigationIcon = 'rh-menu-configuracoes';
 
     protected static string|UnitEnum|null $navigationGroup = 'Sistema';
 

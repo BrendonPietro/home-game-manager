@@ -80,7 +80,7 @@ class UsuariosTable
                 Action::make('ativo')
                     ->label(fn (Usuario $usuario): string => $usuario->ativo ? 'Ativo' : 'Inativo')
                     ->tooltip(fn (Usuario $usuario): string => $usuario->ativo ? 'Ativo: clique para desativar' : 'Inativo: clique para ativar')
-                    ->icon(fn (Usuario $usuario): string => $usuario->ativo ? 'rh-check' : 'rh-x')
+                    ->icon(fn (Usuario $usuario): string => $usuario->ativo ? 'rh-check' : 'rh-fechar')
                     ->color(fn (Usuario $usuario): string => $usuario->ativo ? 'success' : 'danger')
                     ->iconButton()
                     ->visible(fn (Usuario $usuario): bool => ! $usuario->trashed() && (Filament::auth()->user()?->can('update', $usuario) ?? false))

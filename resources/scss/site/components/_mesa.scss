@@ -12,18 +12,60 @@
 	aspect-ratio: var(--ar, 1.75);
 	margin: 0 auto;
 	user-select: none;
+	container-type: inline-size;
+
+	// Recorte do dealer: o trilho entra na mesa onde o dealer fica, como nas mesas de verdade.
+	// --corte-l é meia largura do recorte e --corte-p a profundidade; o feltro recua junto e sobra
+	// o trilho (16px) em volta. O lado vem do data-dealer, que o mesa.js troca ao girar.
+	--trilho: 16px;
+	--inset-y: 15%;
+	--inset-x: 9%;
+	--dealer-w: 120px;
+	--corte-l: clamp(56px, 13cqw, 112px);
+	--corte-p: clamp(20px, 6cqw, 48px);
+	--corte-rx: var(--corte-l);
+	--corte-ry: var(--corte-p);
+	--corte-x: 50%;
+	--corte-y: 100%;
+	--corte-fx: 50%;
+	--corte-fy: calc(100% + var(--trilho));
+
+	&[data-dealer="cima"] {
+		--corte-y: 0%;
+		--corte-fy: calc(var(--trilho) * -1);
+	}
+
+	&[data-dealer="esquerda"],
+	&[data-dealer="direita"] {
+		--corte-rx: var(--corte-p);
+		--corte-ry: var(--corte-l);
+		--corte-y: 50%;
+		--corte-fy: 50%;
+	}
+
+	&[data-dealer="esquerda"] {
+		--corte-x: 0%;
+		--corte-fx: calc(var(--trilho) * -1);
+	}
+
+	&[data-dealer="direita"] {
+		--corte-x: 100%;
+		--corte-fx: calc(100% + var(--trilho));
+	}
 
 	&__rail {
 		position: absolute;
-		inset: var(--inset, 12%);
+		inset: var(--inset-y) var(--inset-x);
 		border-radius: 999px;
 		background: var(--rail-700);
 		box-shadow: inset 0 0 0 2px var(--rail-500), 0 0 0 1px #000;
+		mask-image: radial-gradient(var(--corte-rx) var(--corte-ry) at var(--corte-x) var(--corte-y), transparent 94%, #000 100%);
 	}
 
 	&__felt {
 		position: absolute;
-		inset: 16px;
+		inset: var(--trilho);
+		mask-image: radial-gradient(calc(var(--corte-rx) + var(--trilho)) calc(var(--corte-ry) + var(--trilho)) at var(--corte-fx) var(--corte-fy), transparent 96%, #000 100%);
 		border-radius: 999px;
 		background: radial-gradient(ellipse at 50% 45%, var(--felt-500) 0%, var(--felt-700) 78%);
 		box-shadow: var(--shadow-felt);
@@ -78,6 +120,90 @@
 		padding: 8px;
 	}
 
+	&--compact {
+		--dealer-w: 124px;
+	}
+
+	@include ate(celular) {
+		--dealer-w: 96px;
+	}
+
+	// O dealer não fica na volta dos jogadores: encaixa no recorte do trilho (encosta no fundo do
+	// recorte e sai para fora da mesa) e fica atrás dos lugares se encostar. De lado (mesa em pé),
+	// não passa da borda da mesa.
+	.rh-seat--dealer {
+		z-index: 0;
+		left: 50%;
+		top: calc(100% - var(--inset-y) - var(--corte-p) + 6px);
+		transform: translate(-50%, 0);
+	}
+
+	&[data-dealer="cima"] .rh-seat--dealer {
+		top: calc(var(--inset-y) + var(--corte-p) - 6px);
+		transform: translate(-50%, -100%);
+	}
+
+	&[data-dealer="esquerda"] .rh-seat--dealer {
+		left: max(calc(var(--inset-x) + var(--corte-p) - 6px), calc(var(--dealer-w) + 4px));
+		top: 50%;
+		transform: translate(-100%, -50%);
+	}
+
+	&[data-dealer="direita"] .rh-seat--dealer {
+		left: min(calc(100% - var(--inset-x) - var(--corte-p) + 6px), calc(100% - var(--dealer-w) - 4px));
+		top: 50%;
+		transform: translate(0, -50%);
+	}
+
+	// O botão D fica na borda virada para o feltro (os lugares do lado podem cobrir os cantos).
+	.rh-seat--dealer {
+		padding-top: 14px;
+
+		.rh-dealer-btn {
+			top: -10px;
+			right: auto;
+			left: 50%;
+			transform: translateX(-50%);
+		}
+	}
+
+	&[data-dealer="cima"] .rh-seat--dealer {
+		padding-top: 8px;
+		padding-bottom: 14px;
+
+		.rh-dealer-btn {
+			top: auto;
+			bottom: -10px;
+		}
+	}
+
+	&[data-dealer="esquerda"] .rh-seat--dealer,
+	&[data-dealer="direita"] .rh-seat--dealer {
+		padding-top: 8px;
+
+		.rh-dealer-btn {
+			top: 50%;
+			transform: translateY(-50%);
+		}
+	}
+
+	&[data-dealer="esquerda"] .rh-seat--dealer {
+		padding-right: 14px;
+
+		.rh-dealer-btn {
+			left: auto;
+			right: -10px;
+		}
+	}
+
+	&[data-dealer="direita"] .rh-seat--dealer {
+		padding-left: 14px;
+
+		.rh-dealer-btn {
+			left: -10px;
+		}
+	}
+
 	&--compact .rh-seat__total {
 		font-size: 15px;
 	}
@@ -85,6 +211,7 @@
 
 .rh-seat {
 	position: absolute;
+	z-index: 1;
 	transform: translate(-50%, -50%);
 	width: 132px;
 	padding: 8px 12px;

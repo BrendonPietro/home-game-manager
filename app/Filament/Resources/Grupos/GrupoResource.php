@@ -32,7 +32,7 @@ class GrupoResource extends Resource
 {
     protected static ?string $model = Grupo::class;
 
-    protected static string|BackedEnum|null $navigationIcon = 'rh-check';
+    protected static string|BackedEnum|null $navigationIcon = 'rh-menu-grupos';
 
     protected static string|UnitEnum|null $navigationGroup = 'Sistema';
 

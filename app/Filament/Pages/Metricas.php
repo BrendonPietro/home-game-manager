@@ -27,7 +27,7 @@ class Metricas extends Page
 {
     protected string $view = 'filament.painel.metricas';
 
-    protected static string|BackedEnum|null $navigationIcon = 'rh-chart';
+    protected static string|BackedEnum|null $navigationIcon = 'rh-menu-metricas';
 
     protected static string|UnitEnum|null $navigationGroup = 'Dashboards e relatórios';
 

@@ -5,7 +5,9 @@ namespace App\Providers;
 use App\Http\Middleware\AcessoDoSite;
 use App\Models\Seguranca;
 use App\Support\Dinheiro;
+use App\Support\IconesDoPainel;
 use BladeUI\Icons\Factory;
+use Filament\Support\Facades\FilamentIcon;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
@@ -19,10 +21,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Ícones do design system: @svg('rh-home') ou <x-rh-home />
+        // Ícones do site e do painel, todos em resources/svg/icones (troque o arquivo para trocar o ícone):
+        // @svg('rh-inicio') no site; 'rh-…' nos ícones do painel e nos do Filament (App\Support\IconesDoPainel).
         $this->callAfterResolving(Factory::class, function (Factory $icones) {
             $icones->add('rh', [
-                'path' => resource_path('svg/site/icons'),
+                'path' => resource_path('svg/icones'),
                 'prefix' => 'rh',
                 'class' => 'rh-ic',
                 'attributes' => ['aria-hidden' => 'true'],
@@ -40,6 +43,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Cada clique do Livewire passa de novo pela regra de acesso do site (conta ativa, Operador só na noite).
         Livewire::addPersistentMiddleware([AcessoDoSite::class]);
+
+        // Os ícones do próprio Filament (editar, excluir, setas, avisos…) vêm de resources/svg/icones, como os do site.
+        FilamentIcon::register(IconesDoPainel::apelidos());
 
         // Contas do painel: registra o último acesso (inclusive login por "lembrar acesso"),
         // sem mexer no updated_at da conta.

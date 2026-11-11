@@ -8,7 +8,7 @@
 	@if ($ficha)
 		<span @class(['rh-chip rh-chip--lg', 'rh-chip--'.$cor => $cor])>{{ $ficha }}</span>
 	@else
-		<span class="rh-item__sem-ficha" aria-hidden="true">@svg('rh-plus')</span>
+		<span class="rh-item__sem-ficha" aria-hidden="true">@svg('rh-adicionar')</span>
 	@endif
 
 	<div style="min-width:0">

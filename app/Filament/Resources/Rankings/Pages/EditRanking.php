@@ -16,7 +16,7 @@ class EditRanking extends EditRecord
         return [
             Action::make('classificacao')
                 ->label('Classificação')
-                ->icon('rh-list')
+                ->icon('rh-lista')
                 ->color('gray')
                 ->url(fn (): string => RankingResource::getUrl('classificacao', ['record' => $this->record])),
             DeleteAction::make(),

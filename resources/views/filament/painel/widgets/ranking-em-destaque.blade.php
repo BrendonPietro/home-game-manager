@@ -12,7 +12,7 @@
         @endphp
         <x-filament::section :heading="$ranking->nome" :description="'Ranking em destaque · '.\App\Filament\Widgets\RankingEmDestaque::periodo($ranking)">
             <x-slot name="afterHeader">
-                <x-filament::link :href="$this->urlDaClassificacao($ranking)" icon="rh-chev-r" icon-position="after" size="sm">Classificação</x-filament::link>
+                <x-filament::link :href="$this->urlDaClassificacao($ranking)" icon="rh-chevron-direita" icon-position="after" size="sm">Classificação</x-filament::link>
             </x-slot>
 
             @if (! $lider)
@@ -20,7 +20,7 @@
             @else
                 <div class="rh-ranking">
                     <div class="rh-ranking__lider">
-                        <x-filament::icon icon="rh-trophy" class="rh-ranking__trofeu" />
+                        <x-filament::icon icon="rh-trofeu" class="rh-ranking__trofeu" />
                         <div class="rh-ranking__quem">
                             <span class="rh-label">1º lugar</span>
                             <span class="rh-ranking__nome">{{ $lider->nome_exibicao }}</span>
@@ -55,7 +55,7 @@
     @else
         <x-filament::section heading="Ranking">
             <x-slot name="afterHeader">
-                <x-filament::link :href="$rankings" icon="rh-chev-r" icon-position="after" size="sm">Rankings</x-filament::link>
+                <x-filament::link :href="$rankings" icon="rh-chevron-direita" icon-position="after" size="sm">Rankings</x-filament::link>
             </x-slot>
             <p class="rh-grafico-vazio">Nenhum ranking valendo agora. {{ $podeCriar ? 'Crie um em Cadastros → Rankings, com o período em que ele vale.' : '' }}</p>
         </x-filament::section>

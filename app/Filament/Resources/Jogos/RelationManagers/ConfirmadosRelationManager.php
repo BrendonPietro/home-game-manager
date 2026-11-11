@@ -6,6 +6,7 @@ use App\Actions\Jogo\CadastrarJogadorRapido;
 use App\Actions\Jogo\ConfirmarJogador;
 use App\Actions\Jogo\DesconfirmarJogador;
 use App\Actions\Jogo\DesfazerPagamento;
+use App\Actions\Jogo\MarcarPagamentoAntecipado;
 use App\Actions\Jogo\RegistrarPagamento;
 use App\Enums\DirecaoPagamento;
 use App\Enums\FormaPagamento;
@@ -19,18 +20,22 @@ use App\Models\Participante;
 use App\Models\Seguranca;
 use App\Models\Usuario;
 use App\Support\Dinheiro;
+use App\Support\Fichas;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
+use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
@@ -38,8 +43,9 @@ use Illuminate\Support\Str;
  * antes (buy-in, churrasco…). No dia, quem chega é sentado no site e o buy-in entra ao sentar; quem
  * pagou e não veio não entra no torneio, e o pagamento fica como crédito dele (o caixa devolve).
  *
- * Tudo passa pelas Actions (ConfirmarJogador, CadastrarJogadorRapido, DesconfirmarJogador e
- * RegistrarPagamento), com as permissões do painel: `jogos.editar`, `usuarios.criar` e `pagamentos.registrar`.
+ * Tudo passa pelas Actions (ConfirmarJogador, CadastrarJogadorRapido, DesconfirmarJogador, RegistrarPagamento e
+ * MarcarPagamentoAntecipado), com as permissões do painel: `jogos.editar`, `usuarios.criar`, `pagamentos.registrar`
+ * e `pagamentos.antecipado` (quem pagou antes ganha as fichas do bônus, quando o torneio tem).
  */
 class ConfirmadosRelationManager extends RelationManager
 {
@@ -90,6 +96,13 @@ class ConfirmadosRelationManager extends RelationManager
                         $p->status === StatusParticipante::Confirmado => 'gray',
                         default => 'success',
                     }),
+                TextColumn::make('pagou_antes')
+                    ->label('Bônus antecipado')
+                    ->state(fn (Participante $p): ?string => $p->pagou_antes ? 'Pagou antes · +'.Fichas::numero((int) $this->jogo()->antecipado_fichas) : null)
+                    ->placeholder('—')
+                    ->badge()
+                    ->color('success')
+                    ->visible(fn (): bool => $this->jogo()->temBonusAntecipado()),
                 TextColumn::make('pago')
                     ->label('Pago antes')
                     ->state(fn (Participante $p): int => Dinheiro::centavos($p->pago) - Dinheiro::centavos($p->devolvido))
@@ -103,6 +116,7 @@ class ConfirmadosRelationManager extends RelationManager
             ])
             ->recordActions([
                 $this->acaoPagamento(),
+                $this->acaoAntecipado(),
                 $this->acaoDesfazerPagamento(),
                 $this->acaoTirar(),
             ]);
@@ -146,7 +160,7 @@ class ConfirmadosRelationManager extends RelationManager
     {
         return Action::make('confirmar')
             ->label('Confirmar jogadores')
-            ->icon('rh-plus')
+            ->icon('rh-adicionar')
             ->visible(fn (): bool => $this->listaAberta() && $this->conta()->can('jogos.editar'))
             ->modalHeading('Confirmar jogadores')
             ->modalDescription('Quem vai jogar. No dia, quem senta na mesa entra com o buy-in.')
@@ -180,7 +194,7 @@ class ConfirmadosRelationManager extends RelationManager
     {
         return Action::make('novo')
             ->label('Jogador novo')
-            ->icon('rh-users')
+            ->icon('rh-jogadores')
             ->color('gray')
             ->visible(fn (): bool => $this->listaAberta() && $this->conta()->can('usuarios.criar'))
             ->modalHeading('Jogador novo')
@@ -202,7 +216,7 @@ class ConfirmadosRelationManager extends RelationManager
     {
         return Action::make('pagamento')
             ->label('Pagamento')
-            ->icon('rh-coins')
+            ->icon('rh-fichas')
             ->color('gray')
             ->visible(fn (): bool => $this->jogo()->status !== StatusJogo::Cancelado && $this->conta()->can('pagamentos.registrar'))
             ->modalHeading(fn (Participante $record): string => 'Pagamento · '.$record->nome())
@@ -217,6 +231,7 @@ class ConfirmadosRelationManager extends RelationManager
                     ])
                     ->default(DirecaoPagamento::JogadorPagou->value)
                     ->inline()
+                    ->live()
                     ->required(),
                 TextInput::make('valor')
                     ->label('Valor')
@@ -235,6 +250,11 @@ class ConfirmadosRelationManager extends RelationManager
                     ->placeholder('Buy-in antecipado, churrasco…')
                     ->default('Pago antes do torneio')
                     ->maxLength(255),
+                Checkbox::make('antecipado')
+                    ->label(fn (): string => 'Pagamento antecipado do buy-in: ganha '.Fichas::quantas((int) $this->jogo()->antecipado_fichas).' a mais')
+                    ->visible(fn (Participante $record, Get $get): bool => $this->podeMarcarAntecipado()
+                        && ! $record->pagou_antes
+                        && $get('direcao') === DirecaoPagamento::JogadorPagou->value),
             ])
             ->action(function (Participante $record, array $data): void {
                 $centavos = Dinheiro::lerTexto((string) $data['valor']);
@@ -247,9 +267,43 @@ class ConfirmadosRelationManager extends RelationManager
 
                 $direcao = DirecaoPagamento::from($data['direcao']);
 
+                $antecipado = $direcao === DirecaoPagamento::JogadorPagou && (bool) ($data['antecipado'] ?? false);
+
+                // Pagamento e a marca de "pagou antes" vão juntos: se a marca não puder, o pagamento também não fica.
                 $this->executar(
-                    fn () => app(RegistrarPagamento::class)($record, $direcao, $centavos, FormaPagamento::from($data['forma']), $this->conta(), (string) Str::uuid(), $data['observacao'] ?? null),
-                    $record->nome().($direcao === DirecaoPagamento::JogadorPagou ? ' pagou ' : ' recebeu ').Dinheiro::brlCentavos($centavos).'.',
+                    fn () => DB::transaction(function () use ($record, $direcao, $centavos, $data, $antecipado) {
+                        app(RegistrarPagamento::class)($record, $direcao, $centavos, FormaPagamento::from($data['forma']), $this->conta(), (string) Str::uuid(), $data['observacao'] ?? null);
+
+                        if ($antecipado) {
+                            app(MarcarPagamentoAntecipado::class)($record, true, $this->conta());
+                        }
+                    }),
+                    $record->nome().($direcao === DirecaoPagamento::JogadorPagou ? ' pagou ' : ' recebeu ').Dinheiro::brlCentavos($centavos)
+                        .($antecipado ? ' e ganha '.Fichas::quantas((int) $this->jogo()->antecipado_fichas).' a mais.' : '.'),
+                );
+            });
+    }
+
+    /** Torneio com bônus do pagamento antecipado, agendado ou em andamento, e a conta pode marcar. */
+    private function podeMarcarAntecipado(): bool
+    {
+        return $this->jogo()->temBonusAntecipado()
+            && in_array($this->jogo()->status, [StatusJogo::Agendado, StatusJogo::EmAndamento], true)
+            && $this->conta()->can(MarcarPagamentoAntecipado::PERMISSAO);
+    }
+
+    /** Pagou antes (ou tira a marca): ganha as fichas do bônus junto do buy-in, sem olhar data nem valor. */
+    private function acaoAntecipado(): Action
+    {
+        return Action::make('antecipado')
+            ->label(fn (Participante $record): string => $record->pagou_antes ? 'Tirar pagou antes' : 'Pagou antes')
+            ->icon(fn (Participante $record): string => $record->pagou_antes ? 'rh-fechar' : 'rh-check')
+            ->color('gray')
+            ->visible(fn (): bool => $this->podeMarcarAntecipado())
+            ->action(function (Participante $record): void {
+                $this->executar(
+                    fn () => app(MarcarPagamentoAntecipado::class)($record, ! $record->pagou_antes, $this->conta()),
+                    fn () => MarcarPagamentoAntecipado::aviso($record->refresh()),
                 );
             });
     }
@@ -261,7 +315,7 @@ class ConfirmadosRelationManager extends RelationManager
 
         return Action::make('desfazerPagamento')
             ->label('Desfazer pagamento')
-            ->icon('rh-undo')
+            ->icon('rh-desfazer')
             ->color('gray')
             ->visible(fn (Participante $record): bool => in_array($this->jogo()->status, [StatusJogo::Agendado, StatusJogo::EmAndamento, StatusJogo::Finalizado], true)
                 && $this->conta()->can('pagamentos.registrar')
@@ -294,7 +348,7 @@ class ConfirmadosRelationManager extends RelationManager
     {
         return Action::make('tirar')
             ->label('Tirar da lista')
-            ->icon('rh-x')
+            ->icon('rh-fechar')
             ->color('danger')
             ->visible(fn (Participante $record): bool => $this->listaAberta()
                 && $record->status === StatusParticipante::Confirmado
@@ -321,7 +375,8 @@ class ConfirmadosRelationManager extends RelationManager
                 ->sum(fn ($opcional) => Dinheiro::centavos($opcional->valor));
     }
 
-    private function executar(callable $acao, string $sucesso): void
+    /** @param  string|callable(): string  $sucesso  callable quando a mensagem depende do resultado */
+    private function executar(callable $acao, string|callable $sucesso): void
     {
         try {
             $acao();
@@ -331,6 +386,6 @@ class ConfirmadosRelationManager extends RelationManager
             return;
         }
 
-        Notification::make()->success()->title($sucesso)->send();
+        Notification::make()->success()->title(is_callable($sucesso) ? $sucesso() : $sucesso)->send();
     }
 }

@@ -32,7 +32,7 @@
                     </x-filament::button>
                     @if ($site = $this->urlNoSite($proximo))
                         {{-- Em outra aba: sem login no site, passa pelo login e volta para o jogo. --}}
-                        <x-filament::button tag="a" :href="$site" target="_blank" icon="rh-arrow-r" icon-position="after">{{ $aoVivo ? 'Abrir a noite' : 'Abrir no site' }}</x-filament::button>
+                        <x-filament::button tag="a" :href="$site" target="_blank" icon="rh-seta-direita" icon-position="after">{{ $aoVivo ? 'Abrir a noite' : 'Abrir no site' }}</x-filament::button>
                     @endif
                 </div>
             </div>
@@ -69,7 +69,7 @@
                         <x-filament::button tag="a" :href="$this->urlDosJogos()" color="gray">Ver jogos</x-filament::button>
                     @endif
                     @if ($podeCriar)
-                        <x-filament::button tag="a" :href="$this->novoJogoUrl()" icon="rh-plus">Novo jogo</x-filament::button>
+                        <x-filament::button tag="a" :href="$this->novoJogoUrl()" icon="rh-adicionar">Novo jogo</x-filament::button>
                     @endif
                 </div>
             </div>

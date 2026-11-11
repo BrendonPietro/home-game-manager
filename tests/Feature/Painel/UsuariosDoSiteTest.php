@@ -47,7 +47,7 @@ class UsuariosDoSiteTest extends TestCase
         Livewire::test(ListUsuarios::class)->assertCanSeeTableRecords([$paulo]);
 
         $this->withoutVite()
-            ->post('/login', ['email' => 'paulo@exemplo.com', 'password' => 'senha-segura'])
+            ->post('/login', ['login' => 'paulo@exemplo.com', 'password' => 'senha-segura'])
             ->assertRedirect(route('home'));
         $this->assertAuthenticatedAs($paulo, 'web');
     }
@@ -83,18 +83,45 @@ class UsuariosDoSiteTest extends TestCase
         $this->assertNotSoftDeleted($diego); // continua em Jogadores
     }
 
-    public function test_exige_email_senha_e_grupo(): void
+    public function test_exige_usuario_ou_email_senha_e_grupo(): void
     {
         $this->entrarNoPainel('Admin');
-        Usuario::factory()->comAcesso()->create(['email' => 'ja@exemplo.com']);
+        Usuario::factory()->comAcesso()->create(['email' => 'ja@exemplo.com', 'login' => 'jaexiste']);
 
         Livewire::test(ManageUsuariosDoSite::class)
             ->callAction('create', data: ['nome' => 'Sem dados'])
-            ->assertHasActionErrors(['email' => 'required', 'password' => 'required', 'roles' => 'required']);
+            ->assertHasActionErrors(['login' => 'required_without', 'email' => 'required_without', 'password' => 'required', 'roles' => 'required']);
 
         Livewire::test(ManageUsuariosDoSite::class)
-            ->callAction('create', data: ['nome' => 'Repetido', 'email' => 'ja@exemplo.com', 'password' => 'curta', 'roles' => [$this->grupoDoSite('Operador')]])
-            ->assertHasActionErrors(['email' => 'unique', 'password' => 'min']);
+            ->callAction('create', data: ['nome' => 'Repetido', 'login' => 'JaExiste', 'email' => 'ja@exemplo.com', 'password' => 'curta', 'roles' => [$this->grupoDoSite('Operador')]])
+            ->assertHasActionErrors(['login' => 'unique', 'email' => 'unique', 'password' => 'min']);
+
+        Livewire::test(ManageUsuariosDoSite::class)
+            ->callAction('create', data: ['nome' => 'Arroba', 'login' => 'fulano@exemplo', 'password' => 'senha-segura', 'roles' => [$this->grupoDoSite('Operador')]])
+            ->assertHasActionErrors(['login' => 'regex']);
+    }
+
+    public function test_usuario_sem_email_entra_pelo_usuario(): void
+    {
+        $this->entrarNoPainel('Admin');
+
+        Livewire::test(ManageUsuariosDoSite::class)
+            ->callAction('create', data: [
+                'nome' => 'Ciclano Souza',
+                'login' => ' CiclanoSouza ',
+                'password' => 'senha-segura',
+                'roles' => [$this->grupoDoSite('Admin')],
+            ])
+            ->assertHasNoActionErrors()
+            ->assertSee('ciclanosouza');
+
+        $guilherme = Usuario::query()->sole();
+        $this->assertSame(['ciclanosouza', null], [$guilherme->login, $guilherme->email]);
+
+        $this->withoutVite()
+            ->post('/login', ['login' => 'CiclanoSouza', 'password' => 'senha-segura'])
+            ->assertRedirect(route('home'));
+        $this->assertAuthenticatedAs($guilherme, 'web');
     }
 
     public function test_editar_sem_senha_mantem_a_atual(): void

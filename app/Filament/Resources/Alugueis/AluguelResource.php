@@ -33,7 +33,7 @@ class AluguelResource extends Resource
 {
     protected static ?string $model = Aluguel::class;
 
-    protected static string|BackedEnum|null $navigationIcon = 'rh-key';
+    protected static string|BackedEnum|null $navigationIcon = 'rh-menu-alugueis';
 
     protected static string|UnitEnum|null $navigationGroup = 'Agenda';
 
@@ -125,7 +125,7 @@ class AluguelResource extends Resource
     {
         return Action::make('novoAluguel')
             ->label('Novo aluguel')
-            ->icon('rh-plus')
+            ->icon('rh-adicionar')
             ->authorize('create')
             ->modalHeading('Novo aluguel')
             ->modalWidth(Width::TwoExtraLarge)
@@ -142,7 +142,7 @@ class AluguelResource extends Resource
     {
         return Action::make('editar')
             ->label('Editar')
-            ->icon('rh-edit')
+            ->icon('rh-editar')
             ->color('gray')
             ->authorize('update')
             ->modalHeading(fn (Aluguel $record): string => 'Aluguel de '.$record->cliente)

@@ -55,9 +55,9 @@
 
 						<div class="rh-col" style="justify-content:flex-end;align-items:flex-end">
 							@if ($abrir)
-								<a class="rh-btn rh-btn--primary rh-btn--lg" href="{{ $abrir }}">@svg('rh-arrow-r') Abrir {{ $proximo->eTorneio() ? 'torneio' : 'jogo' }}</a>
+								<a class="rh-btn rh-btn--primary rh-btn--lg" href="{{ $abrir }}">@svg('rh-seta-direita') Abrir {{ $proximo->eTorneio() ? 'torneio' : 'jogo' }}</a>
 							@else
-								<button class="rh-btn rh-btn--primary rh-btn--lg" disabled title="A tela desta etapa ainda não existe">@svg('rh-arrow-r') Abrir {{ $proximo->eTorneio() ? 'torneio' : 'jogo' }}</button>
+								<button class="rh-btn rh-btn--primary rh-btn--lg" disabled title="A tela desta etapa ainda não existe">@svg('rh-seta-direita') Abrir {{ $proximo->eTorneio() ? 'torneio' : 'jogo' }}</button>
 							@endif
 							<span class="rh-small rh-muted">
 								@if ($aoVivo)
@@ -104,7 +104,7 @@
 					<div class="rh-panel__hd">
 						<h3 class="rh-heading">Últimos eventos</h3>
 						<span class="rh-spacer"></span>
-						<a class="rh-btn rh-btn--ghost rh-btn--sm" href="{{ route('jogos.index', ['aba' => 'finalizados']) }}">Ver todos @svg('rh-chev-r')</a>
+						<a class="rh-btn rh-btn--ghost rh-btn--sm" href="{{ route('jogos.index', ['aba' => 'finalizados']) }}">Ver todos @svg('rh-chevron-direita')</a>
 					</div>
 
 					@if ($ultimos->isEmpty())

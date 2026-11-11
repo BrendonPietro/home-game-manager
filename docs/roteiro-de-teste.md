@@ -7,10 +7,10 @@ Os testes automáticos (`php artisan test`) já conferem as regras e as contas. 
 ## Antes de começar
 
 - [ ] Site em `http://rodrigues-home-game.test` e painel em `http://rodrigues-home-game.test/painel`.
-- [ ] Contas: no painel, `dev` ou `teste` (Admin) e `geral` (grupo Geral); no site, `dev@rodrigues.test` ou `teste@rodrigues.test` (Admin) e `operador@rodrigues.test` (Operador, para o celular). `geral` e `operador@` usam a mesma senha da conta `dev` do lado deles (`PAINEL_SENHA_INICIAL` e `SITE_SENHA_INICIAL` do `.env`) e voltam com `php artisan db:seed --class=ContasDeTesteSeeder`.
+- [ ] Contas: no banco limpo, as do clube (`.env`, mesmo usuário no painel e no site). Com os dados de exemplo (`DADOS_DE_EXEMPLO=true`): no painel, `dev` ou `teste` (Admin) e `geral` (grupo Geral); no site, `dev@rodrigues.test` ou `teste@rodrigues.test` (Admin) e `operador@rodrigues.test` (Operador, para o celular). `geral` e `operador@` usam a mesma senha da conta `dev` do lado deles (`PAINEL_SENHA_INICIAL` e `SITE_SENHA_INICIAL` do `.env`) e voltam com `php artisan db:seed --class=ContasDeTesteSeeder`.
 - [ ] Separe três janelas ou aparelhos: o **notebook do Admin**, o **celular do Operador** e a **TV** (o link do relógio, sem login; pode ser outra janela do navegador, até anônima).
 - [ ] Para abrir no celular de verdade: o `.test` só existe no PC. Uma saída é `php artisan serve --host=0.0.0.0 --port=8000` e abrir `http://<IP do PC>:8000` no celular, na mesma rede (talvez precise liberar a porta no firewall do Windows). Sem isso, use o modo celular do navegador (F12).
-- [ ] Quer começar do zero? `php artisan migrate:fresh --seed` recria o banco com a Poker Night #18, mas **apaga tudo do banco local**, inclusive as contas `teste` (as `geral` e `operador@` o seed cria de novo).
+- [ ] Quer começar do zero? `php artisan migrate:fresh --seed` **apaga tudo do banco local** e recria só o essencial com as contas do clube (banco limpo). As contas `dev`, `geral` e `operador@` e a Poker Night #18 só voltam com `DADOS_DE_EXEMPLO=true` no `.env`. Faça o backup antes (docs/deploy.md, "Zerar o banco local").
 
 Referência da Poker Night #18: 12 jogadores, 22 entradas, R$ 2.100 arrecadados, casa R$ 210, prize pool R$ 1.890, prêmios 950 / 565 / 375 (arredondados para R$ 5; a diferença vai para o 1º).
 
@@ -53,6 +53,7 @@ Referência da Poker Night #18: 12 jogadores, 22 entradas, R$ 2.100 arrecadados,
 - [ ] **Confirmar jogadores** → escolha vários do cadastro. **Jogador novo** → nome, apelido e telefone; já entra na lista.
 - [ ] **Pagamento** num confirmado → o valor vem com o buy-in (e os obrigatórios); Pix ou Dinheiro (sem Cartão); "Pago antes" mostra o valor.
 - [ ] **Tirar da lista** quem não pagou → sai; quem pagou → recusa (tem lançamento).
+- [ ] Com **Fichas para quem pagou antes** no cadastro (aba Blinds): **Pagamento** com a caixa "Pagamento antecipado do buy-in" marcada → a coluna Bônus antecipado mostra "Pagou antes · +20.000". **Pagou antes** na linha marca e desmarca; no site, a lista da noite tem o mesmo botão. No dia, o "Quem senta aqui" mostra a marca, e sentar avisa "entregar 40.000 fichas (20.000 do pagamento antecipado)"; o painel do jogador mostra o bônus nas fichas entregues.
 - [ ] Como **Geral**: vê a lista, sem Pagamento nem Confirmar.
 
 **Calendário e aluguéis**
@@ -67,7 +68,8 @@ Referência da Poker Night #18: 12 jogadores, 22 entradas, R$ 2.100 arrecadados,
 - [ ] **Jogadores**: confirme os jogadores, tire um da lista e confirme de novo.
 - [ ] Cadastro rápido com o nome de alguém que já existe → avisa e não cria. Com um nome novo → cria e já confirma.
 - [ ] **Mesas**: clique num lugar vazio → "Quem senta aqui" com os confirmados sem lugar; escolha um → senta e some da lista. Busque alguém do cadastro que não estava na lista → confirma e senta. Cadastre um jogador novo ali mesmo.
-- [ ] SORTEAR → as mesas ficam equilibradas. Clique num jogador e num lugar vazio (move) e depois num ocupado (troca). Mude os lugares e o dealer de uma mesa.
+- [ ] **Sortear lugares** → modal Jogadores: marque alguns (ou Marcar todos), desmarque uma mesa e SORTEAR → só os marcados sentam, só nas mesas marcadas, equilibradas; o modal diz onde cada um senta. Clique num jogador e num lugar vazio (move) e depois num ocupado (troca). Mude os lugares e o dealer de uma mesa.
+- [ ] **Ao vivo, JOGADORES** ("N sem lugar"): marque quem chegou, ponha alguém do cadastro pela busca e cadastre um novo (já ficam marcados), SORTEAR → cada um com mesa, lugar e as fichas a entregar (buy-in, time chip, pagou antes). Na aba Na mesa, marque quem voltou com rebuy no intervalo e sorteie de novo. Quem caiu e não voltou não sorteia (avisa para fazer o rebuy antes).
 - [ ] Como **Operador**: sem jogo em andamento, o login cai em "Nenhum torneio em andamento".
 - [ ] Na **Conferência**, "Relógio nas outras telas": COPIAR LINK e abra o link na TV (numa janela anônima, sem login) → data, horário, nome e "O relógio começa quando o torneio for iniciado · nível 1: …". Nada de dinheiro.
 - [ ] Quando iniciar o torneio, a TV troca sozinha para o relógio (sem recarregar à mão).

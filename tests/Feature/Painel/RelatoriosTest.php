@@ -183,7 +183,7 @@ class RelatoriosTest extends TestCase
             ->assertSee(['Arrecadação — Tudo', 'Out/2026', 'size: A4 landscape'])
             ->assertDontSee('setTimeout(() => window.print(), 300)', false);
 
-        $this->get(route('filament.painel.relatorios.imprimir', ['relatorio' => 'nada']))->assertNotFound();
+        $this->get(route('filament.painel.relatorios.imprimir', ['relatorio' => 'nada']))->assertRedirect(Filament::getPanel('painel')->getUrl());
     }
 
     public function test_quem_ve_e_quem_exporta(): void

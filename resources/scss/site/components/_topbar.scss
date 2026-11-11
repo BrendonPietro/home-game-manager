@@ -1,5 +1,6 @@
 // ============================================================================
-// Topbar do site: marca + jogo atual (nome, status, data) + ações
+// Topbar do site: marca + jogo atual (nome, status, data) + quem está logado + menu
+// O jogo encolhe (o nome ganha reticências) em vez de empurrar o resto: a barra nunca quebra.
 // ============================================================================
 
 @use "../vars" as *;
@@ -13,6 +14,14 @@
 	background: var(--bg-100);
 	border-bottom: 1px solid var(--line-200);
 
+	> * {
+		flex: none;
+	}
+
+	> .rh-spacer {
+		flex: 1 1 0;
+	}
+
 	&__ctx {
 		display: flex;
 		align-items: center;
@@ -20,12 +29,100 @@
 		padding-left: 16px;
 		border-left: 1px solid var(--line-200);
 		min-width: 0;
+		overflow: hidden;
+
+		// Quem encolhe é o nome do jogo; status e data ficam inteiros.
+		&,
+		> * {
+			flex: 0 1 auto;
+		}
+
+		> .rh-badge,
+		> .rh-small {
+			flex: none;
+			white-space: nowrap;
+		}
 
 		b {
 			font-family: var(--font-display);
 			font-weight: 500;
 			font-size: 20px;
 			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			min-width: 0;
+		}
+	}
+
+	// Menu: Jogos, Acessar o painel e Sair.
+	&__menu {
+		position: relative;
+	}
+
+	&__lista {
+		position: absolute;
+		top: calc(100% + 8px);
+		right: 0;
+		z-index: 25;
+		min-width: 220px;
+		padding: 4px;
+		border-radius: var(--radius-md);
+		background: var(--bg-200);
+		border: 1px solid var(--line-200);
+		box-shadow: var(--shadow-modal);
+		display: flex;
+		flex-direction: column;
+
+		form {
+			display: contents;
+		}
+	}
+
+	&__quem {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		padding: 8px 12px 12px;
+		margin-bottom: 4px;
+		border-bottom: 1px solid var(--line-100);
+	}
+
+	&__nome {
+		font-weight: 500;
+	}
+
+	&__item {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		width: 100%;
+		height: 40px;
+		padding: 0 12px;
+		border: 0;
+		border-radius: var(--radius-sm);
+		background: none;
+		color: var(--ink-100);
+		font: inherit;
+		font-size: 15px;
+		text-align: left;
+		text-decoration: none;
+		cursor: pointer;
+		transition: background-color var(--dur-1) var(--ease);
+
+		&:hover,
+		&:focus-visible {
+			background: var(--bg-300);
+		}
+
+		.rh-ic {
+			color: var(--ink-200);
+		}
+	}
+
+	// Sem largura para a data: fica o nome e o status.
+	@include ate(tablet) {
+		&__ctx > .rh-small {
+			display: none;
 		}
 	}
 
@@ -34,47 +131,21 @@
 		gap: 12px;
 
 		.rh-brand__name,
-		.rh-brand__sub,
-		.rh-btn--ghost {
+		.rh-brand__sub {
 			display: none;
-		}
-
-		// O link para a lista de jogos fica, só com o ícone.
-		.rh-btn--ghost.rh-top__link {
-			display: inline-flex;
-
-			span {
-				display: none;
-			}
 		}
 
 		&__ctx {
 			padding-left: 12px;
 			flex: 1 1 auto;
-			overflow: hidden;
-
-			.rh-small {
-				display: none;
-			}
 
 			b {
 				font-size: 18px;
-				overflow: hidden;
-				text-overflow: ellipsis;
-				min-width: 0;
-			}
-
-			.rh-badge {
-				flex: none;
 			}
 		}
 
-		// Com um jogo aberto não sobra espaço: o espaçador some e o Sair fica só no ícone.
+		// Com um jogo aberto, o jogo ocupa o meio todo.
 		&__ctx ~ .rh-spacer {
-			display: none;
-		}
-
-		&__sair span {
 			display: none;
 		}
 	}

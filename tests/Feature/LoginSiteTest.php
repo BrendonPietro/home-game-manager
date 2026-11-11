@@ -32,7 +32,7 @@ class LoginSiteTest extends TestCase
         $this->get('/login')
             ->assertOk()
             ->assertSee('Entrar na operação')
-            ->assertSee('E-mail')
+            ->assertSee('Usuário ou e-mail')
             ->assertSee('Lembrar acesso')
             ->assertDontSee('fonts.googleapis.com');
     }
@@ -41,7 +41,7 @@ class LoginSiteTest extends TestCase
     {
         $operador = $this->operador(['nome' => 'Marcos Silva', 'apelido' => 'Marcão']);
 
-        $this->post('/login', ['email' => 'operador@exemplo.com', 'password' => 'password'])
+        $this->post('/login', ['login' => 'operador@exemplo.com', 'password' => 'password'])
             ->assertRedirect('/');
 
         $this->assertAuthenticatedAs($operador, 'web');
@@ -57,7 +57,21 @@ class LoginSiteTest extends TestCase
     {
         $operador = $this->operador();
 
-        $this->post('/login', ['email' => ' Operador@Exemplo.COM ', 'password' => 'password'])
+        $this->post('/login', ['login' => ' Operador@Exemplo.COM ', 'password' => 'password'])
+            ->assertRedirect('/');
+
+        $this->assertAuthenticatedAs($operador, 'web');
+    }
+
+    public function test_entra_pelo_usuario_sem_diferenciar_maiusculas(): void
+    {
+        $operador = $this->operador(['login' => 'MarcosSilva', 'email' => null]);
+        $this->assertSame('marcossilva', $operador->login); // gravado em minúsculas
+
+        $this->post('/login', ['login' => 'marcos', 'password' => 'password'])
+            ->assertSessionHasErrors(['login' => 'Usuário ou senha incorretos.']);
+
+        $this->post('/login', ['login' => ' MarcosSilva ', 'password' => 'password'])
             ->assertRedirect('/');
 
         $this->assertAuthenticatedAs($operador, 'web');
@@ -68,14 +82,14 @@ class LoginSiteTest extends TestCase
         $this->operador();
 
         $this->withSession(['url.intended' => url('/vitrine')])
-            ->post('/login', ['email' => 'operador@exemplo.com', 'password' => 'password'])
+            ->post('/login', ['login' => 'operador@exemplo.com', 'password' => 'password'])
             ->assertRedirect(url('/vitrine'));
 
         Auth::guard('web')->logout();
 
         // Quem tentou abrir o painel antes não vai parar no painel ao entrar no site.
         $this->withSession(['url.intended' => url('/painel/mesas')])
-            ->post('/login', ['email' => 'operador@exemplo.com', 'password' => 'password'])
+            ->post('/login', ['login' => 'operador@exemplo.com', 'password' => 'password'])
             ->assertRedirect(route('home'));
     }
 
@@ -83,7 +97,7 @@ class LoginSiteTest extends TestCase
     {
         $this->operador();
 
-        $this->post('/login', ['email' => 'operador@exemplo.com', 'password' => 'password', 'remember' => '1'])
+        $this->post('/login', ['login' => 'operador@exemplo.com', 'password' => 'password', 'remember' => '1'])
             ->assertCookie(Auth::guard('web')->getRecallerName());
     }
 
@@ -92,9 +106,9 @@ class LoginSiteTest extends TestCase
         $this->operador();
 
         $this->from('/login')
-            ->post('/login', ['email' => 'operador@exemplo.com', 'password' => 'errada'])
+            ->post('/login', ['login' => 'operador@exemplo.com', 'password' => 'errada'])
             ->assertRedirect('/login')
-            ->assertSessionHasErrors(['email' => 'E-mail ou senha incorretos.']);
+            ->assertSessionHasErrors(['login' => 'Usuário ou senha incorretos.']);
 
         $this->assertGuest('web');
     }
@@ -102,9 +116,9 @@ class LoginSiteTest extends TestCase
     public function test_campos_vazios_com_mensagem_em_portugues(): void
     {
         $this->from('/login')
-            ->post('/login', ['email' => '', 'password' => ''])
+            ->post('/login', ['login' => '', 'password' => ''])
             ->assertSessionHasErrors([
-                'email' => 'O campo e-mail é obrigatório.',
+                'login' => 'O campo usuário ou e-mail é obrigatório.',
                 'password' => 'O campo senha é obrigatório.',
             ]);
     }
@@ -116,8 +130,8 @@ class LoginSiteTest extends TestCase
         Usuario::factory()->comAcesso()->create(['email' => 'excluido@exemplo.com'])->delete();
 
         foreach (['operador@exemplo.com', 'inativo@exemplo.com', 'excluido@exemplo.com'] as $email) {
-            $this->post('/login', ['email' => $email, 'password' => 'password'])
-                ->assertSessionHasErrors('email');
+            $this->post('/login', ['login' => $email, 'password' => 'password'])
+                ->assertSessionHasErrors('login');
         }
 
         $this->assertGuest('web');
@@ -128,14 +142,14 @@ class LoginSiteTest extends TestCase
         $this->operador();
 
         foreach (range(1, 5) as $tentativa) {
-            $this->post('/login', ['email' => 'operador@exemplo.com', 'password' => 'errada']);
+            $this->post('/login', ['login' => 'operador@exemplo.com', 'password' => 'errada']);
         }
 
-        $this->post('/login', ['email' => 'operador@exemplo.com', 'password' => 'password'])
-            ->assertSessionHasErrors('email');
+        $this->post('/login', ['login' => 'operador@exemplo.com', 'password' => 'password'])
+            ->assertSessionHasErrors('login');
 
         $this->assertGuest('web');
-        $this->assertStringStartsWith('Muitas tentativas', session('errors')->first('email'));
+        $this->assertStringStartsWith('Muitas tentativas', session('errors')->first('login'));
     }
 
     public function test_sair(): void

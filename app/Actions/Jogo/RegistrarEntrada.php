@@ -13,6 +13,8 @@ use App\Models\Item;
 use App\Models\Jogo;
 use App\Models\Participante;
 use App\Models\Usuario;
+use App\Services\Jogo\TimeChip;
+use App\Support\Fichas;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -27,10 +29,14 @@ use InvalidArgumentException;
  *   Cash game: buy-in e recompra (rebuy) enquanto estiver em andamento; sem add-on.
  * - Rebuy de quem caiu desfaz a eliminação provisória: ele volta para o lugar.
  * - O uuid vem do clique: repetido devolve a entrada que já existe (toque duplo).
+ * - Buy-in dentro do prazo do time chip guarda as fichas a mais em `entradas.time_chip` (Services\Jogo\TimeChip);
+ *   de quem pagou antes (`participantes.pagou_antes`), as do bônus em `entradas.antecipado` (MarcarPagamentoAntecipado).
  */
 class RegistrarEntrada
 {
     use ChecaRegras;
+
+    public function __construct(private TimeChip $timeChip) {}
 
     /** @param  list<int>  $opcionais  ids dos opcionais marcados */
     public function __invoke(Participante $participante, Item $item, Usuario $quem, string $uuid, array $opcionais = []): Entrada
@@ -64,7 +70,11 @@ class RegistrarEntrada
                 throw new RegraDoJogo("{$participante->nome()} já comprou {$item->nome}".($item->porJogador() ? '.' : " ({$item->limite_por_jogador}× no máximo)."));
             }
 
-            $entrada = $this->lancar($jogo, $participante, $item, $quem, $uuid);
+            $buyin = $item->tipo === TipoItem::Buyin;
+            $entrada = $this->lancar($jogo, $participante, $item, $quem, $uuid,
+                timeChip: $buyin ? $this->timeChip->fichasAgora($jogo) : 0,
+                antecipado: $buyin ? MarcarPagamentoAntecipado::fichas($jogo, $participante) : 0,
+            );
 
             if ($item->tipo->eEntrada()) {
                 foreach ($this->opcionaisJunto($jogo, $participante, $item->tipo, $opcionais) as $opcional) {
@@ -185,7 +195,7 @@ class RegistrarEntrada
         })->values();
     }
 
-    private function lancar(Jogo $jogo, Participante $participante, Item $item, Usuario $quem, string $uuid, ?Entrada $junto = null): Entrada
+    private function lancar(Jogo $jogo, Participante $participante, Item $item, Usuario $quem, string $uuid, ?Entrada $junto = null, int $timeChip = 0, int $antecipado = 0): Entrada
     {
         return $jogo->entradas()->create([
             'uuid' => $uuid,
@@ -194,10 +204,25 @@ class RegistrarEntrada
             'tipo' => $item->tipo,
             'valor' => $item->valor,
             'fichas' => $item->fichas,
+            'time_chip' => $timeChip,
+            'antecipado' => $antecipado,
             'percentual_premiacao' => $item->percentual_premiacao,
             'vinculada_a' => $junto?->id,
             'registrado_por' => $quem->id,
         ]);
+    }
+
+    /** Fichas que o jogador recebe por este lançamento: as da entrada, o time chip, o bônus do pagamento antecipado e as dos opcionais que foram junto. */
+    public static function fichasDoLancamento(Entrada $entrada): int
+    {
+        return (int) $entrada->fichas + (int) $entrada->time_chip + (int) $entrada->antecipado
+            + (int) Entrada::query()->validas()->where('vinculada_a', $entrada->id)->sum('fichas');
+    }
+
+    /** ": entregar 70.000 fichas (10.000 do time chip, 20.000 do pagamento antecipado)", para o aviso do lançamento. */
+    public static function aEntregar(Entrada $entrada): string
+    {
+        return Fichas::entregar(self::fichasDoLancamento($entrada), (int) $entrada->time_chip, (int) $entrada->antecipado);
     }
 
     /** Rebuy de quem caiu: a eliminação provisória fica como histórico e ele volta a jogar. */

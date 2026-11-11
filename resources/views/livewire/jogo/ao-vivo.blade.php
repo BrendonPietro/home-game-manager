@@ -81,7 +81,7 @@
 	<div class="rh-strip rh-aovivo__faixa">
 		@if ($digitaNivel)
 			<button type="button" class="rh-aovivo__nivel" wire:click="abrirNivel" title="Mudar o nível e os blinds">
-				<span class="rh-label">{{ $nivel }} @svg('rh-edit')</span><span class="v">{{ $blinds }}</span>
+				<span class="rh-label">{{ $nivel }} @svg('rh-editar')</span><span class="v">{{ $blinds }}</span>
 			</button>
 		@else
 			<div><span class="rh-label">{{ $nivel }}</span><span class="v">{{ $blinds }}</span></div>
@@ -89,10 +89,10 @@
 		@if ($podeRelogio)
 			<div class="rh-aovivo__relogio">
 				<button type="button" class="rh-aovivo__nivel" wire:click="abrirRelogio" title="Controlar o relógio">
-					<span class="rh-label">{{ $situacao }} @svg('rh-clock')</span><span class="v"><x-site.poker.relogio :estado="$relogio" /></span>
+					<span class="rh-label">{{ $situacao }} @svg('rh-relogio')</span><span class="v"><x-site.poker.relogio :estado="$relogio" /></span>
 				</button>
 				@if ($comandoPlay)
-					<button type="button" class="rh-btn rh-btn--icon rh-aovivo__play" wire:click="controlarRelogio('{{ $comandoPlay }}')" title="{{ ucfirst(mb_strtolower($rotuloPlay)) }} o relógio" aria-label="{{ ucfirst(mb_strtolower($rotuloPlay)) }} o relógio">@svg($comandoPlay === 'pausar' ? 'rh-pause' : 'rh-play')</button>
+					<button type="button" class="rh-btn rh-btn--icon rh-aovivo__play" wire:click="controlarRelogio('{{ $comandoPlay }}')" title="{{ ucfirst(mb_strtolower($rotuloPlay)) }} o relógio" aria-label="{{ ucfirst(mb_strtolower($rotuloPlay)) }} o relógio">@svg($comandoPlay === 'pausar' ? 'rh-pausar' : 'rh-continuar')</button>
 				@endif
 			</div>
 		@elseif ($relogio)
@@ -131,31 +131,41 @@
 					<span><span class="rh-dealer-btn">D</span>Dealer</span>
 				</div>
 
+				{{-- Quem chegou: marcar, cadastrar e sortear o lugar (modal Jogadores). Lugar certo: clique no lugar vazio. --}}
+				@can('mesas.organizar')
+					<button type="button" class="rh-btn" x-on:click="$dispatch('abrir-sorteio')">
+						@svg('rh-jogadores') JOGADORES
+						@if ($semLugar->isNotEmpty())
+							<span class="rh-badge rh-badge--plain">{{ $semLugar->count() }} sem lugar</span>
+						@endif
+					</button>
+				@endcan
+
 				@if ($mesaAtual)
-					<button type="button" class="rh-btn" x-on:click="$dispatch('girar-mesa', {{ $mesaAtual->id }})">@svg('rh-rotate') GIRAR MESA</button>
+					<button type="button" class="rh-btn" x-on:click="$dispatch('girar-mesa', {{ $mesaAtual->id }})">@svg('rh-girar') GIRAR MESA</button>
 				@endif
 
 				{{-- v3: a tela do relógio (botões grandes e o AVISO) e o link do relógio para a TV e outras telas. --}}
 				@if ($torneio)
-					<a class="rh-btn" href="{{ route('jogos.relogio', $jogo) }}" title="Tela do relógio: pausar, trocar de nível e AVISO">@svg('rh-clock') RELÓGIO</a>
+					<a class="rh-btn" href="{{ route('jogos.relogio', $jogo) }}" title="Tela do relógio: pausar, trocar de nível e AVISO">@svg('rh-relogio') RELÓGIO</a>
 				@endif
 				<button type="button" class="rh-btn rh-aovivo__tv" wire:click="abrirLink" title="Link do relógio para a TV e outras telas">@svg('rh-tv') TV</button>
 
 				{{-- Tablet e celular: a lateral some, o botão da fase vem para cá (ou fica na sugestão do intervalo). --}}
 				@if ($botaoFase && ! $sugestao)
-					<button type="button" class="rh-btn rh-btn--danger rh-aovivo__fase-curta" wire:click="abrirFase">@svg('rh-lock') {{ $botaoFase }}</button>
+					<button type="button" class="rh-btn rh-btn--danger rh-aovivo__fase-curta" wire:click="abrirFase">@svg('rh-cadeado') {{ $botaoFase }}</button>
 				@endif
 				@if ($voltarFase)
-					<button type="button" class="rh-btn rh-btn--ghost rh-btn--sm rh-aovivo__fase-curta" wire:click="abrirVoltarFase">@svg('rh-undo') {{ $voltarFase }}</button>
+					<button type="button" class="rh-btn rh-btn--ghost rh-btn--sm rh-aovivo__fase-curta" wire:click="abrirVoltarFase">@svg('rh-desfazer') {{ $voltarFase }}</button>
 				@endif
 			</div>
 
 			@if ($movendoNome)
 				<div class="rh-aovivo__mudando" role="status">
-					@svg('rh-move')
+					@svg('rh-mover')
 					<span><b>{{ $movendoNome }}</b>: clique num lugar vazio para mover ou num jogador para trocar{{ $mesas->count() > 1 ? ' (troque de mesa acima)' : '' }}.</span>
 					<span class="rh-spacer"></span>
-					<button type="button" class="rh-btn rh-btn--sm" wire:click="tirarDoLugar">@svg('rh-out') Tirar do lugar</button>
+					<button type="button" class="rh-btn rh-btn--sm" wire:click="tirarDoLugar">@svg('rh-sair') Tirar do lugar</button>
 					<button type="button" class="rh-btn rh-btn--ghost rh-btn--sm" wire:click="cancelarMudanca">Cancelar</button>
 				</div>
 			@endif
@@ -166,14 +176,14 @@
 			@endif
 
 			@if ($erro && ! $modal && ! $quemSenta)
-				<div class="rh-warn" role="alert">@svg('rh-alert')<div>{{ $erro }}</div></div>
+				<div class="rh-warn" role="alert">@svg('rh-alerta')<div>{{ $erro }}</div></div>
 			@endif
 
 			@if ($sugestao)
 				<div class="rh-warn rh-aovivo__sugestao" role="status">
-					@svg('rh-clock')
+					@svg('rh-relogio')
 					<div>{{ $sugestao }}</div>
-					<button type="button" class="rh-btn rh-btn--danger rh-btn--sm" wire:click="abrirFase">@svg('rh-lock') {{ $botaoFase }}</button>
+					<button type="button" class="rh-btn rh-btn--danger rh-btn--sm" wire:click="abrirFase">@svg('rh-cadeado') {{ $botaoFase }}</button>
 				</div>
 			@endif
 
@@ -193,22 +203,6 @@
 				@endif
 			</div>
 
-			@if ($semLugar->isNotEmpty())
-				<div class="rh-aovivo__espera">
-					<span class="rh-label">Sem lugar</span>
-					@foreach ($semLugar as $participante)
-						<button
-							type="button"
-							wire:key="espera-{{ $participante->id }}"
-							@class(['rh-pcard', 'is-on' => $selecionado === $participante->id])
-							wire:click="selecionar({{ $participante->id }})"
-						>
-							<x-site.props.avatar :nome="$participante->usuario->nome_exibicao" :foto="$participante->usuario->foto" tamanho="sm" />
-							<span class="rh-pcard__n">{{ $participante->usuario->nome_exibicao }}</span>
-						</button>
-					@endforeach
-				</div>
-			@endif
 		</div>
 
 		<aside class="rh-aovivo__lado">
@@ -255,7 +249,7 @@
 						@if ($ficha)
 							<span @class(['rh-chip', 'rh-chip--'.$ficha[1] => $ficha[1]])>{{ $ficha[0] }}</span>
 						@else
-							<span class="rh-aovivo__sem-ficha" aria-hidden="true">@svg('rh-plus')</span>
+							<span class="rh-aovivo__sem-ficha" aria-hidden="true">@svg('rh-adicionar')</span>
 						@endif
 						<span class="rh-aovivo__quem"><b>{{ $entrada->participante->usuario->nome_exibicao }}</b> <span class="rh-muted">· {{ $entrada->item->nome }}</span></span>
 						<span class="rh-num rh-aovivo__valor">@brl($entrada->valor)</span>
@@ -269,10 +263,10 @@
 			@if ($botaoFase || $voltarFase)
 				<div class="rh-aovivo__sec rh-aovivo__acao rh-col" style="gap:8px">
 					@if ($botaoFase)
-						<button type="button" class="rh-btn rh-btn--danger rh-btn--block" wire:click="abrirFase">@svg('rh-lock') {{ $botaoFase }}</button>
+						<button type="button" class="rh-btn rh-btn--danger rh-btn--block" wire:click="abrirFase">@svg('rh-cadeado') {{ $botaoFase }}</button>
 					@endif
 					@if ($voltarFase)
-						<button type="button" class="rh-btn rh-btn--ghost rh-btn--sm rh-btn--block" wire:click="abrirVoltarFase" title="Correção: fica no histórico, com o motivo">@svg('rh-undo') {{ $voltarFase }}</button>
+						<button type="button" class="rh-btn rh-btn--ghost rh-btn--sm rh-btn--block" wire:click="abrirVoltarFase" title="Correção: fica no histórico, com o motivo">@svg('rh-desfazer') {{ $voltarFase }}</button>
 					@endif
 				</div>
 			@endif
@@ -282,6 +276,11 @@
 	{{-- Lugar vazio clicado: quem senta ali (confirmado, do cadastro ou novo). --}}
 	@include('livewire.jogo.partials.quem-senta')
 
+	{{-- Modal Jogadores: quem chegou e o sorteio dos lugares (componente próprio, fora do poll). --}}
+	@can('mesas.organizar')
+		<livewire:jogo.sorteio :jogo="$jogo" :key="'sorteio-'.$jogo->id" />
+	@endcan
+
 	{{-- Telas 08–09: painel do jogador clicado (fica de pé entre um poll e outro). --}}
 	@if ($selecionado)
 		<livewire:jogo.acoes-jogador :jogo="$jogo" :participante-id="$selecionado" :key="'acoes-'.$selecionado" />
@@ -290,12 +289,12 @@
 	{{-- Celular: a faixa some e blinds, entradas e prize pool ficam presos embaixo (com o relógio na frente, se tiver). --}}
 	<div @class(['rh-aovivo__rodape', 'com-relogio' => $relogio])>
 		@if ($podeRelogio)
-			<button type="button" class="rh-aovivo__nivel" wire:click="abrirRelogio" title="Controlar o relógio"><span class="rh-label">{{ $relogio->noIntervalo() ? $relogio->titulo() : $nivel }} @svg('rh-clock')</span><span class="v"><x-site.poker.relogio :estado="$relogio" /></span></button>
+			<button type="button" class="rh-aovivo__nivel" wire:click="abrirRelogio" title="Controlar o relógio"><span class="rh-label">{{ $relogio->noIntervalo() ? $relogio->titulo() : $nivel }} @svg('rh-relogio')</span><span class="v"><x-site.poker.relogio :estado="$relogio" /></span></button>
 		@elseif ($relogio)
 			<div><span class="rh-label">{{ $relogio->noIntervalo() ? $relogio->titulo() : $nivel }}</span><span class="v"><x-site.poker.relogio :estado="$relogio" /></span></div>
 		@endif
 		@if ($digitaNivel)
-			<button type="button" class="rh-aovivo__nivel" wire:click="abrirNivel" title="Mudar o nível e os blinds"><span class="rh-label">Blinds @svg('rh-edit')</span><span class="v">{{ $blindsCurto }}</span></button>
+			<button type="button" class="rh-aovivo__nivel" wire:click="abrirNivel" title="Mudar o nível e os blinds"><span class="rh-label">Blinds @svg('rh-editar')</span><span class="v">{{ $blindsCurto }}</span></button>
 		@else
 			<div><span class="rh-label">{{ $relogio?->noIntervalo() ? 'A seguir' : 'Blinds' }}</span><span class="v">{{ $blindsCurto }}</span></div>
 		@endif
@@ -309,11 +308,11 @@
 				<form class="rh-modal" style="max-width:380px" wire:submit="salvarNivel" role="dialog" aria-modal="true" aria-labelledby="nivel-titulo">
 					<div class="rh-modal__hd">
 						<h2 class="rh-heading" id="nivel-titulo">Nível e blinds</h2>
-						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharModal" aria-label="Fechar">@svg('rh-x')</button>
+						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharModal" aria-label="Fechar">@svg('rh-fechar')</button>
 					</div>
 					<div class="rh-modal__bd rh-col" style="gap:12px">
 						@if ($erro)
-							<div class="rh-warn" role="alert">@svg('rh-alert')<div>{{ $erro }}</div></div>
+							<div class="rh-warn" role="alert">@svg('rh-alerta')<div>{{ $erro }}</div></div>
 						@endif
 						<div class="rh-field">
 							<label class="rh-field__label" for="nivel-campo">Nível</label>
@@ -346,11 +345,11 @@
 				<div class="rh-modal" style="max-width:460px" role="dialog" aria-modal="true" aria-labelledby="relogio-titulo">
 					<div class="rh-modal__hd">
 						<h2 class="rh-heading" id="relogio-titulo">Relógio</h2>
-						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharModal" aria-label="Fechar">@svg('rh-x')</button>
+						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharModal" aria-label="Fechar">@svg('rh-fechar')</button>
 					</div>
 					<div class="rh-modal__bd rh-col" style="gap:16px">
 						@if ($erro)
-							<div class="rh-warn" role="alert">@svg('rh-alert')<div>{{ $erro }}</div></div>
+							<div class="rh-warn" role="alert">@svg('rh-alerta')<div>{{ $erro }}</div></div>
 						@endif
 						<div class="rh-aovivo__tempo">
 							<span class="rh-label">{{ match (true) { $relogio->rodando => 'Correndo', $relogio->acabou() => 'Fim da estrutura', ! $relogio->iniciado => 'Não iniciado', default => 'Pausado' } }}</span>
@@ -359,11 +358,11 @@
 							<span class="rh-small rh-muted">{{ $depois }}{{ $intervaloEm !== null ? ' · intervalo em '.EstruturaBlinds::duracao(intdiv($intervaloEm + 59, 60)) : '' }}</span>
 						</div>
 						<div class="rh-aovivo__comandos">
-							<button type="button" class="rh-btn rh-btn--lg" wire:click="controlarRelogio('anterior')" wire:loading.attr="disabled" @disabled(! $relogio->anterior())>@svg('rh-chev-l') ANTERIOR</button>
+							<button type="button" class="rh-btn rh-btn--lg" wire:click="controlarRelogio('anterior')" wire:loading.attr="disabled" @disabled(! $relogio->anterior())>@svg('rh-chevron-esquerda') ANTERIOR</button>
 							@if ($comandoPlay)
-								<button type="button" class="rh-btn rh-btn--primary rh-btn--lg" wire:click="controlarRelogio('{{ $comandoPlay }}')" wire:loading.attr="disabled">@svg($comandoPlay === 'pausar' ? 'rh-pause' : 'rh-play') {{ $rotuloPlay }}</button>
+								<button type="button" class="rh-btn rh-btn--primary rh-btn--lg" wire:click="controlarRelogio('{{ $comandoPlay }}')" wire:loading.attr="disabled">@svg($comandoPlay === 'pausar' ? 'rh-pausar' : 'rh-continuar') {{ $rotuloPlay }}</button>
 							@endif
-							<button type="button" class="rh-btn rh-btn--lg" wire:click="controlarRelogio('proximo')" wire:loading.attr="disabled" @disabled(! $proximo)>PRÓXIMO @svg('rh-chev-r')</button>
+							<button type="button" class="rh-btn rh-btn--lg" wire:click="controlarRelogio('proximo')" wire:loading.attr="disabled" @disabled(! $proximo)>PRÓXIMO @svg('rh-chevron-direita')</button>
 						</div>
 						<div class="rh-field">
 							<span class="rh-field__label">Ajustar o tempo do nível</span>
@@ -383,22 +382,22 @@
 				<div class="rh-modal" style="max-width:520px" role="dialog" aria-modal="true" aria-labelledby="link-titulo" x-data="{ copiado: false }">
 					<div class="rh-modal__hd">
 						<h2 class="rh-heading" id="link-titulo">Relógio nas outras telas</h2>
-						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharModal" aria-label="Fechar">@svg('rh-x')</button>
+						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharModal" aria-label="Fechar">@svg('rh-fechar')</button>
 					</div>
 					<div class="rh-modal__bd rh-col" style="gap:16px">
 						@if ($erro)
-							<div class="rh-warn" role="alert">@svg('rh-alert')<div>{{ $erro }}</div></div>
+							<div class="rh-warn" role="alert">@svg('rh-alerta')<div>{{ $erro }}</div></div>
 						@endif
 						<p class="rh-small rh-muted" style="margin:0">Abra na TV, no tablet ou em outro celular: mostra só o relógio (nível, tempo, blinds e intervalo), sem login e sem mexer em nada. Se a internet cair, continua contando.</p>
 						<div class="rh-link-relogio">{{ $link }}</div>
 						<div class="rh-row" style="gap:8px;flex-wrap:wrap">
-							<button type="button" class="rh-btn rh-btn--primary rh-btn--lg" x-on:click="$copiar(@js($link)).then(() => { copiado = true; setTimeout(() => copiado = false, 2500) })">@svg('rh-copy') <span x-text="copiado ? 'COPIADO' : 'COPIAR LINK'">COPIAR LINK</span></button>
+							<button type="button" class="rh-btn rh-btn--primary rh-btn--lg" x-on:click="$copiar(@js($link)).then(() => { copiado = true; setTimeout(() => copiado = false, 2500) })">@svg('rh-copiar') <span x-text="copiado ? 'COPIADO' : 'COPIAR LINK'">COPIAR LINK</span></button>
 							<a class="rh-btn rh-btn--lg" href="{{ $link }}" target="_blank" rel="noopener">@svg('rh-tv') ABRIR</a>
 						</div>
 						@can('relogio.controlar')
 							<div class="rh-row" style="gap:12px;align-items:center;flex-wrap:wrap">
 								<span class="rh-small rh-muted" style="flex:1;min-width:200px">Mandou para quem não devia? Gere outro: o link de agora para de abrir.</span>
-								<button type="button" class="rh-btn rh-btn--sm" wire:click="trocarLink" wire:confirm="Gerar outro link? O de agora para de abrir nas telas que estão com ele.">@svg('rh-rotate') GERAR OUTRO LINK</button>
+								<button type="button" class="rh-btn rh-btn--sm" wire:click="trocarLink" wire:confirm="Gerar outro link? O de agora para de abrir nas telas que estão com ele.">@svg('rh-girar') GERAR OUTRO LINK</button>
 							</div>
 						@endcan
 					</div>
@@ -410,14 +409,14 @@
 				<form class="rh-modal" style="max-width:460px" wire:submit="abrirIntervalo" role="dialog" aria-modal="true" aria-labelledby="intervalo-titulo">
 					<div class="rh-modal__hd">
 						<h2 class="rh-heading" id="intervalo-titulo" style="font-size:26px">Abrir intervalo</h2>
-						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharModal" aria-label="Fechar">@svg('rh-x')</button>
+						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharModal" aria-label="Fechar">@svg('rh-fechar')</button>
 					</div>
 					<div class="rh-modal__bd rh-col" style="gap:16px">
 						@if ($erro)
-							<div class="rh-warn" role="alert">@svg('rh-alert')<div>{{ $erro }}</div></div>
+							<div class="rh-warn" role="alert">@svg('rh-alerta')<div>{{ $erro }}</div></div>
 						@endif
 						<div class="rh-warn">
-							@svg('rh-alert')
+							@svg('rh-alerta')
 							<div>
 								<b>No intervalo:</b>
 								<ul>
@@ -437,7 +436,7 @@
 					</div>
 					<div class="rh-modal__ft">
 						<button type="button" class="rh-btn rh-btn--lg" wire:click="fecharModal">VOLTAR</button>
-						<button type="submit" class="rh-btn rh-btn--danger rh-btn--lg" wire:loading.attr="disabled">@svg('rh-clock') ABRIR INTERVALO</button>
+						<button type="submit" class="rh-btn rh-btn--danger rh-btn--lg" wire:loading.attr="disabled">@svg('rh-relogio') ABRIR INTERVALO</button>
 					</div>
 				</form>
 			@elseif ($modal === 'voltar' && $voltarFase)
@@ -445,14 +444,14 @@
 				<form class="rh-modal" style="max-width:460px" wire:submit="voltarFase" role="dialog" aria-modal="true" aria-labelledby="voltar-titulo">
 					<div class="rh-modal__hd">
 						<h2 class="rh-heading" id="voltar-titulo" style="font-size:26px">{{ $voltarFase }}</h2>
-						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharModal" aria-label="Fechar">@svg('rh-x')</button>
+						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharModal" aria-label="Fechar">@svg('rh-fechar')</button>
 					</div>
 					<div class="rh-modal__bd rh-col" style="gap:16px">
 						@if ($erro)
-							<div class="rh-warn" role="alert">@svg('rh-alert')<div>{{ $erro }}</div></div>
+							<div class="rh-warn" role="alert">@svg('rh-alerta')<div>{{ $erro }}</div></div>
 						@endif
 						<div class="rh-warn">
-							@svg('rh-alert')
+							@svg('rh-alerta')
 							<div>
 								<b>{{ $reabrir ? 'Ao reabrir as entradas:' : 'Ao voltar aos rebuys:' }}</b>
 								<ul>
@@ -475,7 +474,7 @@
 					</div>
 					<div class="rh-modal__ft">
 						<button type="button" class="rh-btn rh-btn--lg" wire:click="fecharModal">VOLTAR</button>
-						<button type="submit" class="rh-btn rh-btn--danger rh-btn--lg" wire:loading.attr="disabled">@svg('rh-undo') {{ mb_strtoupper($voltarFase) }}</button>
+						<button type="submit" class="rh-btn rh-btn--danger rh-btn--lg" wire:loading.attr="disabled">@svg('rh-desfazer') {{ mb_strtoupper($voltarFase) }}</button>
 					</div>
 				</form>
 			@elseif ($modal === 'fechar')
@@ -483,14 +482,14 @@
 				<form class="rh-modal" style="max-width:460px" wire:submit="fecharEntradas" role="dialog" aria-modal="true" aria-labelledby="fechar-titulo">
 					<div class="rh-modal__hd">
 						<h2 class="rh-heading" id="fechar-titulo" style="font-size:26px">Fechar entradas</h2>
-						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharModal" aria-label="Fechar">@svg('rh-x')</button>
+						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharModal" aria-label="Fechar">@svg('rh-fechar')</button>
 					</div>
 					<div class="rh-modal__bd rh-col" style="gap:16px">
 						@if ($erro)
-							<div class="rh-warn" role="alert">@svg('rh-alert')<div>{{ $erro }}</div></div>
+							<div class="rh-warn" role="alert">@svg('rh-alerta')<div>{{ $erro }}</div></div>
 						@endif
 						<div class="rh-warn">
-							@svg('rh-alert')
+							@svg('rh-alerta')
 							<div>
 								<b>Após fechar as entradas:</b>
 								<ul>
@@ -506,7 +505,7 @@
 						</div>
 						@if ($semBuyin->isNotEmpty())
 							<div class="rh-warn" role="alert">
-								@svg('rh-alert')
+								@svg('rh-alerta')
 								<div><b>Sem buy-in:</b> {{ $semBuyin->join(', ', ' e ') }}. Lance antes de fechar ou {{ $semBuyin->count() > 1 ? 'eles ficam' : 'fica' }} fora da premiação.</div>
 							</div>
 						@endif
@@ -529,7 +528,7 @@
 					</div>
 					<div class="rh-modal__ft">
 						<button type="button" class="rh-btn rh-btn--lg" wire:click="fecharModal">VOLTAR</button>
-						<button type="submit" class="rh-btn rh-btn--primary rh-btn--lg" wire:loading.attr="disabled">@svg('rh-lock') FECHAR ENTRADAS</button>
+						<button type="submit" class="rh-btn rh-btn--primary rh-btn--lg" wire:loading.attr="disabled">@svg('rh-cadeado') FECHAR ENTRADAS</button>
 					</div>
 				</form>
 			@endif

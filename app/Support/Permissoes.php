@@ -35,12 +35,15 @@ class Permissoes
         'estrutura.editar' => 'Alterar entradas e opcionais no jogo',
         'taxas.editar' => 'Alterar taxas no jogo',
         'financeiro.ver' => 'Ver o financeiro',
+        'pagamentos.antecipado' => 'Marcar pagamento antecipado (fichas a mais)',
         'site.fora_da_noite' => 'Usar o site sem jogo em andamento',
     ];
 
     /** Ações do painel que não são ver/criar/editar/excluir. */
     private const ACOES = [
         'andamento' => 'editar em andamento',
+        'antecipado' => 'marcar antecipado (fichas a mais)',
+        'excluir_tudo' => 'excluir com lançamentos (apaga tudo)',
     ];
 
     /** "Jogos · ver", "Jogos · editar em andamento", "Lançar entradas" */

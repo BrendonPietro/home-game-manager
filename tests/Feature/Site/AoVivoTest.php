@@ -86,14 +86,15 @@ class AoVivoTest extends TestCase
             ->assertSet('selecionado', null);
     }
 
-    public function test_quem_saiu_aparece_apagado_e_quem_esta_sem_lugar_embaixo(): void
+    public function test_quem_saiu_aparece_apagado(): void
     {
         $this->jogador('João')->forceFill(['status' => StatusParticipante::Eliminado])->save();
         $this->noite->participantes()->create(['usuario_id' => Usuario::factory()->create(['nome' => 'Zeca', 'apelido' => null])->id]);
 
         Livewire::test(AoVivo::class, ['jogo' => $this->noite])
             ->assertSeeHtml('rh-seat rh-seat--out')
-            ->assertSeeInOrder(['Sem lugar', 'Zeca'])
+            // Quem está sem lugar fica no modal Jogadores (de quem monta as mesas), não embaixo da mesa.
+            ->assertDontSee(['Zeca', 'JOGADORES'])
             ->assertSeeInOrder(['Jogando', '11']);
     }
 

@@ -7,7 +7,8 @@
 		'rail-700', 'rail-500', 'chip-buyin', 'chip-rebuy', 'chip-addon', 'chip-dealer',
 	];
 
-	$icones = collect(File::files(resource_path('svg/site/icons')))
+	$icones = collect(File::files(resource_path('svg/icones')))
+		->filter(fn ($arquivo) => $arquivo->getExtension() === 'svg') // a pasta tem o LEIAME.md
 		->map(fn ($arquivo) => $arquivo->getFilenameWithoutExtension())
 		->sort()
 		->values();
@@ -41,7 +42,7 @@
 			<span class="rh-small rh-muted">04/10/2026 · 20:00</span>
 		</div>
 		<span class="rh-spacer"></span>
-		<a class="rh-btn rh-btn--ghost rh-btn--sm" href="{{ url('/') }}">@svg('rh-list') Torneios</a>
+		<a class="rh-btn rh-btn--ghost rh-btn--sm" href="{{ url('/') }}">@svg('rh-lista') Torneios</a>
 		<span class="rh-avatar rh-avatar--sm">BR</span>
 	</header>
 
@@ -117,12 +118,12 @@
 				<x-site.props.brand sub="Painel admin" />
 			</div>
 			<div class="rh-row">
-				<button class="rh-btn rh-btn--primary">@svg('rh-plus') Novo jogador</button>
+				<button class="rh-btn rh-btn--primary">@svg('rh-adicionar') Novo jogador</button>
 				<button class="rh-btn">Secundário</button>
 				<button class="rh-btn rh-btn--ghost">Ghost</button>
-				<button class="rh-btn rh-btn--danger">@svg('rh-undo') Desfazer</button>
+				<button class="rh-btn rh-btn--danger">@svg('rh-desfazer') Desfazer</button>
 				<button class="rh-btn rh-btn--sm">Pequeno</button>
-				<button class="rh-btn rh-btn--icon" aria-label="Mais">@svg('rh-more')</button>
+				<button class="rh-btn rh-btn--icon" aria-label="Mais">@svg('rh-mais-opcoes')</button>
 				<button class="rh-btn" disabled>Desabilitado</button>
 			</div>
 			<div class="rh-row">
@@ -154,7 +155,7 @@
 				<span class="rh-badge rh-badge--warn">Pendente</span>
 				<span class="rh-badge rh-badge--done">Encerrado</span>
 				<span class="rh-badge rh-badge--off">Cancelado</span>
-				<span class="rh-badge rh-badge--plain">@svg('rh-lock') Restrito</span>
+				<span class="rh-badge rh-badge--plain">@svg('rh-cadeado') Restrito</span>
 			</div>
 			<div class="rh-row" style="gap:12px">
 				<span class="rh-chip">B</span>
@@ -197,7 +198,7 @@
 				</label>
 				<div class="rh-field">
 					<span class="rh-field__label">Buscar jogador</span>
-					<div class="rh-search">@svg('rh-search')<input class="rh-input" placeholder="Nome ou apelido"></div>
+					<div class="rh-search">@svg('rh-pesquisar')<input class="rh-input" placeholder="Nome ou apelido"></div>
 				</div>
 			</div>
 			<div class="rh-row" style="gap:24px">
@@ -246,7 +247,7 @@
 						</tbody>
 						<tfoot><tr><td>Total</td><td></td><td class="n">R$ 2.100</td><td class="n">R$ 0</td></tr></tfoot>
 					</table>
-					<div class="rh-panel__ft"><button class="rh-btn rh-btn--sm">@svg('rh-down') Exportar</button></div>
+					<div class="rh-panel__ft"><button class="rh-btn rh-btn--sm">@svg('rh-baixar') Exportar</button></div>
 				</div>
 
 				<div class="rh-col" style="gap:16px">
@@ -265,8 +266,8 @@
 
 					<div class="rh-panel">
 						<div class="rh-list">
-							<div class="rh-li">@svg('rh-users')<div><div class="rh-li__t">12 confirmados</div><div class="rh-li__s">2 aguardando lugar</div></div></div>
-							<div class="rh-li">@svg('rh-table')<div><div class="rh-li__t">2 mesas</div><div class="rh-li__s">Dealers: Sérgio e Paulo</div></div></div>
+							<div class="rh-li">@svg('rh-jogadores')<div><div class="rh-li__t">12 confirmados</div><div class="rh-li__s">2 aguardando lugar</div></div></div>
+							<div class="rh-li">@svg('rh-mesa')<div><div class="rh-li__t">2 mesas</div><div class="rh-li__s">Dealers: Sérgio e Paulo</div></div></div>
 						</div>
 					</div>
 				</div>
@@ -287,7 +288,7 @@
 				</div>
 				<div class="rh-col" style="align-items:flex-end;justify-content:space-between">
 					<x-site.props.datebox :data="\Illuminate\Support\Carbon::parse('2026-10-11')" />
-					<a class="rh-btn rh-btn--primary rh-btn--lg" href="#">Abrir jogo @svg('rh-arrow-r')</a>
+					<a class="rh-btn rh-btn--primary rh-btn--lg" href="#">Abrir jogo @svg('rh-seta-direita')</a>
 				</div>
 			</div>
 		</section>
@@ -298,10 +299,10 @@
 				<div class="rh-col" style="gap:12px">
 					<button class="rh-pick" aria-pressed="true"><span class="rh-chip rh-chip--lg">B</span><span class="rh-pick__t">Buy-in simples</span><span class="rh-pick__v">R$ 100<small>10.000 fichas</small></span></button>
 					<button class="rh-pick" aria-pressed="false"><span class="rh-chip rh-chip--lg">2</span><span class="rh-pick__t">Buy-in duplo</span><span class="rh-pick__v">R$ 200<small>20.000 fichas</small></span></button>
-					<div class="rh-warn">@svg('rh-alert')<div><b>Antes de fechar as entradas</b><ul><li>2 jogadores com pagamento pendente</li><li>Mesa 02 sem dealer</li></ul></div></div>
+					<div class="rh-warn">@svg('rh-alerta')<div><b>Antes de fechar as entradas</b><ul><li>2 jogadores com pagamento pendente</li><li>Mesa 02 sem dealer</li></ul></div></div>
 				</div>
 				<div class="rh-modal">
-					<div class="rh-modal__hd"><h3 class="rh-heading">Fechar entradas?</h3><button class="rh-btn rh-btn--ghost rh-btn--icon rh-x" aria-label="Fechar">@svg('rh-x')</button></div>
+					<div class="rh-modal__hd"><h3 class="rh-heading">Fechar entradas?</h3><button class="rh-btn rh-btn--ghost rh-btn--icon rh-x" aria-label="Fechar">@svg('rh-fechar')</button></div>
 					<div class="rh-modal__bd"><p class="rh-muted" style="margin:0">Os prêmios são gravados e as próximas eliminações já dão a posição</p></div>
 					<div class="rh-modal__ft"><button class="rh-btn">Voltar</button><button class="rh-btn rh-btn--primary">Fechar entradas</button></div>
 				</div>
@@ -321,7 +322,7 @@
 		<section class="rh-vitrine__sec">
 			<span class="rh-label">Mesa</span>
 			<div class="rh-vitrine__mesa">
-				<div class="rh-ptable" style="--ar:1.7;--inset:15% 9%">
+				<div class="rh-ptable" style="--ar:1.7;--inset-y:15%;--inset-x:9%" data-dealer="baixo">
 					<div class="rh-ptable__rail">
 						<div class="rh-ptable__felt">
 							<div class="rh-ptable__center">
@@ -332,7 +333,7 @@
 						</div>
 					</div>
 
-					<div class="rh-seat rh-seat--dealer" style="{{ $posicao(0) }}">
+					<div class="rh-seat rh-seat--dealer">
 						<span class="rh-label">Dealer</span><span class="rh-seat__name">Sérgio</span>
 						<span class="rh-dealer-btn">D</span>
 					</div>
@@ -368,8 +369,8 @@
 		<section class="rh-vitrine__sec">
 			<span class="rh-label">Acertos</span>
 			<div class="rh-panel">
-				<div class="rh-xfer"><span class="rh-who"><span class="rh-avatar rh-avatar--sm">TH</span>Thiago</span><span class="rh-xfer__arrow">@svg('rh-arrow-r')</span><span class="rh-who"><span class="rh-avatar rh-avatar--sm">MA</span>Marcão</span><span class="rh-xfer__v">R$ 100</span></div>
-				<div class="rh-xfer"><span class="rh-who"><span class="rh-avatar rh-avatar--sm">DI</span>Diego</span><span class="rh-xfer__arrow">@svg('rh-arrow-r')</span><span class="rh-who"><span class="rh-avatar rh-avatar--sm">BR</span>Brendon</span><span class="rh-xfer__v">R$ 100</span></div>
+				<div class="rh-xfer"><span class="rh-who"><span class="rh-avatar rh-avatar--sm">TH</span>Thiago</span><span class="rh-xfer__arrow">@svg('rh-seta-direita')</span><span class="rh-who"><span class="rh-avatar rh-avatar--sm">MA</span>Marcão</span><span class="rh-xfer__v">R$ 100</span></div>
+				<div class="rh-xfer"><span class="rh-who"><span class="rh-avatar rh-avatar--sm">DI</span>Diego</span><span class="rh-xfer__arrow">@svg('rh-seta-direita')</span><span class="rh-who"><span class="rh-avatar rh-avatar--sm">BR</span>Brendon</span><span class="rh-xfer__v">R$ 100</span></div>
 			</div>
 		</section>
 

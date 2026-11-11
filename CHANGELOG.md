@@ -10,6 +10,112 @@ Registro das atualizações do sistema do Rodrigues Home Game, organizadas por:
 - Docs: documentação;
 - Chore: manutenção.
 
+## 0.33.0
+
+Nome com apelido nas listas, menu na topbar e o lugar do dealer na mesa.
+
+### Feat
+- **Nome e apelido** no Quem senta aqui e no modal Jogadores: "Ricardo Alves (RICO)" (sem apelido, ou apelido igual ao nome, só o nome). A lista segue em ordem de nome.
+- **Menu na topbar** (☰): Jogos, **Acessar o painel** (abre em outra aba) e Sair, com o nome de quem está logado em cima. O link do painel só aparece para quem tem conta lá (as contas do clube têm o mesmo usuário nos dois lados).
+- **Lugar do dealer no desenho da mesa**: o trilho entra na mesa onde o dealer fica, como nas mesas de verdade, e o recorte acompanha quando a mesa gira. O dealer sai da volta dos jogadores e fica encaixado no recorte, atrás dos lugares que encostarem, com o botão D virado para o feltro.
+
+### Fix
+- **Topbar quebrando** em algumas larguras (a data em duas linhas por cima do Jogos): o nome do jogo ganha reticências, a data fica numa linha só e some abaixo de 900px. A barra tem sempre 60px.
+- Rotação da mesa salva no aparelho com um valor que não é 0, 90, 180 ou 270 (apagada pela metade, mexida à mão) volta para a posição padrão em vez de espalhar os lugares.
+
+### Test
+- `MenuEMesaTest`: nome com apelido, Quem senta aqui e modal Jogadores com nome e apelido, menu com e sem o link do painel, e o lugar do dealer na mesa.
+
+## 0.32.0
+
+Modal Jogadores: quem chegou e o sorteio dos lugares, antes e durante o torneio.
+
+### Feat
+- **Botão JOGADORES na tela ao vivo** (com "26 sem lugar"), no lugar da lista de nomes embaixo da mesa. Abre o modal **Jogadores**: marcar quem chegou (busca pelo nome ou apelido), pôr na lista alguém do cadastro ou cadastrar um jogador novo (já ficam marcados), escolher as mesas (com quantos lugares livres cada uma tem) e **SORTEAR**. Depois, o modal mostra onde cada um senta e, no torneio, quantas fichas entregar ("Mesa 2 · Lugar 4 · Entregar 40.000 fichas (20.000 do pagamento antecipado)"). Para um lugar certo, continua o clique no lugar vazio.
+- **Sortear quem quiser, onde quiser** (`SortearLugares`): só os marcados e só nas mesas marcadas, antes e durante o jogo. As mesas ficam equilibradas contando quem já está sentado, o lugar de quem caiu conta como livre, e quem senta com o torneio em andamento entra com o buy-in (time chip e pagou antes inclusos). Na aba **Na mesa**, dá para marcar quem já está sentado e sortear de novo (quem voltou com rebuy no intervalo, quebra de mesa). Quem caiu e não voltou não entra no sorteio: primeiro o rebuy.
+- Tela 06: **Sortear lugares** abre o mesmo modal (com Marcar todos para o sorteio de todo mundo).
+
+### Test
+- `SorteioTest`: quem chegou senta nas mesas escolhidas com o buy-in (e o bônus), mesas equilibradas contando quem fica, quem já estava sentado troca sem novo buy-in, lugar de quem caiu livre, regras (caiu, ninguém, nenhuma mesa, falta lugar), entradas fechadas (tudo ou nada; quebra de mesa vale), Operador não sorteia, o modal inteiro e o botão na tela ao vivo.
+
+## 0.31.0
+
+Excluir qualquer jogo pelo painel, página que não existe volta para o início e o site para de cair no login.
+
+### Feat
+- **Excluir com lançamentos**: permissão nova `jogos.excluir_tudo` ("Jogos · excluir com lançamentos (apaga tudo)"), só no grupo Desenvolvedor. Com ela, o Excluir aparece em qualquer jogo, também em andamento e finalizado, na lista, na edição e no Visualizar, e apaga o jogo com a lista, as entradas, os pagamentos, as eliminações, os acertos, os pontos dos rankings, o histórico e o evento da agenda (`ExcluirJogo`). O modal diz o que vai junto: "Apaga o jogo e tudo o que foi lançado nele: 30 jogadores e 2 entradas (R$ 200). Não dá para desfazer."
+- Sem a permissão, nada muda: só se exclui jogo em rascunho e sem entradas; o resto se cancela.
+- **Sem tela de 404**: página que não existe (jogo excluído, link antigo, endereço digitado errado) volta para a home do site com o aviso "Esse jogo não existe mais." (ou "Essa página não existe."), e no painel, para o Painel de controle com a mesma notificação (`PaginaQueNaoExiste`). A tela ao vivo ou o resumo abertos quando o jogo é excluído recarregam sozinhos no próximo poll e caem na home. Arquivos, JSON e o link do relógio continuam como estavam.
+
+### Fix
+- **Site caindo no login do nada** (ex.: selecionar um jogador e, no clique seguinte, ir para o login): no Laragon o PHP roda dentro do Apache, que divide o ambiente entre os sites, e o `.env` de outro projeto aberto ao mesmo tempo vazava para os pedidos daqui (outro banco e outra chave: a sessão sumia). O `.env` agora fica só em cada pedido no Apache (`Env::disablePutenv()` no `bootstrap/app.php`). Conferido com um pedido "poluidor" ao mesmo tempo: antes, 19 de 20 pedidos davam erro; depois, 100 de 100 certos.
+
+### Test
+- `JogosTest`: Desenvolvedor exclui a Poker Night #18 em andamento (some com lista, entradas e evento) e um finalizado pelo Visualizar; o Admin continua sem o Excluir e sem passar pela Action. `PaginaQueNaoExisteTest`: site, painel, sem login, e o que continua no 404. `SegurancaTest`: a permissão nova e só o Desenvolvedor com ela. Os testes de excluir passam também no MySQL.
+
+## 0.30.0
+
+Bônus do pagamento antecipado.
+
+### Feat
+- **Fichas para quem pagou antes**: no cadastro do torneio, aba Blinds, a seção **Pagamento antecipado** diz quantas fichas a mais ganha quem pagou o buy-in antes (ex.: 20.000). Substitui o opcional de R$ 0 com fichas.
+- **Quem marca decide**: o botão **Pagou antes** na aba Confirmados do painel (e a caixa "Pagamento antecipado do buy-in" no modal do Pagamento, que lança o pagamento e marca juntos), na lista da noite do site e no painel do jogador (Marcar / Desmarcar). Permissão nova `pagamentos.antecipado`, no painel e no site, para Admin e Desenvolvedor. Fica no histórico do jogo.
+- **Sentar já soma**: o bônus entra no buy-in de quem está marcado (`entradas.antecipado`). O "Quem senta aqui" mostra "Pagou antes · +20.000", e sentar com o torneio em andamento avisa "Ana sentou na Mesa 1 · Lugar 5, pagou antes: entregar 40.000 fichas (20.000 do pagamento antecipado)". Marcar quem já sentou dá as fichas na hora ("entregar 20.000 fichas a mais").
+- As fichas entregues (painel do jogador e Resumo) somam o bônus, o Resumo mostra "Pagou antes" no jogador, e a Conferência mostra o bônus e quantos estão marcados.
+
+### Test
+- `PagamentoAntecipadoTest`: bônus no buy-in (e não no rebuy), junto do time chip, marcar depois de sentar e desmarcar, permissão e regras, Quem senta aqui e o aviso, painel do jogador, Resumo e lista da noite. Aba Confirmados com o botão e a caixa do Pagamento (`ConfirmadosTest`) e o campo no cadastro (`JogosTest`).
+
+## 0.29.0
+
+Banco limpo para produção e login pelo nome de usuário.
+
+### Feat
+- **Login do site pelo usuário ou pelo e-mail**, num campo só ("Usuário ou e-mail"). Coluna nova `usuarios.login` (sem `@`, gravada em minúsculas: "FulanoDeTal" e "fulanodetal" entram igual). Em Sistema → Usuários do site, o campo **Usuário** e a coluna dele; a conta precisa de usuário ou e-mail (ao menos um).
+- O login do painel também não diferencia maiúsculas.
+- **Contas do clube pelo usuário**: no `.env`, `"Nome <usuário>"`, com o usuário sendo um nome (`FulanoDeTal`) ou um e-mail. A mesma conta entra assim no site e no painel.
+- **Banco limpo**: o `db:seed` cria só o que o sistema precisa (permissões e grupos, regras de premiação, estruturas de blinds) e as contas do clube. As contas dev e de teste e a Poker Night #18 só entram no ambiente local com `DADOS_DE_EXEMPLO=true`. Assim o banco local pode ser o de verdade, e um `db:seed` depois de uma atualização não traz exemplo nenhum.
+
+### Chore
+- Banco local zerado (com backup antes, fora do git) e recriado limpo, só com as duas contas do clube do `.env` (um Desenvolvedor e um Admin), no site e no painel. Contas e senhas ficam só no `.env`.
+- `phpunit.xml` zera as contas do clube e os dados de exemplo: os testes não dependem do `.env`.
+
+### Test
+- `BancoLimpoTest`: seed sem exemplos só com o essencial (e rodar de novo não duplica); com `DADOS_DE_EXEMPLO`, a noite e as contas dev. Login pelo usuário no site (`LoginSiteTest`), Usuários do site com usuário sem e-mail e a regra de ter um dos dois, e contas do clube pelo usuário nos dois lados (`ContasDoClubeTest`).
+
+## 0.28.0
+
+Fichas a entregar e time chip.
+
+### Feat
+- **Fichas entregues por jogador**: o painel do jogador ganha o bloco "Fichas entregues" com o total e de onde veio ("buy-in 20.000 · time chip 10.000 · rebuys 20.000 · add-on …"), e o Resumo (tela 10) a coluna **Fichas**. Soma as entradas e opcionais válidos (desfeito sai da conta).
+- **Aviso diz quanto entregar**: "Buy-in registrado para Ana: entregar 30.000 fichas (10.000 do time chip)." O "Quem senta aqui" também mostra as fichas do buy-in que entra ao sentar.
+- **Time chip** (só torneio): na aba Blinds do cadastro do jogo, quantas fichas a mais e até o fim de qual nível (padrão 1). O buy-in lançado dentro do prazo ganha (pelo relógio, ou pelo nível digitado sem estrutura); rebuy e add-on não. Para dar mais tempo de chegar, aumente os minutos do nível 1 na estrutura. Fica gravado no buy-in (`entradas.time_chip`), então desfazer leva junto e quem chega depois não ganha. Não mexe em dinheiro.
+- A Conferência (tela 04) mostra o time chip do torneio. Duplicar, Salvar como modelo e Criar a partir do modelo levam o time chip.
+
+### Test
+- `Jogo\TimeChipTest`: prazo pelo relógio (inclusive o intervalo depois do nível) e pelo nível digitado, buy-in com e sem time chip, soma por jogador, desfazer, painel do jogador, Resumo e "Quem senta aqui"; time chip no cadastro do painel.
+
+## 0.27.0
+
+Ícones numa pasta só, Temporadas fora do painel e o menu sem filete.
+
+### Feat
+- **Todos os ícones do site e do painel em `resources/svg/icones`**, com nome pela ideia (`editar`, `excluir`, `jogadores`, `fichas`, `chevron-direita`…) e um `LEIAME.md` dizendo onde cada um aparece. Para trocar um ícone, troca o arquivo por outro SVG com o mesmo nome: muda no site e no painel.
+- Cada item do menu do painel tem o próprio arquivo (`menu-jogos.svg`, `menu-jogadores.svg`…), e os ícones do próprio Filament (editar, excluir, pesquisar, filtros, colunas, setas, paginação, fechar, avisos, tema, sair…) apontam para a pasta (`App\Support\IconesDoPainel`). Os novos começaram com o mesmo desenho de antes.
+- O traço (ou preenchimento) fica dentro de cada SVG e o CSS só dá o tamanho: qualquer ícone baixado (Heroicons, Lucide, Tabler…) funciona como está.
+
+### Style
+- Item ativo do menu do painel sem o filete vermelho na borda: só o fundo.
+- Ícones novos no menu do painel: Painel de controle (computador), Jogadores (mão com cartas), Mesas (mesa), Blinds (relógio) e Rankings.
+- **Avatar em ficha**: quem está logado aparece com as iniciais dentro de uma ficha de poker (`ficha.svg` + `App\Support\AvatarDeFicha`), no topo do site e no menu da conta do painel. No painel, troca o ui-avatars.com (que buscava a imagem fora) por esse SVG local.
+
+### Chore
+- **Temporadas** fora do painel por enquanto (sem menu, atalho nem o campo no cadastro do jogo); o resto continua, e volta com `TemporadaResource::NO_PAINEL = true`.
+
+### Test
+- `IconesTest`: todo ícone usado no código e todo apelido do Filament tem arquivo na pasta, e cada item do menu tem o seu `menu-*`.
+
 ## 0.26.0
 
 Site só para o torneio, etapa 6: a bugadinha do topo, a velocidade e as barras de rolagem.

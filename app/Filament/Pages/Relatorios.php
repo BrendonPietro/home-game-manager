@@ -30,7 +30,7 @@ class Relatorios extends Page
 {
     protected string $view = 'filament.painel.relatorios';
 
-    protected static string|BackedEnum|null $navigationIcon = 'rh-chart';
+    protected static string|BackedEnum|null $navigationIcon = 'rh-menu-relatorios';
 
     protected static string|UnitEnum|null $navigationGroup = 'Dashboards e relatórios';
 
@@ -121,7 +121,7 @@ class Relatorios extends Page
         return [
             Action::make('exportarCsv')
                 ->label('Exportar CSV')
-                ->icon('rh-down')
+                ->icon('rh-baixar')
                 ->color('gray')
                 ->visible($podeExportar)
                 ->action(function (): StreamedResponse {
@@ -134,7 +134,7 @@ class Relatorios extends Page
                 }),
             Action::make('exportarExcel')
                 ->label('Exportar Excel')
-                ->icon('rh-down')
+                ->icon('rh-baixar')
                 ->color('gray')
                 ->visible($podeExportar)
                 ->action(function (): StreamedResponse {
@@ -151,7 +151,7 @@ class Relatorios extends Page
             // PDF = página para imprimir em outra aba, com o diálogo do navegador já aberto (Salvar como PDF).
             Action::make('exportarPdf')
                 ->label('Exportar PDF')
-                ->icon('rh-down')
+                ->icon('rh-baixar')
                 ->visible($podeExportar)
                 ->url(fn (): string => $this->urlDeImpressao())
                 ->openUrlInNewTab(),

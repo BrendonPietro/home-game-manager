@@ -157,7 +157,7 @@ class MesasDoJogoTest extends TestCase
             app(SortearLugares::class)($this->jogo, $this->admin);
             $this->fail('Sorteou sem lugar');
         } catch (RegraDoJogo $erro) {
-            $this->assertSame('Faltam 1 lugares: adicione uma mesa ou aumente os lugares.', $erro->getMessage());
+            $this->assertSame('Falta 1 lugar: adicione uma mesa ou aumente os lugares.', $erro->getMessage());
         }
 
         $semMesa = Jogo::factory()->agendado()->create();

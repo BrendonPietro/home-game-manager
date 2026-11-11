@@ -7,6 +7,9 @@
 	$sobram = $lugares - $total;
 	$organizar = EtapaDoJogo::url($jogo, 'mesas');
 	$podeConfirmar = auth('web')->user()->can('jogadores.confirmar');
+	// Bônus do pagamento antecipado: a marca "pagou antes" na lista (quem tem a permissão marca e desmarca).
+	$bonus = $jogo->temBonusAntecipado() ? (int) $jogo->antecipado_fichas : 0;
+	$marcaAntecipado = $bonus > 0 && auth('web')->user()->can(\App\Actions\Jogo\MarcarPagamentoAntecipado::PERMISSAO);
 @endphp
 
 <div class="rh-grid rh-grid--side" style="--side:300px;gap:20px;align-items:start">
@@ -18,16 +21,16 @@
 			</div>
 			<span class="rh-spacer"></span>
 			<div class="rh-search rh-jogadores__busca">
-				@svg('rh-search')
+				@svg('rh-pesquisar')
 				<input class="rh-input" type="search" wire:model.live.debounce.250ms="busca" placeholder="Buscar jogador" aria-label="Buscar jogador">
 			</div>
 			@can('usuarios.cadastro_rapido')
-				<button type="button" class="rh-btn rh-btn--primary" wire:click="abrirNovo">@svg('rh-plus') NOVO JOGADOR</button>
+				<button type="button" class="rh-btn rh-btn--primary" wire:click="abrirNovo">@svg('rh-adicionar') NOVO JOGADOR</button>
 			@endcan
 		</div>
 
 		@if ($erro && ! $novo)
-			<div class="rh-warn" role="alert">@svg('rh-alert')<div>{{ $erro }}</div></div>
+			<div class="rh-warn" role="alert">@svg('rh-alerta')<div>{{ $erro }}</div></div>
 		@endif
 
 		<div class="rh-row">
@@ -77,8 +80,13 @@
 				<div class="rh-li" style="padding:8px 16px" wire:key="c-{{ $participante->id }}">
 					<x-site.props.avatar :nome="$participante->usuario->nome_exibicao" :foto="$participante->usuario->foto" tamanho="sm" />
 					<span style="flex:1;font-weight:500;min-width:0">{{ $participante->usuario->nome_exibicao }}</span>
+					@if ($marcaAntecipado)
+						<button type="button" @class(['rh-btn rh-btn--sm', 'rh-btn--ghost rh-muted' => ! $participante->pagou_antes]) wire:click="alternarAntecipado({{ $participante->id }})" wire:loading.attr="disabled" aria-pressed="{{ $participante->pagou_antes ? 'true' : 'false' }}" title="Quem pagou antes ganha {{ number_format($bonus, 0, ',', '.') }} fichas a mais ao sentar">@svg($participante->pagou_antes ? 'rh-check' : 'rh-fichas') Pagou antes</button>
+					@elseif ($bonus && $participante->pagou_antes)
+						<span class="rh-badge rh-badge--ok">Pagou antes</span>
+					@endif
 					@if ($podeConfirmar)
-						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-btn--sm" wire:click="remover({{ $participante->usuario_id }})" wire:loading.attr="disabled" aria-label="Tirar {{ $participante->usuario->nome_exibicao }} da lista">@svg('rh-x')</button>
+						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-btn--sm" wire:click="remover({{ $participante->usuario_id }})" wire:loading.attr="disabled" aria-label="Tirar {{ $participante->usuario->nome_exibicao }} da lista">@svg('rh-fechar')</button>
 					@endif
 				</div>
 			@empty
@@ -95,9 +103,9 @@
 				@endif
 			</div>
 			@if ($organizar)
-				<a class="rh-btn rh-btn--primary rh-btn--lg rh-btn--block" href="{{ $organizar }}">Organizar mesas @svg('rh-chev-r')</a>
+				<a class="rh-btn rh-btn--primary rh-btn--lg rh-btn--block" href="{{ $organizar }}">Organizar mesas @svg('rh-chevron-direita')</a>
 			@else
-				<button type="button" class="rh-btn rh-btn--primary rh-btn--lg rh-btn--block" disabled title="A próxima tela ainda não existe">Organizar mesas @svg('rh-chev-r')</button>
+				<button type="button" class="rh-btn rh-btn--primary rh-btn--lg rh-btn--block" disabled title="A próxima tela ainda não existe">Organizar mesas @svg('rh-chevron-direita')</button>
 			@endif
 		</div>
 	</aside>
@@ -107,11 +115,11 @@
 			<form class="rh-modal" style="max-width:380px" wire:submit="cadastrar" role="dialog" aria-modal="true" aria-labelledby="novo-titulo">
 				<div class="rh-modal__hd">
 					<h2 class="rh-heading" id="novo-titulo">Novo jogador</h2>
-					<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharNovo" aria-label="Fechar">@svg('rh-x')</button>
+					<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharNovo" aria-label="Fechar">@svg('rh-fechar')</button>
 				</div>
 				<div class="rh-modal__bd rh-col" style="gap:12px">
 					@if ($erro)
-						<div class="rh-warn" role="alert">@svg('rh-alert')<div>{{ $erro }}</div></div>
+						<div class="rh-warn" role="alert">@svg('rh-alerta')<div>{{ $erro }}</div></div>
 					@endif
 					<label class="rh-field">
 						<span class="rh-field__label">Nome</span>

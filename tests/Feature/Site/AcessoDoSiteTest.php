@@ -83,7 +83,7 @@ class AcessoDoSiteTest extends TestCase
         $this->conta('Operador');
 
         $this->followingRedirects()
-            ->post('/login', ['email' => 'operador@exemplo.com', 'password' => 'password'])
+            ->post('/login', ['login' => 'operador@exemplo.com', 'password' => 'password'])
             ->assertOk()
             ->assertSee(['Nenhum torneio agora', 'Quando o próximo torneio for marcado, o site abre 3 horas antes do início']);
 
@@ -156,7 +156,7 @@ class AcessoDoSiteTest extends TestCase
 
         $this->get('/')
             ->assertRedirect(route('login'))
-            ->assertSessionHasErrors(['email' => 'Seu acesso ao site foi desativado. Fale com o organizador.']);
+            ->assertSessionHasErrors(['login' => 'Seu acesso ao site foi desativado. Fale com o organizador.']);
         $this->assertGuest('web');
     }
 
@@ -180,7 +180,7 @@ class AcessoDoSiteTest extends TestCase
 
         $this->get(route('jogos.ao-vivo', $noite))->assertRedirect(route('login'));
 
-        $this->post('/login', ['email' => 'admin@exemplo.com', 'password' => 'password'])
+        $this->post('/login', ['login' => 'admin@exemplo.com', 'password' => 'password'])
             ->assertRedirect(route('jogos.ao-vivo', $noite));
     }
 }

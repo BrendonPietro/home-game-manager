@@ -17,7 +17,19 @@
 	$rebuys = $doTipo(TipoItem::Rebuy);
 	$addons = $doTipo(TipoItem::Addon);
 	$opcionaisComprados = $doTipo(TipoItem::Opcional);
-	// Fichas são só a referência do cadastro (quanto cada entrada dá): aparecem na escolha da entrada, nunca somadas por jogador.
+	// Fichas que ele recebeu: as de cada entrada válida (opcionais incluídos) mais o time chip e o bônus antecipado do buy-in.
+	$fichasDe = fn ($linhas): int => (int) $linhas->sum(fn (Entrada $e) => (int) $e->fichas + (int) $e->time_chip + (int) $e->antecipado);
+	$fichasTotal = $fichasDe($entradas);
+	$timeChip = (int) $entradas->sum('time_chip');
+	$antecipado = (int) $entradas->sum('antecipado');
+	$partesDasFichas = collect([
+		$buyin ? 'buy-in '.number_format((int) $buyin->fichas, 0, ',', '.') : null,
+		$timeChip ? 'time chip '.number_format($timeChip, 0, ',', '.') : null,
+		$antecipado ? 'pagamento antecipado '.number_format($antecipado, 0, ',', '.') : null,
+		$fichasDe($rebuys) ? ($torneio ? 'rebuys ' : 'recompras ').number_format($fichasDe($rebuys), 0, ',', '.') : null,
+		$fichasDe($addons) ? 'add-on '.number_format($fichasDe($addons), 0, ',', '.') : null,
+		$fichasDe($opcionaisComprados) ? 'opcionais '.number_format($fichasDe($opcionaisComprados), 0, ',', '.') : null,
+	])->filter()->implode(' · ');
 	$fichas = fn (int $n): string => number_format($n, 0, ',', '.').' fichas';
 	$hora = fn ($linhas): string => $linhas->count() > 1 ? 'Última às '.$linhas->last()->created_at->format('H:i') : 'Às '.$linhas->first()->created_at->format('H:i');
 	$fichaDa = fn (Entrada $e): array => match ($e->tipo) {
@@ -40,6 +52,9 @@
 		&& (! $ultima instanceof Entrada || $jogo->entradasAbertas());
 	// Finalizado: quem corrige (jogo.corrigir) desfaz qualquer pagamento lançado à mão; o de acerto sai pelo fechamento.
 	$corrigePagamento = $jogo->estaFinalizado() && $quem->can('jogo.corrigir');
+	// Bônus do pagamento antecipado: aparece no torneio que tem; marca quem tem a permissão, com o jogo em andamento.
+	$bonusAntecipado = $jogo->temBonusAntecipado() && ($emAndamento || $participante->pagou_antes);
+	$marcaAntecipado = $emAndamento && $quem->can(\App\Actions\Jogo\MarcarPagamentoAntecipado::PERMISSAO);
 @endphp
 
 <div x-on:keydown.escape.window="$wire.modal ? $wire.fecharModal() : $dispatch('fechar-jogador')">
@@ -52,7 +67,7 @@
 				<div class="rh-heading rh-jogador__nome">{{ $nome }}</div>
 				<div class="rh-small rh-muted">{{ $local }}{{ $situacao ? ' · '.$situacao : '' }}</div>
 			</div>
-			<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="$dispatch('fechar-jogador')" aria-label="Fechar">@svg('rh-x')</button>
+			<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="$dispatch('fechar-jogador')" aria-label="Fechar">@svg('rh-fechar')</button>
 		</div>
 
 		<div class="rh-drawer__bd">
@@ -80,14 +95,36 @@
 				@if ($avulsos->isNotEmpty())
 					<div class="rh-row">
 						@foreach ($avulsos as $opcional)
-							<button type="button" class="rh-btn rh-btn--sm" wire:click="abrirEntrada('opcional', {{ $opcional->id }})">@svg('rh-plus') {{ $opcional->nome }} · @brl($opcional->valor)</button>
+							<button type="button" class="rh-btn rh-btn--sm" wire:click="abrirEntrada('opcional', {{ $opcional->id }})">@svg('rh-adicionar') {{ $opcional->nome }} · @brl($opcional->valor)</button>
 						@endforeach
 					</div>
 				@endif
 			@endcan
 
-			{{-- O que ele comprou. --}}
+			{{-- O que ele comprou, começando pelas fichas que ele tem de ter recebido. --}}
 			<div class="rh-jogador__blocos">
+				@if ($fichasTotal > 0)
+					<div class="rh-jogador__bloco rh-jogador__bloco--fichas">
+						<span class="rh-jogador__sem-ficha" aria-hidden="true">@svg('rh-fichas')</span>
+						<div class="rh-jogador__bloco-t">
+							<div class="rh-label">Fichas entregues</div>
+							<div class="rh-small rh-muted">{{ $partesDasFichas }}</div>
+						</div>
+						<div class="rh-jogador__bloco-v">{{ number_format($fichasTotal, 0, ',', '.') }}</div>
+					</div>
+				@endif
+				@if ($bonusAntecipado)
+					<div class="rh-jogador__bloco">
+						<span class="rh-jogador__sem-ficha" aria-hidden="true">@svg($participante->pagou_antes ? 'rh-check' : 'rh-fichas')</span>
+						<div class="rh-jogador__bloco-t">
+							<div class="rh-label">{{ $participante->pagou_antes ? 'Pagou antes' : 'Pagamento antecipado' }}</div>
+							<div class="rh-small rh-muted">{{ ($participante->pagou_antes ? '+' : 'Quem pagou antes ganha ').number_format((int) $jogo->antecipado_fichas, 0, ',', '.').' fichas'.($participante->pagou_antes ? ' no buy-in' : '') }}</div>
+						</div>
+						@if ($marcaAntecipado)
+							<button type="button" class="rh-btn rh-btn--sm" wire:click="alternarAntecipado" wire:loading.attr="disabled">{{ $participante->pagou_antes ? 'Desmarcar' : 'Marcar' }}</button>
+						@endif
+					</div>
+				@endif
 				<div class="rh-jogador__bloco">
 					<span class="rh-chip rh-chip--lg">{{ $buyin ? $jogo->fichaDoBuyin($buyin->item) : 'B' }}</span>
 					<div class="rh-jogador__bloco-t">
@@ -118,7 +155,7 @@
 				@endif
 				@if ($opcionaisComprados->isNotEmpty())
 					<div class="rh-jogador__bloco">
-						<span class="rh-jogador__sem-ficha" aria-hidden="true">@svg('rh-plus')</span>
+						<span class="rh-jogador__sem-ficha" aria-hidden="true">@svg('rh-adicionar')</span>
 						<div class="rh-jogador__bloco-t">
 							<div class="rh-label">Opcionais · {{ $opcionaisComprados->count() }}</div>
 							<div class="rh-small rh-muted">{{ $opcionaisComprados->pluck('item.nome')->unique()->implode(', ') }}</div>
@@ -143,7 +180,7 @@
 					<span @class(['rh-jogador__saldo-v', 'rh-pos' => $saldo->saldo < 0])>{{ $saldo->quitado() ? 'Quitado' : Dinheiro::brlCentavos(abs($saldo->saldo)) }}</span>
 				</div>
 				@can('pagamentos.registrar')
-					<button type="button" class="rh-btn rh-btn--block" wire:click="abrirPagamento">@svg('rh-coins') REGISTRAR PAGAMENTO</button>
+					<button type="button" class="rh-btn rh-btn--block" wire:click="abrirPagamento">@svg('rh-fichas') REGISTRAR PAGAMENTO</button>
 				@endcan
 			</div>
 
@@ -158,12 +195,12 @@
 								@if ($texto)
 									<span @class(['rh-chip', 'rh-chip--'.$cor => $cor])>{{ $texto }}</span>
 								@else
-									<span class="rh-jogador__sem-ficha" aria-hidden="true">@svg('rh-plus')</span>
+									<span class="rh-jogador__sem-ficha" aria-hidden="true">@svg('rh-adicionar')</span>
 								@endif
 							@elseif ($acao instanceof Pagamento)
-								<span class="rh-jogador__sem-ficha" aria-hidden="true">@svg('rh-coins')</span>
+								<span class="rh-jogador__sem-ficha" aria-hidden="true">@svg('rh-fichas')</span>
 							@else
-								<span class="rh-jogador__sem-ficha" aria-hidden="true">@svg('rh-skull')</span>
+								<span class="rh-jogador__sem-ficha" aria-hidden="true">@svg('rh-eliminado')</span>
 							@endif
 
 							<span class="rh-jogador__h">
@@ -177,9 +214,9 @@
 							</span>
 
 							@if ($podeDesfazer && $acao->is($ultima))
-								<button type="button" class="rh-btn rh-btn--ghost rh-btn--sm" wire:click="abrirDesfazer">@svg('rh-undo') Desfazer</button>
+								<button type="button" class="rh-btn rh-btn--ghost rh-btn--sm" wire:click="abrirDesfazer">@svg('rh-desfazer') Desfazer</button>
 							@elseif ($corrigePagamento && $acao instanceof Pagamento && $acao->acerto_id === null)
-								<button type="button" class="rh-btn rh-btn--ghost rh-btn--sm" wire:click="abrirDesfazerPagamento({{ $acao->id }})">@svg('rh-undo') Desfazer</button>
+								<button type="button" class="rh-btn rh-btn--ghost rh-btn--sm" wire:click="abrirDesfazerPagamento({{ $acao->id }})">@svg('rh-desfazer') Desfazer</button>
 							@endif
 						</div>
 					@empty
@@ -194,16 +231,16 @@
 			<div class="rh-jogador__fim">
 				@can('mesas.organizar')
 					@unless (! $mudaLugar || $participante->estaFora())
-						<button type="button" class="rh-btn rh-btn--block" wire:click="$dispatch('mudar-lugar', { participanteId: {{ $participante->id }} })">@svg('rh-move') {{ $participante->jogo_mesa_id ? 'MUDAR DE LUGAR' : 'SENTAR NA MESA' }}</button>
+						<button type="button" class="rh-btn rh-btn--block" wire:click="$dispatch('mudar-lugar', { participanteId: {{ $participante->id }} })">@svg('rh-mover') {{ $participante->jogo_mesa_id ? 'MUDAR DE LUGAR' : 'SENTAR NA MESA' }}</button>
 					@endunless
 				@endcan
 
 				@can('eliminacoes.registrar')
 					{{-- Sem buy-in ou último em jogo não cai (o último é o campeão). --}}
 					@if ($podeSerEliminado)
-						<button type="button" class="rh-btn rh-btn--danger rh-btn--block rh-btn--lg" wire:click="abrirEliminacao">@svg('rh-skull') REGISTRAR ELIMINAÇÃO</button>
+						<button type="button" class="rh-btn rh-btn--danger rh-btn--block rh-btn--lg" wire:click="abrirEliminacao">@svg('rh-eliminado') REGISTRAR ELIMINAÇÃO</button>
 					@elseif ($emAndamento && ! $torneio && $temBuyin && in_array($participante->status, [StatusParticipante::Jogando, StatusParticipante::Saiu], true))
-						<button type="button" class="rh-btn rh-btn--danger rh-btn--block rh-btn--lg" wire:click="abrirCashOut">@svg('rh-coins') {{ $participante->cash_out !== null ? 'CORRIGIR CASH-OUT' : 'REGISTRAR CASH-OUT' }}</button>
+						<button type="button" class="rh-btn rh-btn--danger rh-btn--block rh-btn--lg" wire:click="abrirCashOut">@svg('rh-fichas') {{ $participante->cash_out !== null ? 'CORRIGIR CASH-OUT' : 'REGISTRAR CASH-OUT' }}</button>
 					@endif
 				@endcan
 			</div>
@@ -232,11 +269,11 @@
 							<div class="rh-label">{{ match (true) { $tipoAtual === TipoItem::Buyin => 'Novo buy-in', $participante->status === StatusParticipante::Eliminado => 'Volta ao jogo', default => 'Registrar '.mb_strtolower($nomeDaEntrada) } }} · {{ $nome }}</div>
 							<h2 class="rh-heading" id="entrada-titulo" style="font-size:24px">{{ $opcoes->count() > 1 ? 'Escolha o tipo' : $nomeDaEntrada }}</h2>
 						</div>
-						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharModal" aria-label="Fechar">@svg('rh-x')</button>
+						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharModal" aria-label="Fechar">@svg('rh-fechar')</button>
 					</div>
 					<div class="rh-modal__bd rh-col" style="gap:12px">
 						@if ($erro)
-							<div class="rh-warn" role="alert">@svg('rh-alert')<div>{{ $erro }}</div></div>
+							<div class="rh-warn" role="alert">@svg('rh-alerta')<div>{{ $erro }}</div></div>
 						@endif
 
 						@foreach ($opcoes as $item)
@@ -252,7 +289,7 @@
 								@if ($ficha[0])
 									<span @class(['rh-chip rh-chip--lg', 'rh-chip--'.$ficha[1] => $ficha[1]])>{{ $ficha[0] }}</span>
 								@else
-									<span class="rh-jogador__sem-ficha" aria-hidden="true">@svg('rh-plus')</span>
+									<span class="rh-jogador__sem-ficha" aria-hidden="true">@svg('rh-adicionar')</span>
 								@endif
 								<span class="rh-pick__t">{{ $item->nome }}</span>
 								<span class="rh-pick__v">@brl($item->valor)<small>{{ $item->fichas ? $fichas($item->fichas) : 'sem fichas' }}</small></span>
@@ -289,11 +326,11 @@
 							<div class="rh-label">Pagamento · {{ $nome }}</div>
 							<h2 class="rh-heading" id="pagamento-titulo" style="font-size:24px">Registrar pagamento</h2>
 						</div>
-						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharModal" aria-label="Fechar">@svg('rh-x')</button>
+						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharModal" aria-label="Fechar">@svg('rh-fechar')</button>
 					</div>
 					<div class="rh-modal__bd rh-col" style="gap:16px">
 						@if ($erro)
-							<div class="rh-warn" role="alert">@svg('rh-alert')<div>{{ $erro }}</div></div>
+							<div class="rh-warn" role="alert">@svg('rh-alerta')<div>{{ $erro }}</div></div>
 						@endif
 
 						<div class="rh-small rh-muted">{{ $saldo->saldo > 0 ? 'Deve ao caixa '.Dinheiro::brlCentavos($saldo->saldo) : ($saldo->saldo < 0 ? 'O caixa deve a ele '.Dinheiro::brlCentavos(-$saldo->saldo) : 'Conta quitada') }}.</div>
@@ -343,11 +380,11 @@
 							<div class="rh-label">Eliminação · {{ $nome }}</div>
 							<h2 class="rh-heading" id="eliminacao-titulo" style="font-size:24px">Registrar eliminação</h2>
 						</div>
-						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharModal" aria-label="Fechar">@svg('rh-x')</button>
+						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharModal" aria-label="Fechar">@svg('rh-fechar')</button>
 					</div>
 					<div class="rh-modal__bd rh-col" style="gap:12px">
 						@if ($erro)
-							<div class="rh-warn" role="alert">@svg('rh-alert')<div>{{ $erro }}</div></div>
+							<div class="rh-warn" role="alert">@svg('rh-alerta')<div>{{ $erro }}</div></div>
 						@endif
 						<p style="margin:0">{{ $explicacao }}</p>
 						@if ($jogo->nivel_atual)
@@ -370,11 +407,11 @@
 							<div class="rh-label">Cash-out · {{ $nome }}</div>
 							<h2 class="rh-heading" id="cashout-titulo" style="font-size:24px">Fichas finais</h2>
 						</div>
-						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharModal" aria-label="Fechar">@svg('rh-x')</button>
+						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharModal" aria-label="Fechar">@svg('rh-fechar')</button>
 					</div>
 					<div class="rh-modal__bd rh-col" style="gap:12px">
 						@if ($erro)
-							<div class="rh-warn" role="alert">@svg('rh-alert')<div>{{ $erro }}</div></div>
+							<div class="rh-warn" role="alert">@svg('rh-alerta')<div>{{ $erro }}</div></div>
 						@endif
 						<label class="rh-field">
 							<span class="rh-field__label">Fichas</span>
@@ -401,11 +438,11 @@
 							<div class="rh-label">Desfazer · {{ $nome }}</div>
 							<h2 class="rh-heading" id="desfazer-titulo" style="font-size:24px">{{ $this->descrever($ultima) }}</h2>
 						</div>
-						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharModal" aria-label="Fechar">@svg('rh-x')</button>
+						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharModal" aria-label="Fechar">@svg('rh-fechar')</button>
 					</div>
 					<div class="rh-modal__bd rh-col" style="gap:12px">
 						@if ($erro)
-							<div class="rh-warn" role="alert">@svg('rh-alert')<div>{{ $erro }}</div></div>
+							<div class="rh-warn" role="alert">@svg('rh-alerta')<div>{{ $erro }}</div></div>
 						@endif
 						<div class="rh-small rh-muted">
 							Lançado às {{ $ultima->created_at->format('H:i') }}. Nada é apagado: o registro fica cancelado, com o motivo.
@@ -422,7 +459,7 @@
 					</div>
 					<div class="rh-modal__ft">
 						<button type="button" class="rh-btn rh-btn--lg" wire:click="fecharModal">VOLTAR</button>
-							<button type="submit" class="rh-btn rh-btn--danger rh-btn--lg" wire:loading.attr="disabled">@svg('rh-undo') DESFAZER</button>
+							<button type="submit" class="rh-btn rh-btn--danger rh-btn--lg" wire:loading.attr="disabled">@svg('rh-desfazer') DESFAZER</button>
 						</div>
 					</form>
 				@elseif ($modal === 'desfazerPagamento' && ($desfazendo = $historico->first(fn ($a) => $a instanceof Pagamento && $a->id === $pagamentoId)))
@@ -432,11 +469,11 @@
 								<div class="rh-label">Correção · {{ $nome }}</div>
 								<h2 class="rh-heading" id="desfazer-pagamento-titulo" style="font-size:24px">{{ $this->descrever($desfazendo) }}</h2>
 							</div>
-							<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharModal" aria-label="Fechar">@svg('rh-x')</button>
+							<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharModal" aria-label="Fechar">@svg('rh-fechar')</button>
 						</div>
 						<div class="rh-modal__bd rh-col" style="gap:12px">
 							@if ($erro)
-								<div class="rh-warn" role="alert">@svg('rh-alert')<div>{{ $erro }}</div></div>
+								<div class="rh-warn" role="alert">@svg('rh-alerta')<div>{{ $erro }}</div></div>
 							@endif
 							<div class="rh-small rh-muted">
 								Lançado em {{ $desfazendo->created_at->format('d/m H:i') }}. O jogo já foi finalizado: o pagamento fica cancelado, os acertos em aberto são refeitos e a correção fica no histórico, com o motivo.
@@ -448,7 +485,7 @@
 						</div>
 						<div class="rh-modal__ft">
 							<button type="button" class="rh-btn rh-btn--lg" wire:click="fecharModal">VOLTAR</button>
-							<button type="submit" class="rh-btn rh-btn--danger rh-btn--lg" wire:loading.attr="disabled">@svg('rh-undo') DESFAZER</button>
+							<button type="submit" class="rh-btn rh-btn--danger rh-btn--lg" wire:loading.attr="disabled">@svg('rh-desfazer') DESFAZER</button>
 						</div>
 					</form>
 				@endif

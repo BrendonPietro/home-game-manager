@@ -34,7 +34,7 @@ class SegurancaResource extends Resource
 {
     protected static ?string $model = Seguranca::class;
 
-    protected static string|BackedEnum|null $navigationIcon = 'rh-lock';
+    protected static string|BackedEnum|null $navigationIcon = 'rh-menu-contas-do-painel';
 
     protected static string|UnitEnum|null $navigationGroup = 'Sistema';
 

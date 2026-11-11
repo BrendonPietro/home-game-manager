@@ -27,7 +27,7 @@ class MesaResource extends Resource
 {
     protected static ?string $model = Mesa::class;
 
-    protected static string|BackedEnum|null $navigationIcon = 'rh-table';
+    protected static string|BackedEnum|null $navigationIcon = 'rh-menu-mesas';
 
     protected static string|UnitEnum|null $navigationGroup = 'Cadastros';
 

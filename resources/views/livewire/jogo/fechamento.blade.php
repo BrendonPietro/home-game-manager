@@ -25,7 +25,7 @@
 		<span class="rh-spacer"></span>
 		@if ($acertos->isNotEmpty())
 			<button type="button" class="rh-btn" x-data="{ copiado: false }" x-on:click="$copiar(@js($texto)).then(() => { copiado = true; setTimeout(() => copiado = false, 2000) })">
-				@svg('rh-copy') <span x-text="copiado ? 'Copiado' : 'Copiar acertos'">Copiar acertos</span>
+				@svg('rh-copiar') <span x-text="copiado ? 'Copiado' : 'Copiar acertos'">Copiar acertos</span>
 			</button>
 		@endif
 	</div>
@@ -34,7 +34,7 @@
 		<div class="rh-warn rh-warn--ok" role="status">@svg('rh-check')<div>{{ $aviso }}</div></div>
 	@endif
 	@if ($erro && ! $confirmando)
-		<div class="rh-warn" role="alert">@svg('rh-alert')<div>{{ $erro }}</div></div>
+		<div class="rh-warn" role="alert">@svg('rh-alerta')<div>{{ $erro }}</div></div>
 	@endif
 
 	<div class="rh-grid rh-grid--4">
@@ -54,7 +54,7 @@
 
 	@if ($faltam->isNotEmpty())
 		<div class="rh-warn" role="alert">
-			@svg('rh-alert')
+			@svg('rh-alerta')
 			<div>
 				{{ ($torneio ? 'Falta a posição de ' : 'Falta o cash-out de ').$faltam->join(', ', ' e ').'.' }}
 				@if ($torneio && $urlResultado)
@@ -135,7 +135,7 @@
 								<span class="rh-avatar rh-avatar--sm rh-avatar--casa" aria-hidden="true">♠</span>Caixa
 							@endif
 						</span>
-						<span class="rh-xfer__arrow">@svg('rh-arrow-r')</span>
+						<span class="rh-xfer__arrow">@svg('rh-seta-direita')</span>
 						<span class="rh-who">
 							@if ($acerto['para'])
 								<x-site.props.avatar :nome="$acerto['para']->nome()" :foto="$acerto['para']->usuario->foto" tamanho="sm" />{{ $acerto['para']->nome() }}
@@ -149,7 +149,7 @@
 								@if ($acerto['pago'])
 									<span class="rh-badge rh-badge--ok">feito</span>
 									@if ($usuario->can('jogo.corrigir'))
-										<button type="button" class="rh-btn rh-btn--ghost rh-btn--sm" wire:click="abrirDesfazerAcerto({{ $acerto['id'] }})" title="Correção: fica no histórico, com o motivo">@svg('rh-undo') Desfazer</button>
+										<button type="button" class="rh-btn rh-btn--ghost rh-btn--sm" wire:click="abrirDesfazerAcerto({{ $acerto['id'] }})" title="Correção: fica no histórico, com o motivo">@svg('rh-desfazer') Desfazer</button>
 									@endif
 								@elseif ($usuario->can('pagamentos.registrar'))
 									<button type="button" class="rh-btn rh-btn--sm" wire:click="marcarAcerto({{ $acerto['id'] }})" wire:confirm="{{ $nome($acerto['de']).' → '.$nome($acerto['para']).': '.Dinheiro::brlCentavos($acerto['valor']) }} feito?" wire:loading.attr="disabled">@svg('rh-check') FEITO</button>
@@ -205,11 +205,11 @@
 						<div class="rh-label">Correção · acerto feito</div>
 						<h2 class="rh-heading" id="desfazer-acerto-titulo" style="font-size:24px">{{ $nome($acertoDesfeito['de']).' → '.$nome($acertoDesfeito['para']).' · '.Dinheiro::brlCentavos($acertoDesfeito['valor']) }}</h2>
 					</div>
-					<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharDesfazerAcerto" aria-label="Fechar">@svg('rh-x')</button>
+					<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharDesfazerAcerto" aria-label="Fechar">@svg('rh-fechar')</button>
 				</div>
 				<div class="rh-modal__bd rh-col" style="gap:12px">
 					@if ($erro)
-						<div class="rh-warn" role="alert">@svg('rh-alert')<div>{{ $erro }}</div></div>
+						<div class="rh-warn" role="alert">@svg('rh-alerta')<div>{{ $erro }}</div></div>
 					@endif
 					<div class="rh-small rh-muted">Os pagamentos do acerto ficam cancelados, ele volta a estar em aberto e os acertos em aberto são refeitos. Fica no histórico, com o motivo.</div>
 					<label class="rh-field">
@@ -219,7 +219,7 @@
 				</div>
 				<div class="rh-modal__ft">
 					<button type="button" class="rh-btn rh-btn--lg" wire:click="fecharDesfazerAcerto">VOLTAR</button>
-					<button type="submit" class="rh-btn rh-btn--danger rh-btn--lg" wire:loading.attr="disabled">@svg('rh-undo') DESFAZER</button>
+					<button type="submit" class="rh-btn rh-btn--danger rh-btn--lg" wire:loading.attr="disabled">@svg('rh-desfazer') DESFAZER</button>
 				</div>
 			</form>
 		</div>
@@ -230,14 +230,14 @@
 			<div class="rh-modal" style="max-width:440px" role="dialog" aria-modal="true" aria-labelledby="finalizar-titulo">
 				<div class="rh-modal__hd">
 					<h2 class="rh-heading" id="finalizar-titulo" style="font-size:26px">Finalizar {{ $oQue }}</h2>
-					<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharFinalizar" aria-label="Fechar">@svg('rh-x')</button>
+					<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-x" wire:click="fecharFinalizar" aria-label="Fechar">@svg('rh-fechar')</button>
 				</div>
 				<div class="rh-modal__bd rh-col" style="gap:16px">
 					@if ($erro)
-						<div class="rh-warn" role="alert">@svg('rh-alert')<div>{{ $erro }}</div></div>
+						<div class="rh-warn" role="alert">@svg('rh-alerta')<div>{{ $erro }}</div></div>
 					@endif
 					<div class="rh-warn">
-						@svg('rh-alert')
+						@svg('rh-alerta')
 						<div>
 							<b>Ao finalizar:</b>
 							<ul>

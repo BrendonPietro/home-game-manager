@@ -1,0 +1,87 @@
+// ============================================================================
+// Modal Jogadores (telas 06 e 07): quem chegou, cadastro, jogador novo, mesas e SORTEAR.
+// A lista rola no meio; o topo e o rodapé (conta e SORTEAR) ficam à vista.
+// ============================================================================
+
+@use "../vars" as *;
+
+.rh-sorteio {
+	max-width: 560px;
+	max-height: calc(100dvh - 32px);
+	display: flex;
+	flex-direction: column;
+
+	@include ate(celular) {
+		max-height: calc(100dvh - 16px);
+	}
+
+	&__corpo {
+		flex: 1;
+		min-height: 0;
+		overflow: auto;
+
+		// Quem rola é o corpo: nada dentro dele encolhe (as abas, com overflow no celular, sumiam).
+		> * {
+			flex-shrink: 0;
+		}
+	}
+
+	&__ft {
+		align-items: center;
+		padding-top: 16px;
+		border-top: 1px solid var(--line-100);
+	}
+
+	&__novo {
+		padding-top: 16px;
+		border-top: 1px solid var(--line-100);
+	}
+
+	&__mesas-bloco {
+		padding-bottom: 16px;
+		border-bottom: 1px solid var(--line-100);
+	}
+
+	&__mesas {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+		gap: 8px;
+
+		@include ate(celular) {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
+
+	&__mesa {
+		padding: 8px 12px;
+	}
+
+	&__mesa-txt {
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		min-width: 0;
+	}
+
+	&__lugar {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		padding: 12px;
+		border: 1px solid var(--line-200);
+		border-radius: var(--radius-md);
+	}
+
+	&__quem {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		flex: 1;
+		min-width: 0;
+	}
+
+	&__onde {
+		font-weight: 500;
+		white-space: nowrap;
+	}
+}

@@ -4,6 +4,7 @@ namespace App\Livewire\Jogo;
 
 use App\Actions\Jogo\DesfazerAcao;
 use App\Actions\Jogo\DesfazerPagamento;
+use App\Actions\Jogo\MarcarPagamentoAntecipado;
 use App\Actions\Jogo\RegistrarCashOut;
 use App\Actions\Jogo\RegistrarEliminacao;
 use App\Actions\Jogo\RegistrarEntrada;
@@ -106,9 +107,20 @@ class AcoesJogador extends Component
 
         $this->executar(function () use ($item) {
             $participante = $this->participante();
-            app(RegistrarEntrada::class)($participante, $item, $this->quem(), $this->uuid, array_map('intval', $this->opcionais));
+            $entrada = app(RegistrarEntrada::class)($participante, $item, $this->quem(), $this->uuid, array_map('intval', $this->opcionais));
 
-            return "{$item->nome} registrado para {$participante->nome()}.";
+            return "{$item->nome} registrado para {$participante->nome()}".RegistrarEntrada::aEntregar($entrada).'.';
+        });
+    }
+
+    // ── Pagamento antecipado (bônus de fichas) ──
+
+    public function alternarAntecipado(): void
+    {
+        $this->executar(function () {
+            $participante = app(MarcarPagamentoAntecipado::class)($this->participante(), ! $this->participante()->pagou_antes, $this->quem());
+
+            return MarcarPagamentoAntecipado::aviso($participante);
         });
     }
 

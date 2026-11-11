@@ -28,7 +28,7 @@
 			<div class="rh-muted">Tudo abaixo foi definido no painel. Confira com o grupo antes de começar.</div>
 		</div>
 		<span class="rh-spacer"></span>
-		<a class="rh-btn" href="{{ $editarNoPainel }}">@svg('rh-edit') Editar no painel</a>
+		<a class="rh-btn" href="{{ $editarNoPainel }}">@svg('rh-editar') Editar no painel</a>
 		@if ($seguir)
 			<a class="rh-btn rh-btn--primary rh-btn--lg" href="{{ $seguir }}">@svg('rh-check') Conferido, seguir</a>
 		@else
@@ -131,7 +131,7 @@
 						<span class="rh-small rh-muted">Abra na TV, no tablet ou em outro celular, sem login: mostra só o relógio e começa a contar quando o torneio for iniciado.</span>
 						<div class="rh-link-relogio">{{ $jogo->linkDoRelogio() }}</div>
 						<div class="rh-row" style="gap:8px;flex-wrap:wrap">
-							<button type="button" class="rh-btn rh-btn--primary" x-on:click="$copiar(@js($jogo->linkDoRelogio())).then(() => { copiado = true; setTimeout(() => copiado = false, 2500) })">@svg('rh-copy') <span x-text="copiado ? 'COPIADO' : 'COPIAR LINK'">COPIAR LINK</span></button>
+							<button type="button" class="rh-btn rh-btn--primary" x-on:click="$copiar(@js($jogo->linkDoRelogio())).then(() => { copiado = true; setTimeout(() => copiado = false, 2500) })">@svg('rh-copiar') <span x-text="copiado ? 'COPIADO' : 'COPIAR LINK'">COPIAR LINK</span></button>
 							<a class="rh-btn" href="{{ $jogo->linkDoRelogio() }}" target="_blank" rel="noopener">@svg('rh-tv') ABRIR</a>
 						</div>
 					</div>
@@ -153,6 +153,8 @@
 						@endif
 						@if ($torneio)
 							<dt>Estrutura de blinds</dt><dd>{{ $jogo->estruturaBlinds?->nome ?? 'Digitada na noite' }}</dd>
+							<dt>Time chip</dt><dd>{{ $jogo->temTimeChip() ? \App\Services\Jogo\TimeChip::fichas((int) $jogo->time_chip_fichas).' até o fim do nível '.max(1, (int) $jogo->time_chip_ate_nivel) : 'Não tem' }}</dd>
+							<dt>Pagamento antecipado</dt><dd>{{ $jogo->temBonusAntecipado() ? \App\Support\Fichas::quantas((int) $jogo->antecipado_fichas).' a mais para quem pagou antes · '.$jogo->participantes()->where('pagou_antes', true)->count().' marcados' : 'Sem bônus' }}</dd>
 						@else
 							<dt>Valor da ficha</dt><dd>R$ {{ str_replace('.', ',', rtrim(rtrim((string) $jogo->valor_ficha, '0'), '.')) }}</dd>
 						@endif

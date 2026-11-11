@@ -181,7 +181,7 @@ class DashboardTest extends TestCase
         // Na ordem do menu; o Admin não tem Grupos (só o Desenvolvedor).
         $this->assertSame(['Cadastros', 'Agenda', 'Dashboards e relatórios', 'Sistema'], array_column($modulos, 'grupo'));
         $itens = collect($modulos)->flatMap(fn (array $m) => $m['itens'])->keyBy('rotulo');
-        $this->assertSame(['Jogos', 'Modelos', 'Jogadores', 'Mesas', 'Blinds', 'Rankings', 'Temporadas'], array_column($modulos[0]['itens'], 'rotulo'));
+        $this->assertSame(['Jogos', 'Modelos', 'Jogadores', 'Mesas', 'Blinds', 'Rankings'] /* Temporadas fora do painel por enquanto */, array_column($modulos[0]['itens'], 'rotulo'));
         $this->assertSame(['Padrões e premiação', 'Usuários do site', 'Contas do painel'], array_column($modulos[3]['itens'], 'rotulo'));
 
         $this->assertSame('1 agendado', $itens['Jogos']['contexto']);

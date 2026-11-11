@@ -1,4 +1,4 @@
-{{-- Tela 01: login do site de operação (docs/prototipo, tela 01). Entra pelo e-mail: `usuarios` não tem coluna de login. --}}
+{{-- Tela 01: login do site de operação (docs/prototipo, tela 01). Entra pelo usuário (`usuarios.login`) ou pelo e-mail. --}}
 <x-site.app titulo="Entrar">
 	<div class="rh-login">
 		<div class="rh-login__arc" aria-hidden="true"></div>
@@ -13,7 +13,7 @@
 				<p class="rh-small rh-muted" style="margin:4px 0 0">Acesso para quem toca a noite: mesas, entradas e fechamento</p>
 			</div>
 
-			<x-site.props.field label="E-mail" name="email" type="email" autocomplete="username" inputmode="email" required autofocus />
+			<x-site.props.field label="Usuário ou e-mail" name="login" autocomplete="username" autocapitalize="none" spellcheck="false" required autofocus />
 			<x-site.props.field label="Senha" name="password" type="password" autocomplete="current-password" required />
 
 			<label class="rh-check"><input type="checkbox" name="remember" value="1" @checked(old('remember'))> Lembrar acesso</label>

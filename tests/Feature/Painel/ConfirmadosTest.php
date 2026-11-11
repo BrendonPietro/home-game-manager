@@ -147,4 +147,61 @@ class ConfirmadosTest extends TestCase
         $this->aba()->assertCanSeeTableRecords([$daqui])->assertCanNotSeeTableRecords([$deOutro]);
         $this->assertInstanceOf(Participante::class, $daqui);
     }
+
+    public function test_marca_quem_pagou_antes_e_o_bonus_entra_no_buyin(): void
+    {
+        $this->jogo->update(['antecipado_fichas' => 20000]);
+        $mesa = $this->jogo->mesas()->create(['nome' => 'Mesa 1', 'lugares' => 9, 'ordem' => 1]);
+        [$ana, $beto] = collect(['Ana', 'Beto'])
+            ->map(fn (string $nome) => $this->jogo->participantes()->create(['usuario_id' => Usuario::factory()->create(['nome' => $nome, 'apelido' => null])->id]))
+            ->all();
+
+        // Ana paga o buy-in antes e já ganha o bônus no mesmo modal; Beto é marcado depois, pela linha.
+        $this->aba()
+            ->callAction(TestAction::make('pagamento')->table($ana), data: ['antecipado' => true])
+            ->assertNotified('Ana pagou R$ 100 e ganha 20.000 fichas a mais.');
+
+        $this->aba()
+            ->callAction(TestAction::make('antecipado')->table($beto))
+            ->assertNotified('Beto pagou antes: ganha 20.000 fichas a mais ao sentar.')
+            ->assertSee('Pagou antes · +20.000');
+
+        $this->assertSame([true, true], [$ana->fresh()->pagou_antes, $beto->fresh()->pagou_antes]);
+
+        // Tirar a marca do Beto; no dia, os dois sentam e o torneio começa.
+        $this->aba()->callAction(TestAction::make('antecipado')->table($beto))
+            ->assertNotified('Beto sem o pagamento antecipado.');
+
+        $admin = Usuario::factory()->foraDaNoite()->create();
+        $admin->assignRole('Admin');
+        app(TrocarLugar::class)($ana, $mesa, 1, $admin);
+        app(TrocarLugar::class)($beto, $mesa, 2, $admin);
+        app(IniciarJogo::class)($this->jogo, $admin);
+
+        $this->assertSame(20000, $ana->entradas()->sole()->antecipado);
+        $this->assertSame(0, $beto->entradas()->sole()->antecipado);
+
+        // Fica no histórico do jogo.
+        Livewire::test(HistoricoRelationManager::class, ['ownerRecord' => $this->jogo, 'pageClass' => EditJogo::class])
+            ->assertSee(['Ana pagou antes: ganha 20.000 fichas ao sentar', 'Beto sem o pagamento antecipado']);
+    }
+
+    public function test_sem_bonus_no_jogo_nao_tem_a_marca(): void
+    {
+        $ana = $this->jogo->participantes()->create(['usuario_id' => Usuario::factory()->create(['nome' => 'Ana', 'apelido' => null])->id]);
+
+        $this->aba()
+            ->assertActionHidden(TestAction::make('antecipado')->table($ana))
+            ->mountAction(TestAction::make('pagamento')->table($ana))
+            ->assertFormFieldHidden('antecipado');
+    }
+
+    public function test_geral_nao_marca_pagou_antes(): void
+    {
+        $this->jogo->update(['antecipado_fichas' => 20000]);
+        $ana = $this->jogo->participantes()->create(['usuario_id' => Usuario::factory()->create(['nome' => 'Ana', 'apelido' => null])->id]);
+        $this->entrarNoPainel('Geral');
+
+        $this->aba()->assertActionHidden(TestAction::make('antecipado')->table($ana));
+    }
 }

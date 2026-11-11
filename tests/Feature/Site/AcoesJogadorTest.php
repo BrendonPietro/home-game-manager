@@ -53,7 +53,7 @@ class AcoesJogadorTest extends TestCase
             ->call('abrirEntrada', 'rebuy')
             ->assertSee('Volta ao jogo · João')
             ->call('confirmarEntrada')
-            ->assertSet('aviso', 'Rebuy registrado para João.');
+            ->assertSet('aviso', 'Rebuy registrado para João: entregar 20.000 fichas.');
 
         $this->assertSame(StatusParticipante::Jogando, $this->joao->fresh()->status);
     }
@@ -67,7 +67,8 @@ class AcoesJogadorTest extends TestCase
 
         $this->painel()
             ->assertSeeInOrder(['rh-jogador__nome', 'João', 'Mesa 01 · Lugar 1'], false)
-            ->assertSeeInOrder(['Buy-in', 'Às ', 'R$ 100', 'Rebuys · 1', 'R$ 100']) // fichas não se somam por jogador
+            ->assertSeeInOrder(['Fichas entregues', 'buy-in 20.000 · rebuys 20.000', '40.000'])
+            ->assertSeeInOrder(['Buy-in', 'Às ', 'R$ 100', 'Rebuys · 1', 'R$ 100'])
             ->assertSeeInOrder(['Investido', 'R$ 200', 'Pago', 'R$ 150', 'Deve ao caixa', 'R$ 50'])
             ->assertSeeInOrder(['Histórico', 'Pagou R$ 150 (pix)', 'Rebuy · R$ 100', 'Buy-in · R$ 100'])
             ->assertSee('Desfazer')
@@ -103,7 +104,7 @@ class AcoesJogadorTest extends TestCase
             ->assertSeeInOrder(['Total do jogador passa de', 'R$ 0', 'R$ 130'])
             ->call('confirmarEntrada')
             ->assertSet('modal', null)
-            ->assertSet('aviso', 'Buy-in registrado para João.')
+            ->assertSet('aviso', 'Buy-in registrado para João: entregar 20.000 fichas.')
             ->assertDispatched('caixa-mudou')
             ->call('confirmarEntrada'); // o mesmo uuid de novo
 

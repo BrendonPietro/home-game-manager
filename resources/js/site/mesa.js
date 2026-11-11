@@ -2,7 +2,7 @@
 // passos de 90°. Mesma conta do App\Support\PosicoesDaMesa (que dá a posição inicial no servidor).
 //
 // O contêiner tem wire:ignore.self: o Livewire redesenha os assentos, mas não mexe no style do
-// contêiner, onde ficam --ar, --inset e --x0…--xN / --y0…--yN que os assentos usam.
+// contêiner, onde ficam --ar, --inset-y/--inset-x e --x0…--xN / --y0…--yN que os assentos usam.
 // A rotação fica no localStorage do aparelho (cada mesa do jogo guarda a sua).
 
 const AMOSTRAS = 720;
@@ -38,9 +38,10 @@ export function posicoes(lugares, ar, rx, ry, rotacao) {
 
 function lerRotacao(chave, padrao) {
     try {
-        const salva = window.localStorage.getItem(chave);
+        const salva = Number(window.localStorage.getItem(chave) ?? NaN);
 
-        return salva === null ? padrao : Number(salva) % 360;
+        // Só 0, 90, 180 ou 270: qualquer outra coisa salva (ou nada) volta para o padrão.
+        return [0, 90, 180, 270].includes(salva) ? salva : padrao;
     } catch {
         return padrao;
     }
@@ -126,7 +127,8 @@ export default (opcoes) => ({
 
         const estilo = this.$el.style;
         estilo.setProperty('--ar', ar);
-        estilo.setProperty('--inset', retrato ? '9% 15%' : '15% 9%');
+        estilo.setProperty('--inset-y', retrato ? '9%' : '15%');
+        estilo.setProperty('--inset-x', retrato ? '15%' : '9%');
 
         posicoes(opcoes.lugares, ar, rx, ry, this.rotacao).forEach(([x, y], k) => {
             estilo.setProperty(`--x${k}`, `${x.toFixed(2)}%`);
@@ -134,5 +136,7 @@ export default (opcoes) => ({
         });
 
         this.$el.classList.toggle('is-retrato', retrato);
+        // O recorte do dealer no trilho vai para o lado onde o dealer está (o lugar 0 anda com a rotação).
+        this.$el.dataset.dealer = ['baixo', 'esquerda', 'cima', 'direita'][Math.round(this.rotacao / 90) % 4];
     },
 });

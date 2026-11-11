@@ -16,6 +16,7 @@ class ViewJogo extends ViewRecord
             JogoResource::acaoDuplicar(),
             JogoResource::acaoSalvarComoModelo(),
             EditAction::make(),
+            JogoResource::acaoExcluir(),
         ];
     }
 }

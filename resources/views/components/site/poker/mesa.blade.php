@@ -30,7 +30,7 @@
 
 	$lugares = $jogoMesa->lugares;
 	$posicoes = PosicoesDaMesa::calcular($lugares, $ar, $rx, $ry);
-	$estilo = "--ar:{$ar};--inset:15% 9%";
+	$estilo = "--ar:{$ar};--inset-y:15%;--inset-x:9%";
 	foreach ($posicoes as $k => [$x, $y]) {
 		$estilo .= ";--x{$k}:{$x}%;--y{$k}:{$y}%";
 	}
@@ -46,6 +46,7 @@
 	x-data="mesa(@js($opcoes))"
 	x-on:girar-mesa.window="$event.detail === {{ $jogoMesa->id }} && girar()"
 	wire:ignore.self
+	data-dealer="baixo"
 	style="{{ $estilo }}"
 >
 	<div class="rh-ptable__rail">
@@ -58,7 +59,8 @@
 		</div>
 	</div>
 
-	<div class="rh-seat rh-seat--dealer" style="{{ $posicao(0) }}">
+	{{-- O dealer fica no recorte do trilho (CSS, pelo data-dealer), não na volta dos jogadores. --}}
+	<div class="rh-seat rh-seat--dealer">
 		<span class="rh-dealer-btn">D</span>
 		<span class="rh-label">Dealer</span>
 		<span class="rh-seat__name">{{ $jogoMesa->dealer?->nome_exibicao ?? '—' }}</span>

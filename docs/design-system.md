@@ -54,7 +54,7 @@ Em 11/2026 o site e o painel passaram por um pente-fino com a skill **unslop** (
 | `tokens.json` | `resources/scss/site/vars/_tokens.scss` |
 | `bundle.css` (classes `rh-`) | Um parcial por componente em `resources/scss/site/components/` |
 | Camada responsiva | `resources/scss/site/core/_responsive.scss` com classes de grade (`rh-grid--4`, `rh-grid--side`) no lugar dos estilos inline |
-| `RHG.icon()` | SVGs em `resources/svg/site/icons/` + `@svg('rh-…')` |
+| `RHG.icon()` | SVGs em `resources/svg/icones/` (site e painel, nome pela ideia; `LEIAME.md` na pasta) + `@svg('rh-…')` |
 | `RHG.brl()` | `Dinheiro::brl()` + diretiva `@brl()` |
 | `RHG.pokerTable()` | `<x-site.poker.mesa>` + `resources/js/site/mesa.js` (posição por comprimento de arco, rotação 90°) |
 | `siteShell` | Layout `<x-site.operacao>`: topbar + fluxo da noite + faixa ao vivo |
@@ -94,6 +94,7 @@ Layouts que não cabem nessas grades (ex.: `1.6fr 1fr 1fr 1fr`) ficam no parcial
 - A posição de cada assento é uma variável CSS no contêiner (`left:var(--x3);top:var(--y3)`). O servidor escreve a posição de partida (`App\Support\PosicoesDaMesa`) e o `mesa.js` reescreve ao girar e ao mudar o tamanho da tela. Assim o Livewire pode redesenhar os assentos sem que eles pulem.
 - Em pé (90°/270°) a mesa ganha `.is-retrato` e no máximo 520px de largura. Só o girar anima: o `mesa.js` mede assentos e trilho, desenha no lugar novo e anima de volta só com `translate`/`scale` (FLIP, 300ms na curva `--ease`), sem transição de `left`/`top`. Ao abrir e ao redimensionar, os assentos já aparecem no lugar.
 - A busca do ponto na oval começa na amostra 0 (no protótipo começava na 1, deixando o dealer 0,37% fora do centro).
+- **Lugar do dealer**: o trilho tem um recorte côncavo onde o dealer fica, como nas mesas de verdade. É uma `mask-image` (`radial-gradient`) no trilho e no feltro, que recua junto e deixa 16px de trilho em volta; o tamanho segue a largura da mesa (`container-type: inline-size`, `--corte-l` e `--corte-p` em `cqw`). O lado vem do `data-dealer` do contêiner (`baixo`, `esquerda`, `cima`, `direita`), que o `mesa.js` troca ao girar. O dealer não fica na volta dos jogadores (a posição 0 da oval só reserva o espaço): o CSS encaixa a caixa dele no recorte, encostada no fundo e saindo para fora da mesa (de lado, sem passar da borda da mesa), atrás dos lugares (`z-index` 0 contra 1), com o botão D na borda virada para o feltro. A borda do trilho de cada lado vem de `--inset-y` e `--inset-x`.
 - Tela 06 usa a mesa compacta com `ar` 2,6 deitada e 0,72 em pé, raios 44/36, como o protótipo.
 - Tela ao vivo usa a mesa padrão (até 960px). Cada assento mostra o total investido e as fichas (prop `rodapes`): buy-in B (ou 2, 3 na variação que vale 2×, 3× o padrão), rebuy R (ou a quantidade, a partir de 2) e add-on A. Eliminado e quem fez cash-out ficam apagados (`rh-seat--out`).
 

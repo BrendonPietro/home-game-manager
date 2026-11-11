@@ -33,5 +33,9 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <!-- Os testes não usam as contas do clube nem os dados de exemplo do .env (ContasDoClubeTest monta as dele). -->
+        <env name="CONTA_DESENVOLVEDOR" value=""/>
+        <env name="CONTAS_ADMIN" value=""/>
+        <env name="DADOS_DE_EXEMPLO" value="false"/>
     </php>
 </phpunit>
