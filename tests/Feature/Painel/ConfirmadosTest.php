@@ -6,6 +6,7 @@ use App\Actions\Jogo\IniciarJogo;
 use App\Actions\Jogo\TrocarLugar;
 use App\Enums\DirecaoPagamento;
 use App\Enums\FormaPagamento;
+use App\Enums\TipoItem;
 use App\Filament\Resources\Jogos\Pages\EditJogo;
 use App\Filament\Resources\Jogos\RelationManagers\ConfirmadosRelationManager;
 use App\Filament\Resources\Jogos\RelationManagers\HistoricoRelationManager;
@@ -203,5 +204,54 @@ class ConfirmadosTest extends TestCase
         $this->entrarNoPainel('Geral');
 
         $this->aba()->assertActionHidden(TestAction::make('antecipado')->table($ana));
+    }
+
+    public function test_opcionais_pagos_antes_entram_junto_do_buyin(): void
+    {
+        $ana = $this->jogo->participantes()->create(['usuario_id' => Usuario::factory()->create(['nome' => 'Ana', 'apelido' => null])->id]);
+
+        // Sem opcional pago antes no cadastro, não tem a marca.
+        $this->aba()
+            ->assertActionHidden(TestAction::make('opcionaisPagos')->table($ana))
+            ->mountAction(TestAction::make('pagamento')->table($ana))
+            ->assertFormFieldHidden('opcionais_pagos');
+
+        $pizza = $this->jogo->itens()->create([
+            'tipo' => TipoItem::Opcional, 'nome' => 'Taxa Comida', 'valor' => 40, 'fichas' => 40000,
+            'compravel_com' => ['jogador'], 'percentual_premiacao' => 0, 'pago_antes' => true,
+        ]);
+        $mesa = $this->jogo->mesas()->create(['nome' => 'Mesa 1', 'lugares' => 9, 'ordem' => 1]);
+        $beto = $this->jogo->participantes()->create(['usuario_id' => Usuario::factory()->create(['nome' => 'Beto', 'apelido' => null])->id]);
+
+        // Ana pela linha (Opcionais pagos); Beto junto do Pagamento.
+        $this->aba()
+            ->callAction(TestAction::make('opcionaisPagos')->table($ana), data: ['opcionais' => [(string) $pizza->id]])
+            ->assertNotified('Ana pagou Taxa Comida antes: entra junto do buy-in, com 40.000 fichas.')
+            ->assertSee('Opcionais pagos antes');
+
+        $this->aba()
+            ->callAction(TestAction::make('pagamento')->table($beto), data: ['valor' => '140', 'opcionais_pagos' => [(string) $pizza->id]])
+            ->assertNotified('Beto pagou R$ 140 (pago antes: Taxa Comida).');
+
+        // No dia, os dois sentam, o torneio começa e o buy-in já leva a pizza, com as fichas.
+        $admin = Usuario::factory()->foraDaNoite()->create();
+        $admin->assignRole('Admin');
+        app(TrocarLugar::class)($ana, $mesa, 1, $admin);
+        app(TrocarLugar::class)($beto, $mesa, 2, $admin);
+        app(IniciarJogo::class)($this->jogo, $admin);
+
+        foreach ([$ana, $beto] as $participante) {
+            $buyin = $participante->entradas()->validas()->where('tipo', TipoItem::Buyin)->sole();
+            $this->assertSame([$pizza->id], $buyin->opcionais()->validas()->pluck('jogo_item_id')->all());
+        }
+
+        // Desmarcar pela linha, com o jogo em andamento: sai do buy-in.
+        $this->aba()
+            ->callAction(TestAction::make('opcionaisPagos')->table($ana->fresh()), data: ['opcionais' => []])
+            ->assertNotified('Ana não pagou Taxa Comida antes: saiu do buy-in (recolher 40.000 fichas).');
+
+        // O Geral não marca.
+        $this->entrarNoPainel('Geral');
+        $this->aba()->assertActionHidden(TestAction::make('opcionaisPagos')->table($ana));
     }
 }

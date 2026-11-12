@@ -5,6 +5,7 @@ namespace App\Livewire\Jogo;
 use App\Actions\Jogo\CadastrarJogadorRapido;
 use App\Actions\Jogo\ConfirmarJogador;
 use App\Actions\Jogo\DesconfirmarJogador;
+use App\Actions\Jogo\MarcarOpcionalPagoAntes;
 use App\Actions\Jogo\MarcarPagamentoAntecipado;
 use App\Exceptions\RegraDoJogo;
 use App\Models\Jogo;
@@ -64,6 +65,16 @@ class Jogadores extends Component
         $participante = $this->jogo->participantes()->findOrFail($participanteId);
 
         $this->executar(fn () => app(MarcarPagamentoAntecipado::class)($participante, ! $participante->pagou_antes, $this->quem()));
+    }
+
+    /** Opcional pago antes (taxa da pizza), ou tira a marca: entra junto do buy-in, com as fichas, ao sentar. */
+    public function alternarOpcionalPago(int $participanteId, int $itemId): void
+    {
+        $participante = $this->jogo->participantes()->findOrFail($participanteId);
+        $opcional = $this->jogo->opcionais()->findOrFail($itemId);
+        $pagou = ! $participante->opcionaisPagos()->whereKey($opcional->id)->exists();
+
+        $this->executar(fn () => app(MarcarOpcionalPagoAntes::class)($participante, $opcional, $pagou, $this->quem()));
     }
 
     public function abrirNovo(): void
@@ -126,7 +137,7 @@ class Jogadores extends Component
     #[Computed]
     public function confirmados()
     {
-        return $this->jogo->participantes()->with('usuario')->orderBy('id')->get();
+        return $this->jogo->participantes()->with(['usuario', 'opcionaisPagos'])->orderBy('id')->get();
     }
 
     /** @return Collection<int, Usuario> jogadores ativos, filtrados pela busca e pelo filtro */

@@ -75,9 +75,9 @@
 				<div class="rh-warn rh-warn--ok" role="status">@svg('rh-check')<div>{{ $aviso }}</div></div>
 			@endif
 
-			{{-- Entradas: buy-in, rebuy (recompra) e add-on conforme a fase. --}}
+			{{-- Entradas: buy-in, rebuy (recompra) e add-on conforme a fase, e os opcionais para comprar na hora. --}}
 			@can('entradas.registrar')
-				@if ($botoes)
+				@if ($botoes || $cartoesOpcionais->isNotEmpty())
 					<div class="rh-jogador__acoes">
 						@foreach ($botoes as $botao)
 							@php
@@ -89,13 +89,11 @@
 								<span class="rh-action__meta">{{ $botao['meta'] }}</span>
 							</button>
 						@endforeach
-					</div>
-				@endif
-
-				@if ($avulsos->isNotEmpty())
-					<div class="rh-row">
-						@foreach ($avulsos as $opcional)
-							<button type="button" class="rh-btn rh-btn--sm" wire:click="abrirEntrada('opcional', {{ $opcional->id }})">@svg('rh-adicionar') {{ $opcional->nome }} · @brl($opcional->valor)</button>
+						@foreach ($cartoesOpcionais as $cartao)
+							<button type="button" class="rh-action" wire:key="opcional-{{ $cartao['item']->id }}" wire:click="abrirEntrada('opcional', {{ $cartao['item']->id }})" @disabled(! $cartao['ok']) aria-label="{{ $cartao['item']->nome }}: {{ $cartao['meta'] }}">
+								<span class="rh-action__top"><span class="rh-chip rh-chip--o" aria-hidden="true">+</span>{{ $cartao['item']->nome }}</span>
+								<span class="rh-action__meta">{{ $cartao['meta'] }}</span>
+							</button>
 						@endforeach
 					</div>
 				@endif
@@ -125,6 +123,22 @@
 						@endif
 					</div>
 				@endif
+				{{-- Opcionais pagos antes (taxa da pizza): marcado, entra junto do buy-in, com as fichas. --}}
+				@foreach ($pagosAntes as $opcional)
+					@php $pago = $participante->opcionaisPagos->contains($opcional); @endphp
+					@if ($emAndamento || $pago)
+						<div class="rh-jogador__bloco" wire:key="pago-antes-{{ $opcional->id }}">
+							<span class="rh-jogador__sem-ficha" aria-hidden="true">@svg($pago ? 'rh-check' : 'rh-fichas')</span>
+							<div class="rh-jogador__bloco-t">
+								<div class="rh-label">{{ $opcional->nome }} · {{ $pago ? 'pago antes' : 'não pagou antes' }}</div>
+								<div class="rh-small rh-muted">{{ $pago ? 'Vai junto do buy-in' : 'Quem pagou antes leva junto do buy-in' }}{{ $opcional->fichas ? ' · '.$fichas((int) $opcional->fichas) : '' }}</div>
+							</div>
+							@if ($marcaAntecipado)
+								<button type="button" class="rh-btn rh-btn--sm" wire:click="alternarOpcionalPago({{ $opcional->id }})" wire:loading.attr="disabled">{{ $pago ? 'Desmarcar' : 'Marcar' }}</button>
+							@endif
+						</div>
+					@endif
+				@endforeach
 				<div class="rh-jogador__bloco">
 					<span class="rh-chip rh-chip--lg">{{ $buyin ? $jogo->fichaDoBuyin($buyin->item) : 'B' }}</span>
 					<div class="rh-jogador__bloco-t">

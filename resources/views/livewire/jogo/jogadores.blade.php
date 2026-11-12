@@ -10,6 +10,9 @@
 	// Bônus do pagamento antecipado: a marca "pagou antes" na lista (quem tem a permissão marca e desmarca).
 	$bonus = $jogo->temBonusAntecipado() ? (int) $jogo->antecipado_fichas : 0;
 	$marcaAntecipado = $bonus > 0 && auth('web')->user()->can(\App\Actions\Jogo\MarcarPagamentoAntecipado::PERMISSAO);
+	// Opcionais pagos antes (taxa da pizza): um botão por opcional, embaixo do nome (quem não pode marcar só vê os marcados).
+	$pagosAntes = $jogo->opcionaisPagosAntes()->get();
+	$marcaOpcionais = $pagosAntes->isNotEmpty() && auth('web')->user()->can(\App\Actions\Jogo\MarcarPagamentoAntecipado::PERMISSAO);
 @endphp
 
 <div class="rh-grid rh-grid--side" style="--side:300px;gap:20px;align-items:start">
@@ -87,6 +90,20 @@
 					@endif
 					@if ($podeConfirmar)
 						<button type="button" class="rh-btn rh-btn--ghost rh-btn--icon rh-btn--sm" wire:click="remover({{ $participante->usuario_id }})" wire:loading.attr="disabled" aria-label="Tirar {{ $participante->usuario->nome_exibicao }} da lista">@svg('rh-fechar')</button>
+					@endif
+					@if ($marcaOpcionais)
+						<div class="rh-jogadores__pagos">
+							@foreach ($pagosAntes as $opcional)
+								@php $pago = $participante->opcionaisPagos->contains($opcional); @endphp
+								<button type="button" @class(['rh-btn rh-btn--sm', 'rh-btn--ghost rh-muted' => ! $pago]) wire:key="pago-{{ $participante->id }}-{{ $opcional->id }}" wire:click="alternarOpcionalPago({{ $participante->id }}, {{ $opcional->id }})" wire:loading.attr="disabled" aria-pressed="{{ $pago ? 'true' : 'false' }}" title="Pago antes: entra junto do buy-in{{ $opcional->fichas ? ', com '.\App\Support\Fichas::quantas((int) $opcional->fichas) : '' }}">@svg($pago ? 'rh-check' : 'rh-fichas') {{ $opcional->nome }}</button>
+							@endforeach
+						</div>
+					@elseif ($participante->opcionaisPagos->isNotEmpty())
+						<div class="rh-jogadores__pagos">
+							@foreach ($participante->opcionaisPagos as $opcional)
+								<span class="rh-badge rh-badge--ok" wire:key="pago-{{ $participante->id }}-{{ $opcional->id }}">{{ $opcional->nome }}</span>
+							@endforeach
+						</div>
 					@endif
 				</div>
 			@empty

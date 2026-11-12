@@ -33,6 +33,8 @@
 							@if ($quemSenta['antecipado'] && $participante->pagou_antes)
 								<span class="rh-badge rh-badge--ok">Pagou antes · +{{ number_format($quemSenta['antecipado'], 0, ',', '.') }}</span>
 							@endif
+							<x-site.props.pagos-antes :participante="$participante" />
+
 							@svg('rh-chevron-direita', 'rh-faint')
 						</button>
 					@empty

@@ -12,6 +12,7 @@ use App\Models\Entrada;
 use App\Models\Item;
 use App\Models\Jogo;
 use App\Models\Participante;
+use App\Models\Seguranca;
 use App\Models\Usuario;
 use App\Services\Jogo\TimeChip;
 use App\Support\Fichas;
@@ -31,6 +32,8 @@ use InvalidArgumentException;
  * - O uuid vem do clique: repetido devolve a entrada que já existe (toque duplo).
  * - Buy-in dentro do prazo do time chip guarda as fichas a mais em `entradas.time_chip` (Services\Jogo\TimeChip);
  *   de quem pagou antes (`participantes.pagou_antes`), as do bônus em `entradas.antecipado` (MarcarPagamentoAntecipado).
+ * - Opcional: o "1 por jogador" uma vez; o "junto de cada entrada", marcado ao lançar a entrada ou sozinho
+ *   (cartão do painel do jogador), um para cada buy-in, rebuy ou add-on que ele já tem.
  */
 class RegistrarEntrada
 {
@@ -77,7 +80,10 @@ class RegistrarEntrada
             );
 
             if ($item->tipo->eEntrada()) {
-                foreach ($this->opcionaisJunto($jogo, $participante, $item->tipo, $opcionais) as $opcional) {
+                // No buy-in, os opcionais que ele pagou antes (taxa da pizza…) vão junto, como os obrigatórios.
+                $pagosAntes = $buyin ? $participante->opcionaisPagos()->pluck('jogo_itens.id')->all() : [];
+
+                foreach ($this->opcionaisJunto($jogo, $participante, $item->tipo, $opcionais, $pagosAntes) as $opcional) {
                     $this->lancar($jogo, $participante, $opcional, $quem, (string) Str::uuid(), $entrada);
                 }
             }
@@ -145,9 +151,23 @@ class RegistrarEntrada
             throw new RegraDoJogo("{$nome} ainda não tem buy-in.");
         }
 
-        if ($item->tipo === TipoItem::Opcional && ! $item->porJogador()) {
-            throw new RegraDoJogo("{$item->nome} vai junto de um buy-in, rebuy ou add-on.");
+        // Opcional "junto de cada entrada" comprado sozinho (cartão do painel do jogador): um para cada entrada.
+        if ($item->tipo === TipoItem::Opcional && ! $item->porJogador() && self::semEntradaLivre($participante, $item)) {
+            throw new RegraDoJogo($temBuyin
+                ? "{$nome} já comprou {$item->nome} para cada entrada: depois de um rebuy ou add-on, dá para comprar de novo."
+                : "{$nome} ainda não tem buy-in.");
         }
+    }
+
+    /**
+     * Opcional "junto de cada entrada" vai um por entrada (buy-in, rebuy, add-on): comprado na hora, junto do
+     * rebuy ou sozinho depois (o buy-in nasce ao sentar, sem a escolha). Sem entrada livre, não tem como comprar.
+     */
+    public static function semEntradaLivre(Participante $participante, Item $opcional): bool
+    {
+        $entradas = $participante->entradas()->validas()->whereIn('tipo', $opcional->compravel_com ?? [])->count();
+
+        return $participante->entradas()->validas()->where('jogo_item_id', $opcional->id)->count() >= $entradas;
     }
 
     /** Opcional "1 por jogador" já comprado, ou item no limite por jogador. */
@@ -160,13 +180,14 @@ class RegistrarEntrada
     }
 
     /**
-     * Opcionais que vão junto desta entrada: os marcados e os obrigatórios. Obrigatório já comprado
-     * (ou no limite) fica de fora sem erro; marcado no limite é erro.
+     * Opcionais que vão junto desta entrada: os marcados, os obrigatórios e, no buy-in, os pagos antes.
+     * Obrigatório ou pago antes já comprado (ou no limite) fica de fora sem erro; marcado no limite é erro.
      *
      * @param  list<int>  $marcados
+     * @param  list<int>  $pagosAntes  opcionais que ele pagou antes (só no buy-in)
      * @return Collection<int, Item>
      */
-    private function opcionaisJunto(Jogo $jogo, Participante $participante, TipoItem $tipo, array $marcados): Collection
+    private function opcionaisJunto(Jogo $jogo, Participante $participante, TipoItem $tipo, array $marcados, array $pagosAntes = []): Collection
     {
         $marcados = array_map('intval', $marcados);
         $vendidos = $jogo->opcionais()->ativos()->get()
@@ -176,10 +197,11 @@ class RegistrarEntrada
             throw new RegraDoJogo('Esse opcional não é vendido junto de '.$tipo->label().'.');
         }
 
-        return $vendidos->filter(function (Item $opcional) use ($participante, $marcados) {
+        return $vendidos->filter(function (Item $opcional) use ($participante, $marcados, $pagosAntes) {
             $marcado = in_array($opcional->id, $marcados, true);
+            $sozinho = $opcional->obrigatorio || ($opcional->pago_antes && in_array($opcional->id, $pagosAntes, true));
 
-            if (! $marcado && ! $opcional->obrigatorio) {
+            if (! $marcado && ! $sozinho) {
                 return false;
             }
 
@@ -187,7 +209,7 @@ class RegistrarEntrada
                 return true;
             }
 
-            if ($marcado && ! $opcional->obrigatorio) {
+            if ($marcado && ! $sozinho) {
                 throw new RegraDoJogo("{$participante->nome()} já comprou {$opcional->nome}.");
             }
 
@@ -195,7 +217,21 @@ class RegistrarEntrada
         })->values();
     }
 
-    private function lancar(Jogo $jogo, Participante $participante, Item $item, Usuario $quem, string $uuid, ?Entrada $junto = null, int $timeChip = 0, int $antecipado = 0): Entrada
+    /**
+     * Opcional pago antes marcado em quem já sentou (MarcarOpcionalPagoAntes): entra agora, junto do buy-in,
+     * como se tivesse vindo ao sentar. Nulo quando ele já tem (comprou na hora pelo cartão).
+     */
+    public function juntoDoBuyin(Jogo $jogo, Participante $participante, Item $opcional, Entrada $buyin, Usuario|Seguranca $quem): ?Entrada
+    {
+        if ($this->noLimite($participante, $opcional) || (! $opcional->porJogador() && self::semEntradaLivre($participante, $opcional))) {
+            return null;
+        }
+
+        return $this->lancar($jogo, $participante, $opcional, $quem, (string) Str::uuid(), $buyin);
+    }
+
+    /** No painel (opcional pago antes marcado com o jogador já sentado), a entrada fica sem `registrado_por`: o histórico diz quem. */
+    private function lancar(Jogo $jogo, Participante $participante, Item $item, Usuario|Seguranca $quem, string $uuid, ?Entrada $junto = null, int $timeChip = 0, int $antecipado = 0): Entrada
     {
         return $jogo->entradas()->create([
             'uuid' => $uuid,
@@ -208,7 +244,7 @@ class RegistrarEntrada
             'antecipado' => $antecipado,
             'percentual_premiacao' => $item->percentual_premiacao,
             'vinculada_a' => $junto?->id,
-            'registrado_por' => $quem->id,
+            'registrado_por' => $quem instanceof Usuario ? $quem->id : null,
         ]);
     }
 
@@ -219,10 +255,17 @@ class RegistrarEntrada
             + (int) Entrada::query()->validas()->where('vinculada_a', $entrada->id)->sum('fichas');
     }
 
-    /** ": entregar 70.000 fichas (10.000 do time chip, 20.000 do pagamento antecipado)", para o aviso do lançamento. */
+    /**
+     * ": entregar 110.000 fichas (10.000 do time chip, 20.000 do pagamento antecipado, 40.000 de Taxa Comida)", para o
+     * aviso do lançamento: o que veio a mais e cada opcional com fichas que foi junto (pago antes, marcado, obrigatório).
+     */
     public static function aEntregar(Entrada $entrada): string
     {
-        return Fichas::entregar(self::fichasDoLancamento($entrada), (int) $entrada->time_chip, (int) $entrada->antecipado);
+        $opcionais = Entrada::query()->validas()->where('vinculada_a', $entrada->id)->where('fichas', '>', 0)->with('item')->orderBy('id')->get()
+            ->map(fn (Entrada $opcional): array => [$opcional->item->nome, (int) $opcional->fichas])
+            ->all();
+
+        return Fichas::entregar(self::fichasDoLancamento($entrada), (int) $entrada->time_chip, (int) $entrada->antecipado, $opcionais);
     }
 
     /** Rebuy de quem caiu: a eliminação provisória fica como histórico e ele volta a jogar. */

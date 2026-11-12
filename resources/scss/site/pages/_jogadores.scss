@@ -21,4 +21,18 @@
 	@include ate(tablet) {
 		max-height: none;
 	}
+
+	// Com opcionais pagos antes, os botões descem para uma linha embaixo do nome.
+	.rh-li {
+		flex-wrap: wrap;
+	}
+}
+
+// Opcionais pagos antes (taxa da pizza) de cada confirmado: embaixo do nome, alinhados com ele.
+.rh-jogadores__pagos {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	flex-basis: 100%;
+	padding-left: 44px;
 }

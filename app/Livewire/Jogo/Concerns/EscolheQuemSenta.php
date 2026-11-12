@@ -133,7 +133,7 @@ trait EscolheQuemSenta
         $busca = mb_strtolower(trim($this->busca));
         $bate = fn (?string $texto): bool => $busca === '' || str_contains(mb_strtolower((string) $texto), $busca);
 
-        $confirmados = $this->jogo->participantes()->with('usuario')
+        $confirmados = $this->jogo->participantes()->with(['usuario', 'opcionaisPagos'])
             ->whereNull('jogo_mesa_id')
             ->where('status', StatusParticipante::Confirmado)
             ->get()

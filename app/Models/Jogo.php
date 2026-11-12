@@ -189,6 +189,12 @@ class Jogo extends Model
         return $this->itens()->where('tipo', TipoItem::Opcional);
     }
 
+    /** Opcionais ativos que dá para pagar antes (taxa da pizza…): quem está marcado leva junto do buy-in. */
+    public function opcionaisPagosAntes(): HasMany
+    {
+        return $this->opcionais()->where('ativo', true)->where('pago_antes', true);
+    }
+
     public function taxas(): HasMany
     {
         return $this->hasMany(Taxa::class)->orderBy('ordem')->orderBy('id');

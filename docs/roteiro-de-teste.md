@@ -54,6 +54,7 @@ Referência da Poker Night #18: 12 jogadores, 22 entradas, R$ 2.100 arrecadados,
 - [ ] **Pagamento** num confirmado → o valor vem com o buy-in (e os obrigatórios); Pix ou Dinheiro (sem Cartão); "Pago antes" mostra o valor.
 - [ ] **Tirar da lista** quem não pagou → sai; quem pagou → recusa (tem lançamento).
 - [ ] Com **Fichas para quem pagou antes** no cadastro (aba Blinds): **Pagamento** com a caixa "Pagamento antecipado do buy-in" marcada → a coluna Bônus antecipado mostra "Pagou antes · +20.000". **Pagou antes** na linha marca e desmarca; no site, a lista da noite tem o mesmo botão. No dia, o "Quem senta aqui" mostra a marca, e sentar avisa "entregar 40.000 fichas (20.000 do pagamento antecipado)"; o painel do jogador mostra o bônus nas fichas entregues.
+- [ ] **Opcional pago antes** (taxa da pizza): no cadastro, ligue **Pago antes** no opcional. Na aba Confirmados, **Opcionais pagos** na linha (ou as caixas no modal do Pagamento) marca quem pagou → coluna "Opcionais pagos antes". No site, a lista da noite tem um botão por opcional embaixo do nome. No dia, o "Quem senta aqui" mostra "Taxa Comida · +40.000", e sentar já lança a taxa junto do buy-in ("entregar 60.000 fichas (40.000 de Taxa Comida)"). Marcar quem já sentou lança na hora; desmarcar tira do buy-in.
 - [ ] Como **Geral**: vê a lista, sem Pagamento nem Confirmar.
 
 **Calendário e aluguéis**
@@ -92,7 +93,8 @@ Referência da Poker Night #18: 12 jogadores, 22 entradas, R$ 2.100 arrecadados,
 
 **Entradas e caixa**
 - [ ] Clique num assento → painel do jogador: o buy-in já está feito (sentar é entrar). Para trocar um por buy-in duplo: Desfazer o buy-in e lançar o duplo. Opcional avulso (churrasco) pelo botão do painel.
-- [ ] O painel do jogador e o Resumo não mostram fichas somadas por jogador (as fichas ficam só na escolha da entrada, como referência).
+- [ ] O painel do jogador mostra as **Fichas entregues** (buy-in, time chip, pagou antes, rebuys, add-on, opcionais) e o Resumo a coluna Fichas; cada lançamento avisa quanto entregar.
+- [ ] **Opcionais no painel do jogador**: cada opcional é um cartão ao lado do BUY-IN, REBUY e ADD-ON. O de "1 por jogador" (pizza, churrasco) compra uma vez e fica "já feito"; o de "junto de cada entrada" compra um para o buy-in (que nasceu ao sentar) e de novo depois de cada rebuy ou add-on; antes do buy-in, "falta o buy-in". O obrigatório não tem cartão (vai sozinho com a entrada).
 - [ ] Clique duas vezes rápido no confirmar de um lançamento → grava uma vez só.
 - [ ] REBUY em quem ainda não tem buy-in → recusa ("falta o buy-in").
 - [ ] Elimine alguém → fica apagado na mesa, e o painel dele mostra **VOLTAR** (entra como rebuy) → volta a jogar no mesmo lugar. Elimine outro e só volte com ele no intervalo.

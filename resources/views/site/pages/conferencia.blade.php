@@ -158,6 +158,10 @@
 						@else
 							<dt>Valor da ficha</dt><dd>R$ {{ str_replace('.', ',', rtrim(rtrim((string) $jogo->valor_ficha, '0'), '.')) }}</dd>
 						@endif
+						{{-- Opcionais pagos antes (taxa da pizza): quem está marcado leva junto do buy-in. --}}
+						@foreach ($jogo->opcionaisPagosAntes()->withCount('pagaramAntes')->get() as $opcional)
+							<dt>{{ $opcional->nome }} pago antes</dt><dd>{{ $opcional->pagaram_antes_count }} {{ $opcional->pagaram_antes_count === 1 ? 'marcado' : 'marcados' }} · vai junto do buy-in{{ $opcional->fichas ? ', com '.\App\Support\Fichas::quantas((int) $opcional->fichas) : '' }}</dd>
+						@endforeach
 					</dl>
 				</div>
 			</section>

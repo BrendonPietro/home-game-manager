@@ -27,6 +27,11 @@
 		--c: var(--chip-addon);
 	}
 
+	// Opcional (pizza, churrasco, opcional de fichas): ficha neutra com "+", no cartão do painel do jogador.
+	&--o {
+		--c: var(--ink-200);
+	}
+
 	&--lg {
 		width: 32px;
 		height: 32px;

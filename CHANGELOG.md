@@ -10,6 +10,36 @@ Registro das atualizações do sistema do Rodrigues Home Game, organizadas por:
 - Docs: documentação;
 - Chore: manutenção.
 
+## 0.35.0
+
+Opcionais no painel do jogador, etapa 2: os pagos antes (taxa da pizza).
+
+### Feat
+- **Pago antes** no opcional (cadastro do jogo, aba Dinheiro, seção Opcionais): dá para marcar em cada jogador que já pagou, e ele **entra junto do buy-in**, com as fichas, quando o jogador senta (`MarcarOpcionalPagoAntes`, tabela nova `participante_opcionais`).
+- **Onde marcar**: no painel, aba Confirmados (ação **Opcionais pagos** na linha, ou as caixas "Opcionais pagos antes" no modal do Pagamento, que lança o pagamento e marca juntos; a coluna "Opcionais pagos antes" mostra quem está marcado); no site, na lista da noite (um botão por opcional, embaixo do nome) e no painel do jogador (Marcar / Desmarcar). Mesma permissão do pagamento antecipado (`pagamentos.antecipado`).
+- **Ao sentar**: o buy-in já leva o opcional, e o aviso diz o que entregar, com cada opcional: "Ana sentou na Mesa 1 · Lugar 5: entregar 60.000 fichas (40.000 de Taxa Comida)." O "Quem senta aqui" e o modal Jogadores mostram o selo "Taxa Comida · +40.000"; a Conferência, quantos estão marcados.
+- **Já sentado**: marcar lança na hora, junto do buy-in; desmarcar tira do buy-in. O que ele comprou na hora pelo cartão continua. Desfazer o buy-in leva junto, e o buy-in refeito traz de novo. Com as entradas fechadas, não muda mais.
+- O aviso de qualquer lançamento passa a dizer as fichas de cada opcional que foi junto ("entregar 40.000 fichas (20.000 de Opcional)").
+
+### Test
+- `Jogo\OpcionaisPagosAntesTest`: o buy-in leva os marcados (e o rebuy não), desfazer e refazer, marcar e desmarcar quem já sentou, comprado na hora, entradas fechadas, regras e permissão, lista da noite, Quem senta aqui, modal Jogadores e painel do jogador. `ConfirmadosTest`: a ação e as caixas do Pagamento no painel e o buy-in ao iniciar. `JogosTest`: o Pago antes no cadastro.
+
+## 0.34.0
+
+Opcionais no painel do jogador, etapa 1: comprar na hora.
+
+### Feat
+- **Opcionais como cartões** ao lado do BUY-IN, REBUY e ADD-ON no painel do jogador (pizza, churrasco, opcional de fichas…), com o preço ou o porquê de não dar agora ("já feito", "falta o buy-in", "entradas fechadas"). Substituem os botões pequenos do "1 por jogador", que ficavam embaixo.
+- **Opcional "junto de cada entrada" comprado sozinho**: como o buy-in nasce ao sentar, sem a escolha dos opcionais, o cartão compra um para o buy-in e de novo depois de cada rebuy ou add-on (um por entrada, contando os marcados junto do rebuy). Comprado sozinho, o DESFAZER tira só ele.
+- O aviso diz o que entregar: "João comprou Pizza: entregar 10.000 fichas."
+- O obrigatório continua indo sozinho com a entrada e não ganha cartão.
+
+### Docs
+- Roteiro de teste: a linha das fichas do painel do jogador estava velha (ele soma as fichas desde a 0.28.0).
+
+### Test
+- `EntradasTest`: opcional de entrada sozinho, um por entrada, com rebuy e desfazer. `AcoesJogadorTest`: os cartões (antes e depois do buy-in, "já feito", o rebuy abrindo a vez de novo, o obrigatório sem cartão).
+
 ## 0.33.0
 
 Nome com apelido nas listas, menu na topbar e o lugar do dealer na mesa.

@@ -118,13 +118,45 @@ class EntradasTest extends TestCase
         $this->assertRegra('João já comprou Churrasco.', fn () => $this->entrar($joao, TipoItem::Rebuy, [$churrasco->id]));
         $this->assertRegra('Esse opcional não é vendido junto de Rebuy.', fn () => $this->entrar($joao, TipoItem::Rebuy, [$soAddon->id]));
 
-        // Opcional por jogador pode ser comprado sozinho; o de entrada, não.
+        // Opcional por jogador pode ser comprado sozinho; o de entrada, só com uma entrada para ir junto.
         $lucas = $this->jogador('Lucas');
         $this->assertNull($this->entrar($lucas, $churrasco)->vinculada_a);
         $this->assertRegra('Lucas já comprou Churrasco.', fn () => $this->entrar($lucas, $churrasco));
-        $this->assertRegra('Opcional vai junto de um buy-in, rebuy ou add-on.', fn () => $this->entrar($lucas, $opcional));
+        $this->assertRegra('Lucas ainda não tem buy-in.', fn () => $this->entrar($lucas, $opcional));
 
         $this->assertSame(7, $this->jogo->entradas()->count());
+    }
+
+    public function test_opcional_de_entrada_comprado_sozinho_vai_um_por_entrada(): void
+    {
+        $opcional = $this->opcional('Opcional', 10, ['buyin', 'rebuy', 'addon'], 50);
+        $jaTem = 'Ana já comprou Opcional para cada entrada: depois de um rebuy ou add-on, dá para comprar de novo.';
+
+        // Sentou (o buy-in nasce sem a escolha dos opcionais): o opcional se compra sozinho, um para o buy-in.
+        $ana = $this->jogador('Ana');
+        $this->entrar($ana, TipoItem::Buyin);
+        $sozinho = $this->entrar($ana, $opcional);
+
+        $this->assertNull($sozinho->vinculada_a);
+        $this->assertSame(['10.00', 20000, '50.00'], [$sozinho->valor, $sozinho->fichas, $sozinho->percentual_premiacao]);
+        $this->assertSame(': entregar 20.000 fichas', RegistrarEntrada::aEntregar($sozinho));
+        $this->assertRegra($jaTem, fn () => $this->entrar($ana, $opcional));
+
+        // Cada rebuy abre mais um, comprado sozinho ou marcado junto do rebuy.
+        $this->entrar($ana, TipoItem::Rebuy);
+        $this->entrar($ana, $opcional);
+        $this->assertRegra($jaTem, fn () => $this->entrar($ana, $opcional));
+        $this->entrar($ana, TipoItem::Rebuy, [$opcional->id]);
+        $this->assertRegra($jaTem, fn () => $this->entrar($ana, $opcional));
+        $this->assertSame(3, $ana->entradas()->validas()->where('jogo_item_id', $opcional->id)->count());
+
+        // O comprado sozinho é uma ação dele: desfazer tira só o opcional e devolve a vez.
+        $rebuy = $this->entrar($ana, TipoItem::Rebuy);
+        $this->entrar($ana, $opcional);
+        $this->assertSame('Opcional de Ana desfeito.', $this->desfazer($ana));
+        $this->assertNull($rebuy->fresh()->cancelada_em);
+        $this->entrar($ana, $opcional);
+        $this->assertSame(4, $ana->entradas()->validas()->where('jogo_item_id', $opcional->id)->count());
     }
 
     public function test_so_com_o_jogo_em_andamento_e_com_permissao(): void

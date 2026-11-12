@@ -66,7 +66,7 @@ class JogosTest extends TestCase
             'itens_addon' => [['padrao' => true, 'nome' => 'Add-on', 'valor' => '50', 'fichas' => 20000, 'limite_por_jogador' => 1, 'ativo' => true]],
             'opcionais' => [
                 ['nome' => 'Opcional', 'valor' => '10', 'fichas' => 20000, 'compravel_com' => 'entrada', 'premiacao' => '50', 'obrigatorio' => false, 'ativo' => true],
-                ['nome' => 'Churrasco', 'valor' => '30', 'fichas' => 20000, 'compravel_com' => 'jogador', 'premiacao' => '0', 'obrigatorio' => false, 'ativo' => true],
+                ['nome' => 'Churrasco', 'valor' => '30', 'fichas' => 20000, 'compravel_com' => 'jogador', 'premiacao' => '0', 'obrigatorio' => false, 'pago_antes' => true, 'ativo' => true],
             ],
             'taxas' => [
                 ['nome' => 'Casa', 'calculo' => 'fixo', 'valor' => '190', 'quantidade' => 1],
@@ -119,6 +119,7 @@ class JogosTest extends TestCase
         $this->assertTrue($opcional->compravelCom(TipoItem::Rebuy));
         $this->assertTrue($churrasco->porJogador());
         $this->assertSame('0.00', $churrasco->percentual_premiacao);
+        $this->assertSame([false, true], [$opcional->pago_antes, $churrasco->pago_antes]); // churrasco pago antes: entra junto do buy-in
 
         $this->assertSame([CalculoTaxa::Fixo, CalculoTaxa::PorUnidade], $jogo->taxas->pluck('calculo')->all());
         $this->assertSame(2, $jogo->taxas[1]->quantidade);

@@ -93,6 +93,7 @@
 									@if ($bonus && $participante->pagou_antes)
 										<span class="rh-badge rh-badge--ok">Pagou antes · +{{ number_format($bonus, 0, ',', '.') }}</span>
 									@endif
+									<x-site.props.pagos-antes :participante="$participante" />
 									@if ($participante->jogoMesa)
 										<span class="rh-small rh-muted">{{ $participante->jogoMesa->nome }} · Lugar {{ $participante->lugar }}</span>
 									@endif

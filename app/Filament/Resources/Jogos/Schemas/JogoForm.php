@@ -286,7 +286,7 @@ class JogoForm
                             ->visible(fn (Get $get): bool => self::eTorneio($get)),
                     ]),
                 Section::make('Opcionais')
-                    ->description('Opcional de fichas, churrasco… Premiação diz quanto do valor vai para o prize pool (0% fica todo com a casa).')
+                    ->description('Opcional de fichas, churrasco, pizza… Premiação diz quanto do valor vai para o prize pool (0% fica todo com a casa). Pago antes: na lista (aba Confirmados) marca quem já pagou, e ele entra junto do buy-in, com as fichas.')
                     ->schema([self::opcionais()]),
                 Section::make('Taxas')
                     ->description('Saem da premiação antes de dividir (dealers, casa…).')
@@ -439,6 +439,7 @@ class JogoForm
                 TableColumn::make('Premiação'),
                 TableColumn::make('%'),
                 TableColumn::make('Obrigatório'),
+                TableColumn::make('Pago antes'),
                 TableColumn::make('Ativo'),
             ])
             ->schema([
@@ -454,6 +455,8 @@ class JogoForm
                     ->dehydrateStateUsing(fn (?string $state): array => $state === 'jogador' ? ['jogador'] : $porEntrada),
                 ...self::camposDaPremiacao(0),
                 Toggle::make('obrigatorio')->live(),
+                // Dá para marcar quem pagou antes (taxa da pizza): ele entra junto do buy-in, com as fichas.
+                Toggle::make('pago_antes'),
                 Toggle::make('ativo')->default(true)->live(),
             ])
             ->defaultItems(0)

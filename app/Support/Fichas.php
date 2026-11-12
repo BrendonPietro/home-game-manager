@@ -17,8 +17,13 @@ final class Fichas
         return number_format($quantas, 0, ',', '.');
     }
 
-    /** ": entregar 70.000 fichas (10.000 do time chip, 20.000 do pagamento antecipado)", ou "" sem fichas. */
-    public static function entregar(int $total, int $timeChip = 0, int $antecipado = 0): string
+    /**
+     * ": entregar 110.000 fichas (10.000 do time chip, 20.000 do pagamento antecipado, 40.000 de Taxa Comida)", ou
+     * "" sem fichas. Os opcionais com fichas que foram junto vêm por nome.
+     *
+     * @param  list<array{0: string, 1: int}>  $opcionais  [nome, fichas]
+     */
+    public static function entregar(int $total, int $timeChip = 0, int $antecipado = 0, array $opcionais = []): string
     {
         if ($total <= 0) {
             return '';
@@ -27,6 +32,7 @@ final class Fichas
         $extras = array_filter([
             $timeChip > 0 ? self::numero($timeChip).' do time chip' : null,
             $antecipado > 0 ? self::numero($antecipado).' do pagamento antecipado' : null,
+            ...array_map(fn (array $opcional): ?string => $opcional[1] > 0 ? self::numero($opcional[1]).' de '.$opcional[0] : null, $opcionais),
         ]);
 
         return ': entregar '.self::quantas($total).($extras ? ' ('.implode(', ', $extras).')' : '');

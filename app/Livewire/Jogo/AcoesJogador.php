@@ -4,6 +4,7 @@ namespace App\Livewire\Jogo;
 
 use App\Actions\Jogo\DesfazerAcao;
 use App\Actions\Jogo\DesfazerPagamento;
+use App\Actions\Jogo\MarcarOpcionalPagoAntes;
 use App\Actions\Jogo\MarcarPagamentoAntecipado;
 use App\Actions\Jogo\RegistrarCashOut;
 use App\Actions\Jogo\RegistrarEliminacao;
@@ -109,7 +110,12 @@ class AcoesJogador extends Component
             $participante = $this->participante();
             $entrada = app(RegistrarEntrada::class)($participante, $item, $this->quem(), $this->uuid, array_map('intval', $this->opcionais));
 
-            return "{$item->nome} registrado para {$participante->nome()}".RegistrarEntrada::aEntregar($entrada).'.';
+            // Opcional tem nome livre (pizza, churrasco): "João comprou Pizza" serve para qualquer um.
+            $texto = $item->tipo === TipoItem::Opcional
+                ? "{$participante->nome()} comprou {$item->nome}"
+                : "{$item->nome} registrado para {$participante->nome()}";
+
+            return $texto.RegistrarEntrada::aEntregar($entrada).'.';
         });
     }
 
@@ -121,6 +127,17 @@ class AcoesJogador extends Component
             $participante = app(MarcarPagamentoAntecipado::class)($this->participante(), ! $this->participante()->pagou_antes, $this->quem());
 
             return MarcarPagamentoAntecipado::aviso($participante);
+        });
+    }
+
+    /** Opcional pago antes (taxa da pizza), ou tira a marca: já sentado, entra (ou sai) junto do buy-in na hora. */
+    public function alternarOpcionalPago(int $itemId): void
+    {
+        $this->executar(function () use ($itemId) {
+            $participante = $this->participante();
+            $opcional = $this->jogo->opcionais()->findOrFail($itemId);
+
+            return app(MarcarOpcionalPagoAntes::class)($participante, $opcional, ! $participante->opcionaisPagos()->whereKey($itemId)->exists(), $this->quem());
         });
     }
 
@@ -272,13 +289,13 @@ class AcoesJogador extends Component
 
     private function participante(): Participante
     {
-        return $this->jogo->participantes()->with(['usuario', 'jogoMesa'])->findOrFail($this->participanteId);
+        return $this->jogo->participantes()->with(['usuario', 'jogoMesa', 'opcionaisPagos'])->findOrFail($this->participanteId);
     }
 
     /** @return Collection<int, Item> */
     private function itensAtivos(): Collection
     {
-        return $this->jogo->itens()->ativos()->get();
+        return $this->jogo->itens()->ativos()->get(); // na ordem do cadastro (Jogo::itens)
     }
 
     private function fichasDigitadas(): ?int
@@ -311,7 +328,8 @@ class AcoesJogador extends Component
             'historico' => $this->historico($participante, $entradas),
             'ultima' => $desfazer->ultimaAcao($participante),
             'botoes' => $this->botoes($participante, $entradas, $itens, $temBuyin),
-            'avulsos' => $this->opcionaisAvulsos($participante, $entradas, $itens),
+            'cartoesOpcionais' => $this->cartoesDosOpcionais($participante, $entradas, $itens),
+            'pagosAntes' => $itens->filter(fn (Item $i) => $i->tipo === TipoItem::Opcional && $i->pago_antes)->values(),
             'previsaoPosicao' => $this->modal === 'eliminacao' ? $this->previsaoPosicao() : null,
             'podeSerEliminado' => $this->jogo->eTorneio() && $participante->status === StatusParticipante::Jogando && $temBuyin
                 && $this->jogo->participantes()->naMesa()
@@ -424,20 +442,41 @@ class AcoesJogador extends Component
     }
 
     /**
-     * Opcionais "1 por jogador" que ele ainda não comprou (ex.: churrasco), vendidos sozinhos.
+     * Cartões dos opcionais, ao lado do buy-in, rebuy e add-on: comprar na hora (pizza, opcional de fichas…).
+     * O "1 por jogador" uma vez; o "junto de cada entrada", um para cada buy-in, rebuy ou add-on que ele já tem
+     * (o buy-in nasce ao sentar, sem a escolha dos opcionais). O obrigatório vai sozinho com a entrada: só
+     * aparece se estiver faltando. Como nos botões das entradas, quem decide é o RegistrarEntrada.
      *
      * @param  Collection<int, Entrada>  $entradas
      * @param  Collection<int, Item>  $itens
-     * @return Collection<int, Item>
+     * @return Collection<int, array{item: Item, ok: bool, meta: string}>
      */
-    private function opcionaisAvulsos(Participante $participante, Collection $entradas, Collection $itens): Collection
+    private function cartoesDosOpcionais(Participante $participante, Collection $entradas, Collection $itens): Collection
     {
-        if (! $this->jogo->entradasAbertas() || $participante->estaFora()) {
-            return collect();
-        }
+        $abertas = $this->jogo->entradasAbertas();
+        $temBuyin = $entradas->contains(fn (Entrada $e) => $e->tipo === TipoItem::Buyin);
 
-        return $itens->filter(fn (Item $i) => $i->tipo === TipoItem::Opcional && $i->porJogador()
-            && ! $entradas->contains('jogo_item_id', $i->id))->values();
+        return $itens->filter(fn (Item $i) => $i->tipo === TipoItem::Opcional)
+            ->map(function (Item $opcional) use ($participante, $entradas, $abertas, $temBuyin): array {
+                $comprados = $entradas->where('jogo_item_id', $opcional->id)->count();
+                $feito = $opcional->porJogador()
+                    ? $comprados > 0
+                    : $temBuyin && $comprados >= $entradas->filter(fn (Entrada $e) => $opcional->compravelCom($e->tipo))->count();
+                $falta = ! $opcional->porJogador() && ! $temBuyin;
+
+                $porque = match (true) {
+                    $feito => 'já feito',
+                    ! $abertas => 'entradas fechadas',
+                    $participante->status === StatusParticipante::Saiu => 'saiu do jogo',
+                    $participante->status === StatusParticipante::Eliminado => 'fora do jogo',
+                    $falta => 'falta o buy-in',
+                    default => null,
+                };
+
+                return ['item' => $opcional, 'ok' => $porque === null, 'meta' => $porque ?? Dinheiro::brl($opcional->valor)];
+            })
+            ->reject(fn (array $cartao) => $cartao['item']->obrigatorio && ! $cartao['ok'])
+            ->values();
     }
 
     /** Com as entradas fechadas, a posição de quem cair agora (último entre os que restam). */

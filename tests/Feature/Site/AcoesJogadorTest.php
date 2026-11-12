@@ -111,6 +111,41 @@ class AcoesJogadorTest extends TestCase
         $this->assertSame(2, $this->jogo->entradas()->count());
     }
 
+    public function test_opcionais_aparecem_como_cartoes_junto_das_entradas(): void
+    {
+        $opcional = fn (string $nome, int $valor, array $com, bool $obrigatorio = false) => $this->jogo->itens()->create([
+            'tipo' => TipoItem::Opcional, 'nome' => $nome, 'valor' => $valor, 'fichas' => 10000, 'compravel_com' => $com,
+            'percentual_premiacao' => 0, 'obrigatorio' => $obrigatorio,
+        ]);
+        $pizza = $opcional('Pizza', 20, ['jogador']);
+        $fichas = $opcional('Opcional', 10, ['buyin', 'rebuy', 'addon']);
+        $opcional('Caixinha', 5, ['buyin', 'rebuy', 'addon'], obrigatorio: true);
+
+        // Antes de sentar: a pizza já se compra, o opcional de entrada espera o buy-in e o obrigatório não tem cartão.
+        $this->painel()
+            ->assertSeeInOrder(['Buy-in', 'R$ 100', 'Rebuy', 'falta o buy-in', 'Add-on', 'no intervalo', 'Pizza', 'R$ 20', 'Opcional', 'falta o buy-in'])
+            ->assertDontSee('Caixinha');
+
+        // Sentou (o buy-in leva a caixinha): o opcional de entrada se compra sozinho, pelo cartão.
+        $this->entrar($this->joao, TipoItem::Buyin);
+
+        $this->painel()
+            ->assertSeeInOrder(['Pizza', 'R$ 20', 'Opcional', 'R$ 10'])
+            ->call('abrirEntrada', 'opcional', $fichas->id)
+            ->assertSee('Registrar opcional · João')
+            ->call('confirmarEntrada')
+            ->assertSet('aviso', 'João comprou Opcional: entregar 10.000 fichas.')
+            ->call('abrirEntrada', 'opcional', $pizza->id)
+            ->call('confirmarEntrada')
+            ->assertSet('aviso', 'João comprou Pizza: entregar 10.000 fichas.');
+
+        $this->painel()->assertSeeInOrder(['Pizza', 'já feito', 'Opcional', 'já feito']);
+
+        // O rebuy abre a vez do opcional de entrada de novo.
+        $this->entrar($this->joao, TipoItem::Rebuy);
+        $this->painel()->assertSeeInOrder(['Pizza', 'já feito', 'Opcional', 'R$ 10']);
+    }
+
     public function test_regra_aparece_no_modal(): void
     {
         $this->entrar($this->joao, TipoItem::Buyin);

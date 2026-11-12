@@ -6,6 +6,7 @@ use App\Actions\Jogo\CadastrarJogadorRapido;
 use App\Actions\Jogo\ConfirmarJogador;
 use App\Actions\Jogo\DesconfirmarJogador;
 use App\Actions\Jogo\DesfazerPagamento;
+use App\Actions\Jogo\MarcarOpcionalPagoAntes;
 use App\Actions\Jogo\MarcarPagamentoAntecipado;
 use App\Actions\Jogo\RegistrarPagamento;
 use App\Enums\DirecaoPagamento;
@@ -14,6 +15,7 @@ use App\Enums\StatusJogo;
 use App\Enums\StatusParticipante;
 use App\Enums\TipoItem;
 use App\Exceptions\RegraDoJogo;
+use App\Models\Item;
 use App\Models\Jogo;
 use App\Models\Pagamento;
 use App\Models\Participante;
@@ -24,6 +26,7 @@ use App\Support\Fichas;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ToggleButtons;
@@ -34,6 +37,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -45,7 +49,8 @@ use Illuminate\Support\Str;
  *
  * Tudo passa pelas Actions (ConfirmarJogador, CadastrarJogadorRapido, DesconfirmarJogador, RegistrarPagamento e
  * MarcarPagamentoAntecipado), com as permissões do painel: `jogos.editar`, `usuarios.criar`, `pagamentos.registrar`
- * e `pagamentos.antecipado` (quem pagou antes ganha as fichas do bônus, quando o torneio tem).
+ * e `pagamentos.antecipado` (quem pagou antes ganha as fichas do bônus, quando o torneio tem, e os opcionais
+ * pagos antes, como a taxa da pizza, entram junto do buy-in: MarcarOpcionalPagoAntes).
  */
 class ConfirmadosRelationManager extends RelationManager
 {
@@ -70,7 +75,7 @@ class ConfirmadosRelationManager extends RelationManager
     {
         return $table
             ->recordTitle(fn (Participante $participante): string => $participante->nome())
-            ->modifyQueryUsing(fn (Builder $query) => $query->with('usuario')->withSum([
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['usuario', 'opcionaisPagos'])->withSum([
                 'pagamentos as pago' => fn (Builder $q) => $q->validas()->where('direcao', DirecaoPagamento::JogadorPagou),
             ], 'valor')->withSum([
                 'pagamentos as devolvido' => fn (Builder $q) => $q->validas()->where('direcao', DirecaoPagamento::JogadorRecebeu),
@@ -103,6 +108,13 @@ class ConfirmadosRelationManager extends RelationManager
                     ->badge()
                     ->color('success')
                     ->visible(fn (): bool => $this->jogo()->temBonusAntecipado()),
+                TextColumn::make('opcionais_pagos')
+                    ->label('Opcionais pagos antes')
+                    ->state(fn (Participante $p): array => $p->opcionaisPagos->pluck('nome')->all())
+                    ->placeholder('—')
+                    ->badge()
+                    ->color('success')
+                    ->visible(fn (): bool => $this->pagosAntes()->isNotEmpty()),
                 TextColumn::make('pago')
                     ->label('Pago antes')
                     ->state(fn (Participante $p): int => Dinheiro::centavos($p->pago) - Dinheiro::centavos($p->devolvido))
@@ -117,6 +129,7 @@ class ConfirmadosRelationManager extends RelationManager
             ->recordActions([
                 $this->acaoPagamento(),
                 $this->acaoAntecipado(),
+                $this->acaoOpcionaisPagos(),
                 $this->acaoDesfazerPagamento(),
                 $this->acaoTirar(),
             ]);
@@ -255,6 +268,12 @@ class ConfirmadosRelationManager extends RelationManager
                     ->visible(fn (Participante $record, Get $get): bool => $this->podeMarcarAntecipado()
                         && ! $record->pagou_antes
                         && $get('direcao') === DirecaoPagamento::JogadorPagou->value),
+                CheckboxList::make('opcionais_pagos')
+                    ->label('Opcionais pagos antes: entram junto do buy-in, com as fichas')
+                    ->options(fn (Participante $record): array => $this->opcoesPagosAntes($this->naoMarcados($record)))
+                    ->visible(fn (Participante $record, Get $get): bool => $this->podeMarcarOpcionais()
+                        && $this->naoMarcados($record)->isNotEmpty()
+                        && $get('direcao') === DirecaoPagamento::JogadorPagou->value),
             ])
             ->action(function (Participante $record, array $data): void {
                 $centavos = Dinheiro::lerTexto((string) $data['valor']);
@@ -268,18 +287,26 @@ class ConfirmadosRelationManager extends RelationManager
                 $direcao = DirecaoPagamento::from($data['direcao']);
 
                 $antecipado = $direcao === DirecaoPagamento::JogadorPagou && (bool) ($data['antecipado'] ?? false);
+                $opcionais = $direcao === DirecaoPagamento::JogadorPagou
+                    ? $this->pagosAntes()->whereIn('id', array_map('intval', $data['opcionais_pagos'] ?? []))
+                    : new Collection;
 
                 // Pagamento e a marca de "pagou antes" vão juntos: se a marca não puder, o pagamento também não fica.
                 $this->executar(
-                    fn () => DB::transaction(function () use ($record, $direcao, $centavos, $data, $antecipado) {
+                    fn () => DB::transaction(function () use ($record, $direcao, $centavos, $data, $antecipado, $opcionais) {
                         app(RegistrarPagamento::class)($record, $direcao, $centavos, FormaPagamento::from($data['forma']), $this->conta(), (string) Str::uuid(), $data['observacao'] ?? null);
 
                         if ($antecipado) {
                             app(MarcarPagamentoAntecipado::class)($record, true, $this->conta());
                         }
+
+                        foreach ($opcionais as $opcional) {
+                            app(MarcarOpcionalPagoAntes::class)($record, $opcional, true, $this->conta());
+                        }
                     }),
                     $record->nome().($direcao === DirecaoPagamento::JogadorPagou ? ' pagou ' : ' recebeu ').Dinheiro::brlCentavos($centavos)
-                        .($antecipado ? ' e ganha '.Fichas::quantas((int) $this->jogo()->antecipado_fichas).' a mais.' : '.'),
+                        .($antecipado ? ' e ganha '.Fichas::quantas((int) $this->jogo()->antecipado_fichas).' a mais' : '')
+                        .($opcionais->isNotEmpty() ? ' (pago antes: '.$opcionais->pluck('nome')->implode(', ').')' : '').'.',
                 );
             });
     }
@@ -304,6 +331,80 @@ class ConfirmadosRelationManager extends RelationManager
                 $this->executar(
                     fn () => app(MarcarPagamentoAntecipado::class)($record, ! $record->pagou_antes, $this->conta()),
                     fn () => MarcarPagamentoAntecipado::aviso($record->refresh()),
+                );
+            });
+    }
+
+    /** Opcionais ativos com "Pago antes" no cadastro (taxa da pizza…), na ordem do cadastro; uma consulta por pedido. */
+    private function pagosAntes(): Collection
+    {
+        return once(fn () => $this->jogo()->opcionaisPagosAntes()->get());
+    }
+
+    /** Os pagos antes que ele ainda não tem marcados. */
+    private function naoMarcados(Participante $participante): Collection
+    {
+        return $this->pagosAntes()->whereNotIn('id', $participante->opcionaisPagos->modelKeys());
+    }
+
+    /**
+     * "Taxa Comida · R$ 40 · 40.000 fichas" para as caixas de marcar.
+     *
+     * @param  Collection<int, Item>  $opcionais
+     * @return array<int, string>
+     */
+    private function opcoesPagosAntes(Collection $opcionais): array
+    {
+        return $opcionais->mapWithKeys(fn (Item $opcional): array => [
+            $opcional->id => $opcional->nome.' · '.Dinheiro::brl($opcional->valor).($opcional->fichas ? ' · '.Fichas::quantas((int) $opcional->fichas) : ''),
+        ])->all();
+    }
+
+    /** Jogo com opcional pago antes, agendado ou em andamento, e a conta pode marcar. */
+    private function podeMarcarOpcionais(): bool
+    {
+        return in_array($this->jogo()->status, [StatusJogo::Agendado, StatusJogo::EmAndamento], true)
+            && $this->conta()->can(MarcarPagamentoAntecipado::PERMISSAO)
+            && $this->pagosAntes()->isNotEmpty();
+    }
+
+    /** Quais opcionais ele pagou antes (marca e desmarca): entram junto do buy-in, com as fichas, quando ele sentar. */
+    private function acaoOpcionaisPagos(): Action
+    {
+        return Action::make('opcionaisPagos')
+            ->label('Opcionais pagos')
+            ->icon('rh-fichas')
+            ->color('gray')
+            ->visible(fn (): bool => $this->podeMarcarOpcionais())
+            ->modalHeading(fn (Participante $record): string => 'Opcionais pagos antes · '.$record->nome())
+            ->modalDescription('O que estiver marcado entra junto do buy-in, com as fichas, quando ele sentar (se já sentou, entra agora). O dinheiro se lança no Pagamento.')
+            ->modalSubmitActionLabel('Salvar')
+            ->fillForm(fn (Participante $record): array => ['opcionais' => array_map('strval', $record->opcionaisPagos->modelKeys())])
+            ->schema([
+                CheckboxList::make('opcionais')
+                    ->hiddenLabel()
+                    ->options(fn (): array => $this->opcoesPagosAntes($this->pagosAntes())),
+            ])
+            ->action(function (Participante $record, array $data): void {
+                $marcados = array_map('intval', $data['opcionais'] ?? []);
+                $avisos = [];
+
+                // Closure comum (não fn): $avisos tem de voltar preenchido para o aviso de sucesso.
+                $this->executar(
+                    function () use ($record, $marcados, &$avisos) {
+                        DB::transaction(function () use ($record, $marcados, &$avisos) {
+                            foreach ($this->pagosAntes() as $opcional) {
+                                $pagou = in_array($opcional->id, $marcados, true);
+
+                                if ($pagou !== $record->opcionaisPagos->contains($opcional)) {
+                                    $avisos[] = app(MarcarOpcionalPagoAntes::class)($record, $opcional, $pagou, $this->conta());
+                                }
+                            }
+                        });
+                    },
+                    function () use (&$avisos): string {
+                        return $avisos ? implode(' ', $avisos) : 'Nada mudou.';
+                    },
                 );
             });
     }

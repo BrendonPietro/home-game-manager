@@ -14,10 +14,10 @@
 		text-overflow: ellipsis;
 	}
 
+	// Buy-in, rebuy, add-on e os opcionais: três por linha no drawer (com menos cartões, eles esticam).
 	&__acoes {
 		display: grid;
-		grid-auto-flow: column;
-		grid-auto-columns: 1fr;
+		grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
 		gap: 8px;
 
 		.rh-action {

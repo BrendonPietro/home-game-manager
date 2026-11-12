@@ -8,6 +8,7 @@ use App\Enums\StatusParticipante;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /** A pessoa naquele jogo: lugar, status, posição, prêmio ou cash-out. */
@@ -57,6 +58,12 @@ class Participante extends Model
     public function entradas(): HasMany
     {
         return $this->hasMany(Entrada::class);
+    }
+
+    /** Opcionais que ele pagou antes (taxa da pizza…): entram junto do buy-in (Actions\Jogo\MarcarOpcionalPagoAntes). */
+    public function opcionaisPagos(): BelongsToMany
+    {
+        return $this->belongsToMany(Item::class, 'participante_opcionais', 'participante_id', 'jogo_item_id')->withTimestamps();
     }
 
     public function pagamentos(): HasMany

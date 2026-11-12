@@ -178,7 +178,7 @@ class Sorteio extends Component
     {
         $busca = mb_strtolower(trim($this->busca));
 
-        return $this->jogo->participantes()->with(['usuario', 'jogoMesa'])
+        return $this->jogo->participantes()->with(['usuario', 'jogoMesa', 'opcionaisPagos'])
             ->whereIn('status', [StatusParticipante::Confirmado, StatusParticipante::Jogando])
             ->when($this->aba === 'sem-lugar', fn ($q) => $q->whereNull('jogo_mesa_id'), fn ($q) => $q->whereNotNull('jogo_mesa_id'))
             ->get()
