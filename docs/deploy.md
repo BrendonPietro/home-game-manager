@@ -66,28 +66,45 @@ php artisan migrate:fresh --seed
 
 `storage/app/backups/` fica fora do git. Para voltar o backup: `mysql.exe -uroot rodrigues_home_game < storage\app\backups\antes-de-limpar.sql`.
 
-## Lançamento: domínio e hospedagem novos (a definir)
+## Produção: leticiaebrendon.com (Hostinger)
 
-O projeto não depende de WebSocket, fila nem cron, então funciona em hospedagem compartilhada com PHP 8.5 e MySQL. Fluxo previsto, igual ao do casamento (FTP + SSH):
+No ar desde 12/11/2026, no lugar do site do casamento, no plano **Business** da Hostinger (hPanel → Sites → leticiaebrendon.com). O projeto não depende de WebSocket, fila nem cron.
 
-1. Local: `npm run build` (site + tema do Filament em `public/build/`).
-2. Subir os arquivos alterados; `vendor/` quando mudar dependência (ou `composer install` no servidor).
-3. Se a hospedagem separar docroot (`public_html`) e a pasta do Laravel, sincronizar as **duas** pastas `build/` — senão o `@vite` aponta para hashes que não existem e o JS dá 404.
-4. No servidor:
+- **PHP 8.5** (hPanel → Avançado → Configuração do PHP), o mesmo do local. As extensões que o `composer.lock` pede já vêm ligadas. A Hostinger desliga `proc_open`, `exec`, `symlink` e afins (`disable_functions`): por isso o composer roda sem os scripts e o link do storage é feito no shell (abaixo).
+- **SSH**: porta, usuário e IP em hPanel → Avançado → Acesso SSH (abaixo, `PORTA`, `USUARIO` e `IP`), com a chave `~/.ssh/hostinger_rhg` do PC de desenvolvimento (cadastrada no hPanel → Avançado → Acesso SSH, nome "rodrigues-home-game deploy"; para tirar o acesso, apague a chave lá).
+- **Pastas**: o Laravel fica em `~/domains/leticiaebrendon.com/laravel`, e o `public_html` é um link para `laravel/public` (um `build/` só, sem sincronizar duas pastas). O `public/storage` é um link para `../storage/app/public`, feito com `ln -s`.
+- **`.env` de produção** (só no servidor, `chmod 600`): `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://leticiaebrendon.com`, `LOG_LEVEL=error`, `SESSION_SECURE_COOKIE=true`, `QUEUE_CONNECTION=sync` (sem worker), o banco e o usuário MySQL do site antigo, reaproveitados e o SMTP da Hostinger. As `CONTA_*` ficam vazias: as contas já estão no banco.
+- **https**: o `public/.htaccess` manda http para https só quando o host é leticiaebrendon.com (o local continua em http).
+- **Backups**: os diários da Hostinger (hPanel → Backups) e, antes de cada atualização, um dump à mão (abaixo). Em `~/backups` no servidor ficam o `.env` do site antigo e o dump do banco feito na subida.
+
+### Atualizar o sistema
+
+No PC (Git Bash), da pasta do projeto, com tudo commitado:
 
 ```bash
-php artisan migrate --force
-php artisan filament:assets          # se o Filament mudou
-php artisan storage:link             # primeira vez (fotos, logo)
-php artisan optimize                 # config, rotas, views e eventos em cache
-php artisan filament:optimize        # componentes e ícones do Filament em cache
+npm run build
+git archive --format=tar -o /tmp/rhg.tar HEAD && tar -rf /tmp/rhg.tar public/build && gzip -f /tmp/rhg.tar
+scp -i ~/.ssh/hostinger_rhg -P PORTA /tmp/rhg.tar.gz USUARIO@IP:rhg.tar.gz
+ssh -i ~/.ssh/hostinger_rhg -p PORTA USUARIO@IP
 ```
 
-## Produção
+No servidor:
 
-- `APP_URL` com `https://`, `APP_ENV=production`, `APP_DEBUG=false`, `SESSION_LIFETIME=720` (12 h: a noite inteira sem cair).
+```bash
+cd ~/domains/leticiaebrendon.com/laravel
+mysqldump --no-tablespaces --single-transaction -u USUARIO_DO_BANCO -p NOME_DO_BANCO > ~/backups/antes-$(date +%F).sql   # os dois estão no .env
+php artisan down
+tar -xzf ~/rhg.tar.gz && rm ~/rhg.tar.gz       # por cima: .env, storage e vendor ficam
+composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+php artisan package:discover
+php artisan migrate --force
+php artisan optimize && php artisan filament:optimize
+php artisan up
+```
+
 - Permissão nova do site em uma versão (ex.: `site.fora_da_noite`): `php artisan db:seed --class=PermissoesSeeder --force` (volta os grupos padrão às permissões do seed).
-- PHP 8.5 (Laravel 13 recebe correções de segurança até 17/03/2028). Conferir a versão do PHP antes de contratar a hospedagem.
+- Arquivo que saiu do projeto continua no servidor (o `tar` só sobrescreve): apague à mão se importar.
+- Primeira subida (já feita): o mesmo, mais `php artisan key:generate --force` e `ln -s ../storage/app/public public/storage`.
 
 ## Contas do clube
 

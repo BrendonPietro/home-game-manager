@@ -188,7 +188,7 @@ V2 (feita em 28/10/2026). Estruturas de blinds (`EstruturaBlinds` com os `Estrut
 
 ## Deploy
 
-Por enquanto só local. O lançamento vai para domínio e hospedagem novos; o projeto não depende de WebSocket, fila nem cron, então serve hospedagem compartilhada. Ver [docs/deploy.md](docs/deploy.md).
+No ar em **https://leticiaebrendon.com** (Hostinger, plano Business, PHP 8.5), desde 12/11/2026, no lugar do site do casamento. Laravel em `~/domains/leticiaebrendon.com/laravel`, `public_html` é um link para `laravel/public`; SSH com a chave `~/.ssh/hostinger_rhg`. A Hostinger desliga `proc_open`/`exec`/`symlink`: composer com `--no-scripts` e `php artisan package:discover` à mão. O banco de produção é o local limpo que subiu (só as 2 contas). Passo a passo de atualizar em [docs/deploy.md](docs/deploy.md). Sem WebSocket, fila nem cron.
 
 ## Documentação
 

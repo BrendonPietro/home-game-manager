@@ -10,6 +10,17 @@ Registro das atualizações do sistema do Rodrigues Home Game, organizadas por:
 - Docs: documentação;
 - Chore: manutenção.
 
+## 0.35.1
+
+No ar em https://leticiaebrendon.com.
+
+### Chore
+- **Produção na Hostinger** (plano Business, PHP 8.5), no lugar do site do casamento: o Laravel em `domains/leticiaebrendon.com/laravel` e o `public_html` como link para a pasta `public`. O `.env` de produção reaproveita o banco e o SMTP do site antigo, com uma chave nova. O banco é o local limpo (só as 2 contas do clube).
+- `public/.htaccess`: http vai para https no domínio de produção (o local continua em http).
+
+### Docs
+- `docs/deploy.md`: como está a produção e o passo a passo de atualizar (a Hostinger desliga `proc_open`, `exec` e `symlink`: composer com `--no-scripts`, `package:discover` à mão e o link do storage pelo shell).
+
 ## 0.35.0
 
 Opcionais no painel do jogador, etapa 2: os pagos antes (taxa da pizza).
