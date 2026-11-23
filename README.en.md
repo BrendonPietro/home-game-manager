@@ -11,6 +11,22 @@ One Laravel app with two entry points:
 - **Operations site** (`/`): used at the table during the night, on a laptop, tablet or phone. Table seating, a panel for each player (entry, payment, elimination), tournament phases, summary and closing.
 - **Admin panel** (`/painel`): used on the PC to set up games and templates, the list of confirmed players with prepayments, blind structures, rankings, calendar, table rentals, reports and permissions.
 
+## Screenshots
+
+Game night live: table seating, who has paid and what each player bought, with the prize pool updated on the side.
+
+<p align="center"><img src="docs/prints/mesa-ao-vivo.jpg" alt="Live table" width="800"></p>
+
+The tournament clock (sent to the TV through a link with no login) and the same table on a phone:
+
+<p align="center"><img src="docs/prints/relogio.jpg" alt="Tournament clock" width="430">&nbsp;&nbsp;<img src="docs/prints/celular-mesa.jpg" alt="Table on a phone" width="200"></p>
+
+The night's financial summary, player by player:
+
+<p align="center"><img src="docs/prints/resumo.jpg" alt="Night summary" width="800"></p>
+
+<sub>Data from the seeded sample night (fictional). The interface is in Portuguese.</sub>
+
 ## What it does on game night
 
 1. **Before**: the game is set up in the panel (entries, extras, fees, payouts and blinds), with the list of confirmed players and who has already paid.
