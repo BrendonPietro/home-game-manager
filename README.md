@@ -11,6 +11,22 @@ Um app Laravel com duas entradas:
 - **Site de operação** (`/`): usado na mesa durante a noite, no notebook, no tablet ou no celular. Mesa com os lugares, painel de cada jogador (entrada, pagamento, eliminação), fases do torneio, resumo e fechamento.
 - **Painel administrativo** (`/painel`): usado no PC para cadastrar jogos e modelos, a lista de confirmados com os pagamentos antecipados, estruturas de blinds, rankings, calendário, aluguéis de mesa, relatórios e permissões.
 
+## Telas
+
+A noite ao vivo: mesa com os lugares, quem já pagou e o que cada um comprou, e o prize pool atualizado na lateral.
+
+<p align="center"><img src="docs/prints/mesa-ao-vivo.jpg" alt="Mesa ao vivo" width="800"></p>
+
+O relógio do torneio (vai para a TV por um link sem login) e a mesma tela no celular:
+
+<p align="center"><img src="docs/prints/relogio.jpg" alt="Relógio do torneio" width="430">&nbsp;&nbsp;<img src="docs/prints/celular-mesa.jpg" alt="Mesa no celular" width="200"></p>
+
+O resumo financeiro da noite, jogador por jogador:
+
+<p align="center"><img src="docs/prints/resumo.jpg" alt="Resumo da noite" width="800"></p>
+
+<sub>Dados da noite de exemplo (fictícios), criada pelo seed.</sub>
+
 ## O que ele faz numa noite
 
 1. **Antes**: o jogo é cadastrado no painel (entradas, opcionais, taxas, premiação e blinds), com a lista de confirmados e quem já pagou.
