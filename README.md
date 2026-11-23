@@ -1,5 +1,9 @@
 # Rodrigues Home Game
 
+[![Testes](https://github.com/BrendonPietro/home-game-manager/actions/workflows/tests.yml/badge.svg)](https://github.com/BrendonPietro/home-game-manager/actions/workflows/tests.yml)
+
+🇺🇸 [English version](README.en.md)
+
 Sistema de gerenciamento de um home game semanal de poker **presencial**. Substitui a planilha da noite: torneios e cash games, jogadores e mesas, buy-ins, rebuys, add-ons e opcionais, pagamentos, prize pool, premiação, acertos de "quem paga quem", rankings e o relógio do torneio na TV.
 
 Um app Laravel com duas entradas:
