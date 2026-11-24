@@ -10,6 +10,11 @@ Registro das atualizações do sistema do Rodrigues Home Game, organizadas por:
 - Docs: documentação;
 - Chore: manutenção.
 
+## 0.35.2
+
+### Fix
+- **Relógio de quem controla** (`/jogos/{jogo}/relogio`), tela deitada: em telas de 1280 a 1440px os botões passavam da borda direita e a página rolava para o lado. A coluna dos botões agora nunca fica mais estreita que eles (`minmax(min-content, 1fr)`) e quem encolhe é o relógio. Conferido em 844×390, 1024, 1280, 1366, 1440 e 1920px.
+
 ## 0.35.1
 
 No ar em https://leticiaebrendon.com.
