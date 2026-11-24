@@ -115,10 +115,16 @@
 		text-align: center;
 	}
 
-	// Deitado: relógio à esquerda e botões à direita
+	// Deitado: relógio à esquerda e botões à direita. A coluna dos botões nunca fica mais estreita que
+	// eles (min-content): com minmax(280px, 1fr), em telas de 1280 a 1440px os botões passavam da borda
+	// e a página rolava para o lado. Quem encolhe é o relógio.
 	@media (orientation: landscape) {
+		&__comandos {
+			min-width: 280px;
+		}
+
 		&__corpo {
-			grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
+			grid-template-columns: minmax(0, 1.6fr) minmax(min-content, 1fr);
 			grid-template-rows: minmax(0, 1fr);
 
 			&.sem-botoes {
@@ -137,11 +143,12 @@
 		}
 
 		&__corpo {
-			grid-template-columns: minmax(0, 1.3fr) minmax(250px, 1fr);
+			grid-template-columns: minmax(0, 1.3fr) minmax(min-content, 1fr);
 		}
 
 		&__comandos {
 			gap: 8px;
+			min-width: 250px;
 		}
 
 		&__principais {
